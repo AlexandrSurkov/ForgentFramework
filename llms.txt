@@ -1,0 +1,14 @@
+# ForgentFramework
+
+> Technology-agnostic Multi-Agent Development Specification (Orchestrator/Executor/Critic) and the minimal agent setup used to maintain it.
+
+Key constraints: treat `MULTI_AGENT_SPEC.md` as the canonical source of truth; keep changes small and reviewable; keep committed artifacts in English.
+
+## Key Files
+- [MULTI_AGENT_SPEC.md](MULTI_AGENT_SPEC.md): the canonical specification
+- [README.md](README.md): repository overview
+- [AGENTS.md](AGENTS.md): agent working agreements for this repository
+- [.github/copilot-instructions.md](.github/copilot-instructions.md): always-on Copilot workspace instructions
+
+## Tools
+- [tools/validate_spec.py](tools/validate_spec.py): lightweight validation for spec Markdown (fences/headings)

@@ -1,0 +1,10 @@
+# Agent temporary sessions (do not commit)
+.agents/session/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
