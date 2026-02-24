@@ -12,3 +12,5 @@ Key constraints: treat `MULTI_AGENT_SPEC.md` as the canonical source of truth; k
 
 ## Tools
 - [tools/validate_spec.py](tools/validate_spec.py): lightweight validation for spec Markdown (fences/headings)
+- [tools/validate_agents.py](tools/validate_agents.py): lightweight “golden checks” for agent prompt structure
+- [tools/link_audit.py](tools/link_audit.py): audits local Markdown links (no network)

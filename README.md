@@ -137,6 +137,16 @@ Run this after changing `MULTI_AGENT_SPEC.md` to catch broken Markdown fences an
 python tools/validate_spec.py
 ```
 
+Optional checks:
+
+```bash
+# Lightweight “golden checks” for agent prompts (structure/required rules)
+python tools/validate_agents.py
+
+# Audit local Markdown links (no network)
+python tools/link_audit.py
+```
+
 ## Upgrading
 
 When `MULTI_AGENT_SPEC.md` changes, follow the “Upgrade an existing project” procedure in the spec. The expected baseline is recorded in the target project’s `PROJECT.md` as the previously used spec version.

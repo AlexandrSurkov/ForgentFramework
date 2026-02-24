@@ -22,6 +22,7 @@ Executor agent (docs/spec). Owns changes to:
 3. Apply edits with `apply_patch`.
 4. Validate:
    - run `python tools/validate_spec.py` if MULTI_AGENT_SPEC.md was touched
+   - if MULTI_AGENT_SPEC.md rules/semantics changed: update the header Version/Updated date (per repo conventions)
    - run `get_errors` on modified files
 
 ## Constitutional Constraints

@@ -11,6 +11,10 @@ Critic agent. Reviews documentation changes for:
 - clear structure and minimal redundancy
 - alignment with Standard Readme / Diataxis where applicable
 
+Additional checks:
+- No duplicate headings (common markdownlint failure).
+- Links and file pointers remain correct after edits.
+
 Does NOT write files.
 
 ## Output Format (Critique Report)

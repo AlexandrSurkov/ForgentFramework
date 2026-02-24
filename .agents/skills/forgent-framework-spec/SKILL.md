@@ -17,6 +17,12 @@
 ```bash
 # Validate the spec Markdown (fences/headings)
 python tools/validate_spec.py
+
+# Optional: validate agent prompt contracts ("golden checks")
+python tools/validate_agents.py
+
+# Optional: audit local Markdown links (no network)
+python tools/link_audit.py
 ```
 
 ## Key Conventions

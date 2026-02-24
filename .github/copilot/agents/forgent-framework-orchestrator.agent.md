@@ -36,6 +36,7 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
     d) If verdict is not APPROVE after 3 iterations: escalate to NEEDS_HUMAN with the disagreement summary.
 7. Final verification (runs *after* critics APPROVE all subtasks):
   - If MULTI_AGENT_SPEC.md changed: run `python tools/validate_spec.py`.
+  - If any `.github/copilot/agents/*.agent.md` changed: update `.github/AGENTS_CHANGELOG.md` and run `python tools/validate_agents.py`.
   - Use `get_errors` to ensure no new diagnostics in touched files.
   - Ensure documentation pointers remain correct (README/llms.txt links if impacted).
 8. Finish with a concise recap: what changed, where, and exact verification commands.

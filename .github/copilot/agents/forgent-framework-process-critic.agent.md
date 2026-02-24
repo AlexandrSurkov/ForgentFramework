@@ -22,6 +22,12 @@ Does NOT write files.
 - WARNING: likely confusion for adopters; missing definitions/examples; weak transition rules.
 - SUGGESTION: optional clarity improvements.
 
+When relevant, anchor findings to the governing spec section (e.g., “conflicts with MULTI_AGENT_SPEC.md §3.1”).
+
+Additional checks:
+- Spec edits: version/updated date hygiene; consistent terminology; gate semantics (APPROVE/REQUEST_CHANGES/NEEDS_HUMAN).
+- Agent prompt edits: `.github/AGENTS_CHANGELOG.md` updated; no role-mixing introduced; iteration/verification rules preserved.
+
 ## Output Format (Critique Report)
 - Verdict: APPROVE | REQUEST_CHANGES | REJECT
 - Findings list:
