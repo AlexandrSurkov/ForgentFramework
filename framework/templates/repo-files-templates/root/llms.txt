@@ -1,0 +1,15 @@
+# Repository Overview (Template)
+
+This repository: TODO (one sentence).
+
+Key files:
+
+- AGENTS.md: repository map and how to run/test
+- .github/copilot-instructions.md: always-on Copilot constraints
+- .github/agents/: custom Copilot agents (.agent.md)
+- .github/prompts/: reusable prompt files (.prompt.md)
+- .github/decisions/: ADRs
+- .agents/skills/: Agent Skills (SKILL.md)
+- .agents/evals/: eval cases and rubrics
+- 00-multi-agent-development-spec.md: universal spec (normative)
+- PROJECT.md: project parameters (stack, models, CI)

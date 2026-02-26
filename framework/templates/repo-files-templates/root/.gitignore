@@ -1,0 +1,10 @@
+# Agent temporary sessions (do not commit)
+.agents/session/
+
+# Traces retention depends on PROJECT.md Trace mode:
+# - Mode 1: committed sanitized traces → keep `.agents/traces/` tracked
+# - Mode 2: external / not committed   → ignore `.agents/traces/`
+# .agents/traces/
+
+# Secrets
+.env

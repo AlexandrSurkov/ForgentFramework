@@ -1,16 +1,49 @@
 # ForgentFramework
 
-> Technology-agnostic Multi-Agent Development Specification (Orchestrator/Executor/Critic) and the minimal agent setup used to maintain it.
+> A technology-agnostic Multi-Agent Development Specification (`framework/00-multi-agent-development-spec.md`),
+> applied via VS Code Copilot agents.
 
-Key constraints: treat `MULTI_AGENT_SPEC.md` as the canonical source of truth; keep changes small and reviewable; keep committed artifacts in English.
+## What this is
 
-## Key Files
-- [MULTI_AGENT_SPEC.md](MULTI_AGENT_SPEC.md): the canonical specification
-- [README.md](README.md): repository overview
-- [AGENTS.md](AGENTS.md): agent working agreements for this repository
-- [.github/copilot-instructions.md](.github/copilot-instructions.md): always-on Copilot workspace instructions
+ForgentFramework defines a universal Orchestrator → Executor → Critic workflow for running
+software projects with AI agents. Spec is `framework/00-multi-agent-development-spec.md`; applied via VS Code Copilot `.agent.md` agents.
 
-## Tools
-- [tools/validate_spec.py](tools/validate_spec.py): lightweight validation for spec Markdown (fences/headings)
-- [tools/validate_agents.py](tools/validate_agents.py): lightweight “golden checks” for agent prompt structure
-- [tools/link_audit.py](tools/link_audit.py): audits local Markdown links (no network)
+## Repository map
+
+| Path | Description |
+|---|---|
+| `framework/00-multi-agent-development-spec.md` | Canonical spec: roles, pipeline phases, rubrics, Reflexion, traces, upgrade procedure |
+| `framework/CHANGELOG.md` | Spec release notes shipped with the spec package |
+| `AGENTS.md` | Machine-readable repo context — read first |
+| `PROJECT.md` | Project parameters: stack (no code — Copilot agents only), models, rate limits |
+| `.github/agents/` | System prompts: orchestrator, spec-editor, docs-critic, process-critic (`.agent.md` — VS Code Copilot agent definitions) |
+| `.agents/session/` | Gitignored per-session state: `.agents/session/<trace_id>/TASK_CONTEXT.md` |
+| `.agents/traces/` | JSONL session traces (OTel GenAI format). Retention per `PROJECT.md` → Trace mode (Mode 1 committed in this repo) |
+| `.github/copilot-instructions.md` | VS Code always-on context: workflow, constraints, active ADRs |
+| `.github/AGENTS_CHANGELOG.md` | History of all agent prompt changes |
+| `.github/SPEC_VERSIONING.md` | How this repo versions/releases spec changes (repo governance) |
+| `.github/workflows/spec-versioning.yml` | CI guard for spec version bumps and changelog updates |
+| `.github/decisions/` | ADR records — orchestrator checks these before every decomposition |
+
+## Key concepts
+
+- **Orchestrator**: decomposes task → routes `executor=<name>` → max 3 iterations → `TASK_COMPLETE` or `NEEDS_HUMAN`
+- **Executor**: makes changes; reads `## Previous Attempts` in `TASK_CONTEXT.md` before each iteration (Reflexion)
+- **Critic**: reads only final result (critic isolation); returns `APPROVE` / `REQUEST_CHANGES` / `REJECT`
+- **TASK_CONTEXT.md**: per-session scratch file at `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored); holds task, decomposition, previous attempts
+- **trace_id**: collision-resistant session ID (recommended `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`)
+- **Trace**: JSONL line per agent operation appended to `.agents/traces/<trace_id>.jsonl` (retention per `PROJECT.md` → Trace mode)
+
+## Running
+
+```bash
+# Open repo in VS Code, use Copilot Chat in Agent mode, select forgent-orchestrator
+```
+
+## Constraints
+
+- No secrets in committed files
+
+## Spec version
+
+See `framework/00-multi-agent-development-spec.md` header for current version.

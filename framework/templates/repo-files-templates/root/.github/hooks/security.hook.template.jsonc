@@ -1,0 +1,7 @@
+{
+  "TODO": "Hook configuration is platform/version-dependent. Replace this file with a valid VS Code Copilot hook JSON schema for your environment.",
+  "suggested": {
+    "purpose": "Enforce security guardrails (deny/ask for risky tools, secret scanning, redaction)",
+    "notes": "Keep hooks deterministic and document trust boundaries."
+  }
+}

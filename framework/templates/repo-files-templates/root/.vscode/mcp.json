@@ -1,0 +1,13 @@
+{
+  "TODO": "MCP configuration schema depends on your editor/runtime. Consult the VS Code Copilot MCP documentation for the exact schema.",
+  "servers": {
+    "example-server": {
+      "transport": "stdio",
+      "command": "TODO",
+      "args": ["TODO"],
+      "env": {
+        "EXAMPLE_API_KEY": "${env:EXAMPLE_API_KEY}"
+      }
+    }
+  }
+}

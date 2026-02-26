@@ -1,0 +1,7 @@
+{
+  "TODO": "Hook configuration is platform/version-dependent. Replace this file with a valid VS Code Copilot hook JSON schema for your environment.",
+  "suggested": {
+    "purpose": "Enforce quality gates (formatting, lint, test commands)",
+    "notes": "Prefer small, fast checks and keep commands reproducible."
+  }
+}

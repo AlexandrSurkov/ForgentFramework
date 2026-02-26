@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "github.copilot",
+    "github.copilot-chat",
+    "eamodio.gitlens",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-json"
+  ]
+}

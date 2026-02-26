@@ -1,0 +1,14 @@
+{
+  "folders": [
+    { "path": ".", "name": "<project>-AgentConfig" },
+    { "path": "../<project>-Backend", "name": "<project>-Backend" },
+    { "path": "../<project>-Frontend", "name": "<project>-Frontend" },
+    { "path": "../<project>-Automation", "name": "<project>-Automation" },
+    { "path": "../<project>-Docs", "name": "<project>-Documentation" }
+  ],
+  "settings": {
+    "chat.agentFilesLocations": {
+      ".github/agents": true
+    }
+  }
+}
