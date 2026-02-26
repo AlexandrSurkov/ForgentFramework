@@ -18,16 +18,17 @@ Replace `...` with real values for your project.
 
 > **Don’t want to fill it manually?** Use the prompt interview below — paste it into Copilot Chat:
 >
-> ```
+> ```text
 > You are a Project Setup Interviewer. Ask me the questions from section §6.pre of MULTI_AGENT_SPEC.md
 > one by one (or in small groups). Based on my answers, create PROJECT.md using the template in §0.8.1
 > in the <project>-AgentConfig/ folder next to MULTI_AGENT_SPEC.md and fill the §pre section.
-> Speak with me in Russian. Start with the first question.
+> Speak with me in English by default. If I request another language, use it and record it in PROJECT.md §pre
+> under "User communication language" (default is English). Start with the first question.
 > ```
 
 **Step 2.** Copy the prompt below and run it as the system instruction for Copilot Chat / an agent:
 
-```
+```text
 You are an Implementation Agent. Read MULTI_AGENT_SPEC.md (this specification) and PROJECT.md
 (§pre answers are already filled). Execute Roadmap §6.0–6.8 sequentially.
 Start with Phase 0 and ask for confirmation before each next step.
@@ -48,7 +49,7 @@ If it doesn’t, set the current spec version manually as a baseline before upgr
 
 **Step 2.** Copy the prompt below and run it as the system instruction for Copilot Chat / an agent:
 
-```
+```text
 You are a Spec Upgrade Agent. MULTI_AGENT_SPEC.md has been updated.
 Read the new MULTI_AGENT_SPEC.md and PROJECT.md (the field MULTI_AGENT_SPEC version: is the old version).
 Follow the upgrade procedure in §6.agent.2: identify the delta, classify changes
@@ -75,21 +76,27 @@ Follow the upgrade procedure in §6.agent.2: identify the delta, classify change
   - [0.2 Multi-root workspace](#02-multi-root-workspace)
   - [0.3 AGENTS.md in every repository](#03-agentsmd-in-every-repository)
   - [0.4 llms.txt format](#04-llmstxt-format)
-  - [0.5 GitFlow + SemVer (detailed rules)](#05-gitflow-semver-detailed-rules)
+  - [0.5 GitFlow + SemVer — detailed rules](#05-gitflow-semver-detailed-rules)
   - [0.6 Pull request policy](#06-pull-request-policy)
-  - [0.6.1 Merge gates (PR gates)](#061-merge-gates-pr-gates)
-  - [0.6.2 Branch protection setup](#062-branch-protection-setup)
+    - [0.6.1 Merge gates (PR gates)](#061-merge-gates-pr-gates)
+    - [0.6.2 Branch protection setup](#062-branch-protection-setup)
   - [0.7 README in code](#07-readme-in-code)
   - [0.8 PROJECT.md (project file template)](#08-projectmd-project-file-template)
   - [0.9 copilot-instructions.md (system instructions)](#09-copilot-instructionsmd-system-instructions)
   - [0.10 SKILL.md (technology knowledge package)](#010-skillmd-a-technology-knowledge-package)
 - [1. Agent system architecture](#1-agent-system-architecture)
-   - [1.1 Orchestrator agent assignment rules](#11-orchestrator-agent-assignment-rules)
-   - [1.2 Model selection policy](#12-model-selection-policy)
-   - [1.3 Development pipeline (from spec to production)](#13-development-pipeline-from-spec-to-production)
-   - [1.3.6 Test Failure Protocol](#136-test-failure-protocol)
-   - [1.3.8 Shortened Pipeline Paths (Fast-Track)](#138-shortened-pipeline-paths-fast-track)
-   - [1.4 Manual test plans](#14-manual-test-plans)
+  - [1.1 Orchestrator agent assignment rules](#11-orchestrator-agent-assignment-rules)
+  - [1.2 Model selection policy](#12-model-selection-policy)
+  - [1.3 Development pipeline (from spec to production)](#13-development-pipeline-from-spec-to-production)
+    - [1.3.1 Three levels of work](#131-three-levels-of-work)
+    - [1.3.2 Who writes which tests and when](#132-who-writes-which-tests-and-when)
+    - [1.3.3 Development Pipeline (9 steps)](#133-development-pipeline-9-steps-phases-0-1-2-25-3-35-4-5-6)
+    - [1.3.4 Why these cycle counts](#134-why-these-cycle-counts)
+    - [1.3.5 When the user intervenes](#135-when-the-user-intervenes)
+    - [1.3.6 Test Failure Protocol](#136-test-failure-protocol)
+    - [1.3.7 Alignment with Reflexion loop](#137-alignment-with-reflexion-loop)
+    - [1.3.8 Shortened Pipeline Paths (Fast-Track)](#138-shortened-pipeline-paths-fast-track)
+  - [1.4 Manual test plans](#14-manual-test-plans)
 - [2. Work Protocol: Sessions and Memory](#2-work-protocol-sessions-and-memory)
   - [2.1 TASK_CONTEXT.md structure](#21-task_contextmd-structure)
   - [2.2 Memory rules](#22-memory-rules)
@@ -107,6 +114,7 @@ Follow the upgrade procedure in §6.agent.2: identify the delta, classify change
   - [3.9 Security Critic rubric](#39-security-critic-rubric)
   - [3.10 Documentation Critic rubric](#310-documentation-critic-rubric)
   - [3.11 Definition of Ready / Definition of Done](#311-definition-of-ready-definition-of-done)
+    - [3.11.1 When to create an ADR](#3111-when-to-create-an-adr)
   - [3.12 ADR file format](#312-adr-file-format)
 - [4. Observability AI workflow](#4-observability-ai-workflow)
   - [4.1 OTel GenAI Semantic Conventions v1.40.0](#41-standard-opentelemetry-genai-semantic-conventions-cncf-v1400-2025)
@@ -123,6 +131,7 @@ Follow the upgrade procedure in §6.agent.2: identify the delta, classify change
 - [6. Adoption roadmap](#6-adoption-roadmap)
   - [6.pre Before you start: capture project parameters](#6pre-before-you-start-capture-project-parameters)
   - [6.agent Implementation Agent prompt](#6agent-implementation-agent-prompt)
+  - [6.agent.2 Spec upgrade agent prompt](#6agent2-spec-upgrade-agent-prompt)
   - [6.0 Phase 0 — AgentConfig repo](#60-phase-0-agentconfig-repo)
   - [6.1 Phase 1 — Context](#61-phase-1-context)
   - [6.2 Phase 2 — Agent Skills](#62-phase-2-agent-skills)
@@ -241,7 +250,7 @@ Follow the upgrade procedure in §6.agent.2: identify the delta, classify change
 
 Each project creates a dedicated agent-configuration repository (`<project>-AgentConfig`):
 
-```
+```text
 <project>-AgentConfig/
 │
 ├── .vscode/
@@ -307,7 +316,7 @@ Each project creates a dedicated agent-configuration repository (`<project>-Agen
 
 **`.gitignore` for AgentConfig:**
 
-```gitignore
+```text
 # Agent temporary sessions (do not commit)
 .agents/session/
 
@@ -391,6 +400,30 @@ Full format — see MULTI_AGENT_SPEC.md §4.5–4.6.
 
 > `name`, `description`, `model`, `tools` are read by VS Code Copilot from the YAML frontmatter; the system prompt is the file body after `---`.
 
+#### 0.1.2 Minimal `.vscode/extensions.json`
+
+Recommended VS Code extensions for an AI-agent workspace:
+
+```json
+{
+   "recommendations": [
+      "github.copilot",
+      "github.copilot-chat",
+      "ms-azuretools.vscode-docker",
+      "hashicorp.terraform",
+      "golang.go",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "eamodio.gitlens",
+      "redhat.vscode-yaml",
+      "ms-vscode.vscode-json"
+   ]
+}
+```
+
+> This list depends on your tech stack — adjust to the languages and tools you actually use.
+> During developer onboarding, an agent may recommend installing extensions from this list.
+
 #### 0.1.3 Filled `.agent.md` example — backend-critic
 
 > A full working copy-paste example. Replace `<project>` with your project name; choose the model according to PROJECT.md §2.
@@ -458,30 +491,6 @@ After issuing the verdict, append to .agents/traces/<trace_id>.jsonl:
 
 ---
 
-#### 0.1.2 Minimal `.vscode/extensions.json`
-
-Recommended VS Code extensions for an AI-agent workspace:
-
-```json
-{
-   "recommendations": [
-      "github.copilot",
-      "github.copilot-chat",
-      "ms-azuretools.vscode-docker",
-      "hashicorp.terraform",
-      "golang.go",
-      "dbaeumer.vscode-eslint",
-      "esbenp.prettier-vscode",
-      "eamodio.gitlens",
-      "redhat.vscode-yaml",
-      "ms-vscode.vscode-json"
-   ]
-}
-```
-
-> This list depends on your tech stack — adjust to the languages and tools you actually use.
-> During developer onboarding, an agent may recommend installing extensions from this list.
-
 ### 0.2 Multi-root workspace
 
 All project repositories are combined into a single VS Code workspace via `.vscode/<project>.code-workspace`:
@@ -505,7 +514,7 @@ All project repositories are combined into a single VS Code workspace via `.vsco
 
 AGENTS.md distribution across repositories:
 
-```
+```text
 <project>-AgentConfig/AGENTS.md    ← global: product, repo map, conventions
 <project>-Backend/AGENTS.md        ← backend language/framework: build, tests, structure
 <project>-Frontend/AGENTS.md       ← UI framework: build, tests, structure
@@ -613,7 +622,7 @@ Language/framework: X. Key constraints: Y.
 
 #### 0.5.2 SemVer + automated versioning
 
-```
+```text
 Commit type      → Version bump
 feat:            → MINOR bump  (X.Y+1.0)
 fix:             → PATCH bump  (X.Y.Z+1)
@@ -629,7 +638,7 @@ CI pipeline reads the version via gitversion and tags the image/artifact.
 
 #### 0.5.3 Feature branch naming
 
-```
+```text
 feature/<task-id>-<short-kebab-description>
 
 Examples:
@@ -667,7 +676,7 @@ Examples:
 - [ ] ADR created or referenced if architectural decision made
 ```
 
-### 0.6.1 Merge gates (PR gates)
+#### 0.6.1 Merge gates (PR gates)
 
 Any merge into `main` / `release` requires passing three sequential gates.
 
@@ -675,7 +684,7 @@ Any merge into `main` / `release` requires passing three sequential gates.
 
 Every PR runs a full test suite automatically. Merging is blocked until all checks pass.
 
-```
+```text
 Required CI run:
    - Static analysis (linter, vet/typecheck)
    - Unit tests (coverage must not drop below project threshold)
@@ -694,7 +703,7 @@ Exact commands and pipeline files are defined in the project file.
 
 The appropriate critic agent must review the PR and leave structured comments as PR threads.
 
-```
+```text
 Critic assignment by change type:
    Backend changes (business logic, API)        → backend-critic
    Frontend changes (components, pages)        → frontend-critic
@@ -723,7 +732,7 @@ Without a working mechanism, Gate 2 does not function.
 
 PR is open → developer opens Copilot Chat and writes:
 
-```
+```text
 @backend-critic perform a Code Review of this PR
 ```
 
@@ -754,7 +763,7 @@ Silence is not a response — an unresolved thread blocks merging.
 
 **Option A — Executor disagrees with critic:**
 
-```
+```text
 Executor replies in the thread:
    DISPUTE: <argument>
    - Link to a standard / ADR / test that proves the point
@@ -770,7 +779,7 @@ SUGGESTION may be rejected by the executor without escalation (ACKNOWLEDGED is s
 
 **Option B — Executor agrees:**
 
-```
+```text
 Executor fixes the code, then replies:
    FIXED: <what changed> — commit <sha>
    Reason: <why this fix addresses the root cause>
@@ -795,7 +804,7 @@ Critic closes the thread:
 
 **Final merge condition:**
 
-```
+```text
 Gate 1:  CI → all tests green, build successful
 Gate 2:  Critic agent left a review (at least one thread, or explicit "No findings")
 Gate 3:  All threads are RESOLVED | ACKNOWLEDGED | DEFERRED(SUGGESTION-only)
@@ -824,7 +833,7 @@ Gate 3:  All threads are RESOLVED | ACKNOWLEDGED | DEFERRED(SUGGESTION-only)
 
 ---
 
-### 0.6.2 Branch protection setup
+#### 0.6.2 Branch protection setup
 
 Gates (§0.6.1) work only if direct pushes to protected branches are technically blocked.
 Without branch protection, Gates 1–3 can be bypassed by merging without a PR.
@@ -1012,7 +1021,7 @@ before spending iterations on a wrong implementation.
        Orchestrator reads this section and applies it with higher priority than MULTI_AGENT_SPEC §1.2.
        If empty, §1.2 applies as-is. -->
 
-```
+```text
 Providers in use: ...          (e.g., Anthropic + OpenAI / Anthropic only)
 Max tier: T?                  (e.g., T2 — T1 models unavailable / budget)
 Forbidden models: ...         (e.g., Claude Opus 4.6 — 30x, do not use)
@@ -1058,7 +1067,7 @@ Prefer 0x models: yes|no      (yes — prefer GPT-4.1/GPT-4o/GPT-5 mini/Raptor m
 > Concrete triggers for this project’s stack. Do not duplicate universal rules from the spec.
 
 ### Backend Critic — additional triggers
-```
+```text
 BLOCKER:
 - [ ] ...
 WARNING:
@@ -1066,7 +1075,7 @@ WARNING:
 ```
 
 ### Frontend Critic — additional triggers
-```
+```text
 BLOCKER:
 - [ ] ...
 WARNING:
@@ -1074,7 +1083,7 @@ WARNING:
 ```
 
 ### DevOps Critic — additional triggers
-```
+```text
 BLOCKER:
 - [ ] ...
 WARNING:
@@ -1105,9 +1114,11 @@ WARNING:
 > Filled **before starting the Roadmap** (§6.pre) — answers to the implementation agent’s questions.
 > The implementation agent (§6.agent) reads this section first; without it, it cannot set up files correctly.
 
-```
+```text
 Project:
    Name and description:        ...
+   Artifact language:           English (default)
+   User communication language: English (default)
    Components (repositories):   ...
    Codebase baseline:           greenfield | legacy+rescue | old-project
    MULTI_AGENT_SPEC version:    vX.Y.Z  (spec version at project setup — see §6.agent.2)
@@ -1174,7 +1185,8 @@ Pipeline: Phase 0 (specs) -> 1 (code) -> 2 (tests) -> 2.5 (deploy) -> 3 (refacto
 See: MULTI_AGENT_SPEC.md for full protocol.
 
 ## Key Constraints
-- Language: all code artifacts and comments in English. Chat with user in Russian.
+- Language: all code artifacts and comments in English by default (override in PROJECT.md §pre: "Artifact language").
+   Communicate with the user in English by default (override in PROJECT.md §pre: "User communication language").
 - Do not modify auto-generated files (see AGENTS.md -> Structure).
 - No hardcoded secrets or config values (12-Factor III).
 - Every new feature requires .feature spec before Phase 1 (SDD).
@@ -1189,7 +1201,7 @@ See: MULTI_AGENT_SPEC.md for full protocol.
 ```
 
 > `## Active ADR` is the most important section: long-term memory visible in every chat.
-> `## Current Sprint` is updated once per sprint; do not copy the entire TASK_CONTEXT.md into it.
+> `## Current Sprint` is updated once per sprint; do not copy the entire `TASK_CONTEXT.md` into it.
 
 ---
 
@@ -1262,7 +1274,7 @@ swagger generate server -f swagger-api/swagger.yaml
 
 ## 1. Agent system architecture
 
-```
+```text
 User
        │
        ▼
@@ -1328,7 +1340,7 @@ Orchestrator selects agents using two signals: **change area** (what changes in 
 
 Orchestrator must invoke `architect` **before** any other executor if at least one condition holds:
 
-```
+```text
 - The task creates a new service or standalone module
 - The task introduces or changes a public cross-service API
 - The task crosses more than one bounded context boundary
@@ -1340,7 +1352,7 @@ Orchestrator must invoke `architect` **before** any other executor if at least o
 
 Run in parallel with the primary executor (or as a separate subtask) if:
 
-```
+```text
 - AuthN/AuthZ is added or changed
 - A new public endpoint is added that accepts external input
 - The task processes PII or financial data
@@ -1351,9 +1363,9 @@ Run in parallel with the primary executor (or as a separate subtask) if:
 #### 1.1.4 Parallel execution
 
 Independent parts of a task (no mutual dependencies) should be given to multiple executors **concurrently**.
-Orchestrator marks them in TASK_CONTEXT.md (`Depends on: —`).
+Orchestrator marks them in `TASK_CONTEXT.md` (`Depends on: —`).
 
-```
+```text
 Example: "Add filtering by status"
    Condition: API contract is fixed in `.feature`
    ├── backend-dev (Phase 1): endpoint + unit tests
@@ -1361,12 +1373,12 @@ Example: "Add filtering by status"
 ```
 
 > Parallelism cap: no more than 4 executor agents concurrently for one task.
-> Beyond that, orchestrator loses reliable control over TASK_CONTEXT.md and traces.
+> Beyond that, orchestrator loses reliable control over `TASK_CONTEXT.md` and traces.
 > If you have more than 4 independent parts — group them into prioritized batches.
 
 #### 1.1.5 Orchestrator anti-patterns
 
-```
+```text
 ✗ Assign backend-dev without `.feature` → run architect first
 ✗ Assign frontend-dev if API contract is not fixed yet
 ✗ Combine executor and critic in the same agent for the same task
@@ -1395,7 +1407,7 @@ Example: "Add filtering by status"
 
 #### 1.2.2 Critic/executor parity rule
 
-```
+```text
 A critic must NEVER be weaker than the executor it reviews.
 A weaker critic model systematically misses executor mistakes — sycophancy effect.
 ```
@@ -1413,7 +1425,7 @@ A weaker critic model systematically misses executor mistakes — sycophancy eff
 | T2+ — Balanced (fast) | Claude Opus 4.6 fast mode (30x) | T1-like reasoning quality but ~30x cost; use only with hard time budget and short tasks |
 | T3 — Efficient | Claude Haiku 4.5 (0.33x) · GPT-5 mini (0x) · Gemini 3 Flash (0.33x) · GPT-5.1-Codex-Mini (0.33x) · Raptor mini (0x) | Fast/economic; unambiguous tasks with clear I/O |
 
-```
+```text
 Application rule:
    Executor T1 → Critic T1
    Executor T2 → Critic T2 or T1
@@ -1422,7 +1434,7 @@ Application rule:
 
 #### 1.2.4 When a reasoning-heavy model is required
 
-```
+```text
 Required (T1 — Gemini 2.5 Pro / GPT-5.1 / GPT-5.1-Codex-Max / Claude Opus 4.6 / Claude Opus 4.5):
    - Task decomposition with implicit dependencies
    - Creating/reviewing a new ADR: alternatives, trade-offs, consequences
@@ -1439,7 +1451,7 @@ Not required (T2 is enough: Claude Sonnet 4.6 / GPT-5.3-Codex / GPT-4.1 / Gemini
 
 #### 1.2.5 Using an efficient model instead of an expensive one
 
-```
+```text
 Use an efficient model if ALL conditions hold:
    - Task is unambiguous: inputs/outputs are clearly defined
    - No multiple interdependent decisions
@@ -1458,7 +1470,7 @@ When quality is equal — choose 0x over 0.33x or paid models.
 
 If the preferred model is unavailable (rate limit, quota, outage):
 
-```
+```text
 1. Use the Alternative from the same row in §1.2.1
 2. If Alternative is also unavailable — choose another model from the same tier (§1.2.3)
 3. If tier is downgraded — record in TASK_CONTEXT.md:
@@ -1468,13 +1480,13 @@ If the preferred model is unavailable (rate limit, quota, outage):
 
 ---
 
-## 1.3 Development Pipeline — from spec to production
+### 1.3 Development Pipeline — from spec to production
 
 > Based on: ATDD (Cunningham), TDD (Kent Beck, 2002), Quality Gates (CMMI),
 > Shift-Left Testing (L. Smith, 2001).
 > Each phase is a Quality Gate: without critic APPROVE, you cannot move forward.
 
-### 1.3.1 Three levels of work
+#### 1.3.1 Three levels of work
 
 | Level | Prepared by | Example input | Output |
 |---|---|---|---|
@@ -1504,7 +1516,7 @@ if any: ...
 
 ---
 
-### 1.3.2 Who writes which tests and when
+#### 1.3.2 Who writes which tests and when
 
 > Tests are written **before or alongside code** (TDD/ATDD) — not after.
 > Each test type belongs to a specific agent and phase.
@@ -1526,10 +1538,10 @@ if any: ...
 
 ---
 
-### 1.3.3 Development Pipeline (9 steps: phases 0, 1, 2, 2.5, 3, 3.5, 4, 5, 6)
+#### 1.3.3 Development Pipeline (9 steps: phases 0, 1, 2, 2.5, 3, 3.5, 4, 5, 6)
 
 > Parallel execution: `backend-dev` and `frontend-dev` may work in Phases 1–2 concurrently if their subtasks do not depend on each other.
-> Orchestrator explicitly marks independence in TASK_CONTEXT.md (`Depends on: —`).
+> Orchestrator explicitly marks independence in `TASK_CONTEXT.md` (`Depends on: —`).
 > Critics operate independently per branch; orchestrator waits for APPROVE from both before entering Phase 2.5.
 >
 > Handing off results when going back a phase:
@@ -1547,7 +1559,7 @@ if any: ...
 > Executor starts with specific locations and problems — not “fix something”, but “fix X in file Y:Z”.
 > Without `## Previous Attempts`, executor does not know why it is here and will repeat the same mistake (sycophancy / anchoring).
 
-```
+```text
 ▼ PHASE 0 — Requirements (source of truth) — SDD: spec before code
 ┌─────────────────────────────────────────────────────────┐
 │  User writes/updates domain/specs/*.feature              │
@@ -1670,7 +1682,7 @@ if any: ...
                ↓ APPROVE → merge feature → develop
 ```
 
-### 1.3.4 Why these cycle counts
+#### 1.3.4 Why these cycle counts
 
 | Phase | Cycles | Rationale |
 |---|---|---|
@@ -1683,9 +1695,9 @@ if any: ...
 | Security | 1 | OWASP/STRIDE is binary: BLOCKER found or not |
 | Documentation | 1 | API reference updates are binary |
 
-### 1.3.5 When the user intervenes
+#### 1.3.5 When the user intervenes
 
-```
+```text
 Position A (normal):
    User states the task for the orchestrator once per sprint.
    Orchestrator runs the Pipeline autonomously.
@@ -1705,7 +1717,7 @@ Position C (spec correction):
 
 What happens after Human Input (Position B):
 
-```
+```text
 User adds ## Human Input to TASK_CONTEXT.md (template → §2.3):
 
    ## Human Input — [date]
@@ -1725,7 +1737,7 @@ If NEEDS_HUMAN occurs a second time on the same subtask — ESCALATED (see §3.3
 
 ---
 
-### 1.3.6 Test Failure Protocol
+#### 1.3.6 Test Failure Protocol
 
 > Applies to any test failure in Phases 1, 2, 2.5, 3.5.
 > Executor must record in `TASK_CONTEXT.md`: what failed (test, file:line), root cause (hypothesis), what was changed in the current iteration.
@@ -1771,12 +1783,12 @@ If NEEDS_HUMAN occurs a second time on the same subtask — ESCALATED (see §3.3
 > not an exhausted limit. The task is not resumed without explicit human approval.
 
 ---
-### 1.3.7 Alignment with Reflexion loop
+#### 1.3.7 Alignment with Reflexion loop
 
 The Pipeline does not replace the internal executor→critic loop (max 3 iter) — it is built **on top of** it.
 Each phase consists of one or more subtasks, each going through a Reflexion cycle.
 
-```
+```text
 [Pipeline]
   └─ Phase 1: Development
        └─ subtask: write tests       [executor → critic, max 3]
@@ -1788,7 +1800,7 @@ Each phase consists of one or more subtasks, each going through a Reflexion cycl
 
 ---
 
-### 1.3.8 Shortened Pipeline Paths (Fast-Track)
+#### 1.3.8 Shortened Pipeline Paths (Fast-Track)
 
 The full 9-phase pipeline is intended for **feature work** on `feature/*` branches.
 For other types of changes — shortened paths:
@@ -1806,7 +1818,7 @@ For other types of changes — shortened paths:
 
 **Hotfix procedure:**
 
-```
+```text
 1. branch: hotfix/<id>-<slug> from main
 2. Phase 1: executor → quick fix (max 2 iter, no full TDD)
 3. Phase 2: unit tests only — existing tests are not broken, regression test for the bug
@@ -1818,7 +1830,7 @@ For other types of changes — shortened paths:
 
 **Rollback procedure (when the hotfix will take > 30 minutes):**
 
-```
+```text
 1. git revert <last-good-commit> --no-edit
 2. Additional PR → fast-merge into main (CI Gate 1, skip Gate 2/3)
 3. tag: vX.Y.Z-rollback
@@ -1855,7 +1867,7 @@ For other types of changes — shortened paths:
 
 `frontend-dev` creates a manual test plan when:
 
-```
+```text
 - Implementing a new critical user flow (any scenario from .feature)
 - Changing the observable behaviour of an existing flow
 - Adding a form with validation, a multi-step wizard, a new state (empty, error, loading)
@@ -1901,7 +1913,7 @@ Stored at: `docs/test-plans/<feature-name>.md` (canonical path).
 
 #### 1.4.3 Composition rules
 
-```
+```text
 - Each step = one action + one expected result
 - Expected result: only what the tester sees (not the internal state of the system)
 - Preconditions are specific: not "log in" but "log in as role=admin"
@@ -2034,22 +2046,23 @@ Every agent follows these principles regardless of the task:
 4. **Do not hard-code secrets and configuration** — not “for tests”, not “temporarily”.
 5. **Do not bypass tests** — do not delete tests, do not add Skip()/ignore without justification, do not comment out assertions.
 6. **Do not add dependencies without justification** — a new import requires an explicit rationale in the commit or PR.
-7. **Artifact language is English; user communication language is Russian**
+7. **Language policy: default English; override in PROJECT.md**
 
    | Artifact | Language |
    |---|---|
-   | Code, code comments | English |
-   | README, AGENTS.md, llms.txt, SKILL.md | English |
-   | API Reference, OpenAPI descriptions | English |
-   | `.feature` (Gherkin) scenarios | English |
-   | ADR, CHANGELOG | English |
-   | Commit messages | English (Conventional Commits) |
-   | Agent messages to the user (chat, NEEDS_HUMAN, questions) | Russian |
-   | `TASK_CONTEXT.md` (internal session file) | Russian |
+   | Code, code comments | Artifact language (PROJECT.md §pre; default: English) |
+   | `README`, `AGENTS.md`, `llms.txt`, `SKILL.md` | Artifact language (PROJECT.md §pre; default: English) |
+   | API Reference, OpenAPI descriptions | Artifact language (PROJECT.md §pre; default: English) |
+   | `.feature` (Gherkin) scenarios | Artifact language (PROJECT.md §pre; default: English) |
+   | `ADR`, `CHANGELOG` | Artifact language (PROJECT.md §pre; default: English) |
+   | Commit messages | Artifact language (PROJECT.md §pre; default: English) |
+   | Agent messages to the user (chat, NEEDS_HUMAN, questions) | User communication language (PROJECT.md §pre; default: English) |
+   | `TASK_CONTEXT.md` (internal session file) | User communication language (PROJECT.md §pre; default: English) |
 
-   > **Rationale:** artifacts are committed to the repo and processed by tools (grep, IDE, CI) — English is required for compatibility. Communicating with the user in Russian reduces cognitive load and avoids meaning loss.
+   > **Rationale:** English is the lowest-friction default for tooling (grep, IDE, CI) and cross-team collaboration.
+   > PROJECT.md allows teams to override the user-facing language (and, if needed, artifact language) explicitly.
    >
-   > **Critic check:** code comments and docs must not contain Russian text. If Russian text is found in code or documentation — BLOCKER.
+   > **Critic check:** artifacts must follow PROJECT.md §pre "Artifact language" (default: English). If artifacts contain mixed languages without explicit override — BLOCKER.
 
 8. **Work in small batches** (DORA AI Capabilities, 2025)
 
@@ -2133,7 +2146,7 @@ Every agent follows these principles regardless of the task:
 
 **Rule 2 — Finding format (Self-Refine format)**
 
-```
+```text
 1. What is wrong:     specific location (file:line)
 2. Why:              root cause
 3. How to fix:       actionable recommendation
@@ -2143,7 +2156,7 @@ Every agent follows these principles regardless of the task:
 
 **Rule 3 — Iteration limit (AutoGen / LangGraph)**
 
-```
+```text
 max_iterations: 3
 
 After the 3rd iteration without APPROVE:
@@ -2158,7 +2171,7 @@ Healthy-critic signal:
 
 **Rule 4 — Critic tools (CRITIC paper)**
 
-```
+```text
 All critics: read-only tools only (read_file, grep_search)
 Exception: devops-critic is additionally allowed syntax validators
    (e.g., terraform validate, docker compose config --quiet)
@@ -2167,7 +2180,7 @@ Without tools, critics hallucinate syntax checks.
 
 **Rule 5 — Conflicts between multiple critics on one PR**
 
-```
+```text
 If multiple critics review one PR and their verdicts disagree:
    - Any REJECT from any critic → PR must not be merged
    - Any open BLOCKER blocks merging (Gate 3)
@@ -2238,7 +2251,7 @@ After recording, the pipeline resumes per the chosen option. If ESCALATED repeat
 > Set `parent_span_id` to the orchestrator’s `span_id`.
 >
 > Example critic line (`operation: "critique"`):
-> ```jsonl
+> ```json
 > {"ts":"2026-02-24T10:00:00Z","trace_id":"20260224-task","span_id":"s03",
 >  "parent_span_id":"s01","agent":"backend-critic","operation":"critique",
 >  "subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES",
@@ -2285,7 +2298,7 @@ ACKNOWLEDGED: WARNING | style       | models/host.go:34   | Missing godoc | Add 
 > Applies to any server-side language and framework.
 > Project file extends it with stack-specific triggers (Go, Java, Python, etc.).
 
-```
+```text
 BLOCKER triggers:
 - [ ] Unvalidated/unsanitized input from an external source (HTTP, queue, file, env)
 - [ ] Error is propagated without context — caller cannot determine the cause
@@ -2326,7 +2339,7 @@ SUGGESTION triggers:
 > Applies to any IaC tool and CI/CD platform.
 > Project file extends it with stack-specific triggers (Terraform, Helm, GitHub Actions, Azure Pipelines, etc.).
 
-```
+```text
 BLOCKER triggers:
 - [ ] Secret/credentials/token in source code or build artifact
 - [ ] Secret is passed via build argument (remains in image layer history/artifacts)
@@ -2358,7 +2371,7 @@ WARNING triggers:
 > Applies to any UI framework.
 > Project file extends it with stack-specific triggers (React, Vue, Angular, etc.).
 
-```
+```text
 BLOCKER triggers:
 - [ ] API key/token in client code (visible to the user)
 - [ ] Type safety is disabled/bypassed without documented justification
@@ -2390,7 +2403,7 @@ SUGGESTION triggers:
 > QA critic checks test scripts and scenario coverage quality — not production code.
 > Project file extends it with concrete tooling (Playwright, k6, pytest, etc.).
 
-```
+```text
 BLOCKER triggers:
 - [ ] Smoke test does not cover all health/readiness endpoints of the deployed system
 - [ ] E2E test contains only protocol-level assertions and does not validate a real user flow
@@ -2416,7 +2429,7 @@ SUGGESTION triggers:
 
 ### 3.8 Architect Critic rubric
 
-```
+```text
 BLOCKER triggers:
 - [ ] Bounded context violation: module/service directly accesses data from another context
 - [ ] Decision contradicts an accepted ADR without a new ADR or explicit SUPERSEDES
@@ -2443,7 +2456,7 @@ SUGGESTION triggers:
 > OWASP LLM Top 10 applies only if the project contains AI/LLM components.
 > Project file extends this with stack-specific checks (web headers, cloud IAM, network policies, etc.).
 
-```
+```text
 BLOCKER triggers:
 - [ ] OWASP A01 Broken Access Control — operation runs without authorization checks
 - [ ] OWASP A02 Cryptographic Failures — sensitive data stored/transmitted without encryption
@@ -2479,7 +2492,7 @@ SUGGESTION triggers:
 
 ### 3.10 Documentation Critic rubric
 
-```
+```text
 BLOCKER triggers:
 - [ ] README does not explain how to run the project locally from scratch (Quick Start)
 - [ ] API Reference does not match the real schema (spec is outdated)
@@ -2509,7 +2522,7 @@ SUGGESTION triggers:
 
 **Definition of Ready (DoR)** — what a task must contain before starting an executor:
 
-```
+```text
 - [ ] Task is specific (not “improve”, but “endpoint < 50ms”)
 - [ ] Impacted files/modules are listed
 - [ ] No ADR conflicts
@@ -2519,7 +2532,7 @@ SUGGESTION triggers:
 
 **Definition of Done (DoD)** — what must be true at APPROVE:
 
-```
+```text
 For code (backend):
 - [ ] Tests are written and passing
 - [ ] Formatting applied
@@ -2563,9 +2576,9 @@ PR merge gates (Gate 1–3; see §0.6):
 - [ ] At least 1 human reviewer → APPROVE
 ```
 
-### 3.11.1 When to create an ADR
+#### 3.11.1 When to create an ADR
 
-```
+```text
 ADR is mandatory when:
 - Choosing a technology/library with long-term architecture impact
 - Any decision that contradicts or changes an existing ADR (must mark SUPERSEDES)
@@ -2621,7 +2634,7 @@ Goal: see what agents do, how much each iteration costs, and where the workflow 
 
 Each LLM invocation is a span with attributes:
 
-```
+```text
 gen_ai.system                 = "openai" | "anthropic" | "google"
 gen_ai.request.model          = "gpt-4o" | "claude-sonnet-4-6"
 gen_ai.operation.name         = "chat"
@@ -2643,7 +2656,7 @@ To enable the latest attributes, set:
 
 Nested calls form a tree:
 
-```
+```text
 [orchestrator]         ← root span of the task
    ├── [backend-dev]    iteration 1
    │     └── tool: run_in_terminal
@@ -2671,7 +2684,7 @@ Nested calls form a tree:
 | **MTTR** | < 1 hour |
 | **Change Failure Rate** | < 5% |
 
-Source: https://dora.dev (Google).
+Source: [dora.dev](https://dora.dev) (Google).
 
 ### 4.4 DORA AI Capabilities Model (2025)
 
@@ -2691,7 +2704,7 @@ Projects with these practices show higher delivery speed, code quality, develope
 
 ### 4.5 Trace log structure
 
-```
+```text
 .agents/
 ├── session/     ← TASK_CONTEXT.md (temporary)
 └── traces/      ← JSONL session logs
@@ -2701,7 +2714,7 @@ Projects with these practices show higher delivery speed, code quality, develope
 
 Single-record format examples:
 
-```jsonl
+```json
 {"ts":"2026-02-23T14:32:00Z","trace_id":"abc123","span_id":"s01","parent_span_id":null,
  "agent":"orchestrator","operation":"plan","task":"add bulk endpoint",
  "input_tokens":412,"output_tokens":89,"duration_ms":3200}
@@ -2744,7 +2757,7 @@ There is no automatic instrumentation — agents write traces manually using nor
 
 #### 4.6.3 Example: complete trace for one task
 
-```jsonl
+```json
 {"ts":"2026-02-23T14:32:00Z","trace_id":"20260223-bulk-endpoint","span_id":"s01","parent_span_id":null,"agent":"orchestrator","operation":"plan","task":"add-bulk-endpoint","input_tokens":412,"output_tokens":89,"duration_ms":3200}
 {"ts":"2026-02-23T14:32:05Z","trace_id":"20260223-bulk-endpoint","span_id":"s02","parent_span_id":"s01","agent":"backend-dev","operation":"execute","iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}
 {"ts":"2026-02-23T14:33:10Z","trace_id":"20260223-bulk-endpoint","span_id":"s03","parent_span_id":"s01","agent":"backend-critic","operation":"critique","iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}
@@ -2815,7 +2828,7 @@ Change types:
 
 After any change to a critic’s system prompt or rubric, you must run golden tests.
 
-```
+```text
 .agents/evals/
 ├── backend-critic-golden.jsonl      ← {input, expected_verdict, expected_severity}
 ├── frontend-critic-golden.jsonl
@@ -2832,7 +2845,7 @@ Run: npx promptfoo eval
 
 Example lines for `backend-critic-golden.jsonl`:
 
-```jsonl
+```json
 {"id":"bc-001","input":{"task":"Add POST /hosts endpoint","result_file":"handlers/host.go","result_summary":"Handler added, input validated, unit test written, godoc present"},"expected_verdict":"APPROVE","expected_severity":"none","description":"APPROVE: correct implementation — no BLOCKERs"}
 {"id":"bc-002","input":{"task":"Add POST /hosts endpoint","result_file":"handlers/host.go","result_summary":"Handler added but no input validation on body fields"},"expected_verdict":"REQUEST_CHANGES","expected_severity":"BLOCKER","description":"BLOCKER: unvalidated external input (OWASP A03 / Backend Critic rule)"}
 {"id":"bc-003","input":{"task":"Add POST /hosts endpoint","result_file":"handlers/host.go","result_summary":"Handler writes directly to devops-managed IaC config — outside backend zone"},"expected_verdict":"REJECT","expected_severity":"BLOCKER","description":"REJECT: executor wrote files outside its responsibility zone (Constitution principle 2)"}
@@ -2840,7 +2853,7 @@ Example lines for `backend-critic-golden.jsonl`:
 
 Orchestrator golden tests (`orchestrator-golden.jsonl`) validate fast-track selection and decomposition correctness:
 
-```jsonl
+```json
 {"id":"orch-001","input":{"task":"Fix typo in README.md"},"expected_fast_track":"docs-only","expected_agents":[],"description":"Docs-only: no executors needed"}
 {"id":"orch-002","input":{"task":"Update feature spec for login flow"},"expected_fast_track":"docs+feature","expected_agents":["architect-critic"],"description":"Docs+feature: architect-critic required (spec changed)"}
 {"id":"orch-003","input":{"task":"Add POST /users endpoint with JWT auth"},"expected_fast_track":"feature","expected_agents":["architect","backend-dev","security-critic"],"description":"Feature: full pipeline; security-critic required for new auth endpoint"}
@@ -2877,7 +2890,7 @@ Create one config per critic: change the `.agent.md` path and the `*-golden.json
 
 ### 5.3 Agent change procedure
 
-```
+```text
 1. Create a branch: feature/<task-id>-update-<agent-name>-prompt
 2. Edit the .agent.md
 3. Run golden tests: npx promptfoo eval
@@ -2938,13 +2951,17 @@ Team:
 - Existing ADRs/architecture docs to consider
 - Existing `.feature` specifications
 
+Language:
+- Artifact language (default English; override in PROJECT.md §pre)
+- User communication language (default English; override in PROJECT.md §pre)
+
 ---
 
 ### 6.agent Implementation Agent prompt
 
 Use this prompt as the system instruction for the agent that will implement this spec in a project.
 
-```
+```text
 You — Implementation Agent. Your task is to set up the multi-agent development
 system for a specific project, following MULTI_AGENT_SPEC.md and the answers
 unlocked in PROJECT.md §pre.
@@ -2957,7 +2974,8 @@ Rules:
    phase until all checkboxes are done or explicitly deferred with a reason.
 - Ask NEEDS_HUMAN if a parameter requires a team decision you cannot infer
    from PROJECT.md answers.
-- Language: create all file content in English; communicate with the user in Russian.
+- Language: create all file content in the configured Artifact language (PROJECT.md §pre; default English).
+   Communicate with the user in the configured User communication language (PROJECT.md §pre; default English).
 - After each phase: summarise what was created and list any deferred items.
 
 Context files to read first (in this order):
@@ -2975,7 +2993,7 @@ Use this when MULTI_AGENT_SPEC.md was updated and you need to sync an already co
 
 Prerequisite: PROJECT.md records the spec version used to set up the project (header field `Spec: MULTI_AGENT_SPEC vX.Y.Z`; see §0.8.1).
 
-```
+```text
 You — Spec Upgrade Agent. MULTI_AGENT_SPEC.md has been updated.
 Your task is to bring the project's agent configuration up to date with the new version.
 
@@ -3025,7 +3043,8 @@ Rules:
       (e.g. model removed from an available tier, new mandatory gate requiring CI reconfiguration)
    - Additive changes that require significant effort may be deferred:
       record as TODO in PROJECT.md §6 Roadmap with spec version reference
-   - Language: all file content in English; communicate with the user in Russian
+    - Language: create all file content in the configured Artifact language (PROJECT.md §pre; default English).
+       Communicate with the user in the configured User communication language (PROJECT.md §pre; default English).
    - After completing: summarise what was changed, what was deferred, what requires human decision
 ```
 
@@ -3040,7 +3059,7 @@ Rules:
 
 Checklist:
 
-```
+```text
 - [ ] Create <project>-AgentConfig repo (or use an existing one)
 - [ ] Create .vscode/<project>.code-workspace (all project repos)
 - [ ] Create .gitignore (.agents/session/)
@@ -3056,7 +3075,7 @@ Checklist:
 
 ### 6.1 Phase 1 — Context
 
-```
+```text
 - [ ] <project>-AgentConfig/AGENTS.md — global (template §0.3)
 - [ ] AGENTS.md in each component repo
 - [ ] llms.txt in each component repo (template §0.4)
@@ -3068,7 +3087,7 @@ Checklist:
 
 ### 6.2 Phase 2 — Agent skills
 
-```
+```text
 - [ ] SKILL.md for each component: backend, frontend, devops
 - [ ] references/ with technology conventions and examples
 - [ ] In backend SKILL.md: a "Property-Based / Fuzz Testing" section — run commands
@@ -3079,7 +3098,7 @@ Checklist:
 
 ### 6.3 Phase 3 — Agents
 
-```
+```text
 - [ ] <project>-orchestrator.agent.md
 - [ ] Each (executor + critic) pair: architect, backend, frontend, qa, devops, security, documentation
 - [ ] Verify models using the power/cost matrix (PROJECT.md §2)
@@ -3134,7 +3153,7 @@ repos:
 
 ### 6.4 Phase 4 — MCP servers
 
-```
+```text
 - [ ] .vscode/mcp.json
 - [ ] SCM MCP (GitHub / Azure DevOps / GitLab)
 - [ ] Container runtime MCP (docker)
@@ -3176,7 +3195,7 @@ repos:
 
 ### 6.5 Phase 5 — ADR and memory
 
-```
+```text
 - [ ] First 5 ADRs for key architectural decisions
 - [ ] .agents/session/ directory + in .gitignore
 - [ ] domain/ directory: glossary.md, bounded-contexts.md, domain-events.md
@@ -3186,7 +3205,7 @@ repos:
 
 ### 6.6 Phase 6 — Observability
 
-```
+```text
 - [ ] .agents/traces/ directory (committed!)
 - [ ] Orchestrator writes a JSONL trace for each session (validate §4 format)
 - [ ] After 10+ sessions: use arize-phoenix or jaeger for visualization
@@ -3194,7 +3213,7 @@ repos:
 
 ### 6.7 Phase 7 — Evals
 
-```
+```text
 - [ ] .agents/evals/ directory
 - [ ] 3 golden tests per critic in JSONL (approve / request_changes / reject)
 - [ ] After any .agent.md change → run evals: npx promptfoo eval
@@ -3203,7 +3222,7 @@ repos:
 
 ### 6.8 Phase 8 — Iteration
 
-```
+```text
 - [ ] Calibrate rubrics based on real sessions
 - [ ] Expand SKILL.md as new conventions appear
 - [ ] If needs_human_rate > 20% → simplify tasks or rubrics
@@ -3219,7 +3238,7 @@ repos:
 
 **Step 0 — Orchestrator reads ADRs and chooses fast-track**
 
-```
+```text
 1. Reads .github/decisions/ — no conflicts
 2. Type: feature/* → full pipeline
 3. Creates .agents/traces/20260223-add-host-desc.jsonl
@@ -3243,7 +3262,7 @@ architect-critic: `APPROVE` — scenario is unambiguous and does not violate ADR
 
 **Step 2 — backend-dev implements (iteration 1)**
 
-```
+```text
 - models/host.go: add Description *string
 - migration: ALTER TABLE hosts ADD COLUMN description TEXT
 - test: TestGetHost_Description
@@ -3251,14 +3270,14 @@ architect-critic: `APPROVE` — scenario is unambiguous and does not violate ADR
 
 backend-critic verdict (iter 1): `REQUEST_CHANGES`
 
-```
+```text
 BLOCKER: handlers/host.go:78 — Description is not included in GET /hosts/:id response
 WARNING:  models/host.go:34 — missing godoc for the field
 ```
 
 **Step 3 — backend-dev implements (iteration 2)**
 
-```
+```text
 - handlers/host.go: add Description to JSON response
 - models/host.go: add godoc
 ```
@@ -3267,7 +3286,7 @@ backend-critic verdict (iter 2): `APPROVE` — BLOCKERs closed.
 
 **Step 4 — CI Gate 1 (auto) → Gate 2 (critic) → Gate 3 (human) → merge**
 
-```
+```text
 Gate 1: tests green, lint pass
 Gate 2: backend-critic reviewed; no open BLOCKERs
 Gate 3: PM verifies description appears in API response — APPROVED
@@ -3276,7 +3295,7 @@ Merge → main + tag v1.4.7
 
 **Session trace** (format §4.5: separate spans for executor and critic, verdict — only in critique spans):
 
-```jsonl
+```json
 {"ts":"2026-02-23T14:32:00Z","trace_id":"20260223-add-host-desc","span_id":"s01","parent_span_id":null,"agent":"orchestrator","operation":"plan","task":"add-host-description","fast_track":"feature","input_tokens":320,"output_tokens":75,"duration_ms":2800}
 {"ts":"2026-02-23T14:32:05Z","trace_id":"20260223-add-host-desc","span_id":"s02","parent_span_id":"s01","agent":"architect","operation":"execute","subtask":1,"iteration":1,"input_tokens":1100,"output_tokens":280,"duration_ms":9200}
 {"ts":"2026-02-23T14:32:20Z","trace_id":"20260223-add-host-desc","span_id":"s03","parent_span_id":"s01","agent":"architect-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"APPROVE","blockers":0,"warnings":0,"input_tokens":700,"output_tokens":90,"duration_ms":5100}
