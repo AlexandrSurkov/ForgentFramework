@@ -24,11 +24,11 @@ It is **not** an application or library. You don’t “run” it; you apply it 
 - `.agents/session/` — gitignored per-session state (`.agents/session/<trace_id>/TASK_CONTEXT.md`).
 - `.agents/traces/` — JSONL session traces (OTel GenAI format). Retention is defined by `PROJECT.md` → Trace mode.
 
-## Quick start (apply to a project)
+## Apply to a project
 
-1. Open `framework/00-multi-agent-development-spec.md` and go to **Quick Start**.
-2. Create a project-specific `PROJECT.md` next to the spec using the template referenced in the spec.
-3. Run the “Implementation Agent” system instruction from the spec’s Quick Start to execute the adoption roadmap.
+1. Open `framework/00-multi-agent-development-spec.md` and follow **Framework operations** → Install.
+2. Create a project-specific `PROJECT.md` next to the spec using the template referenced in the Infrastructure module.
+3. Run the “Implementation Agent” system instruction from the Adoption Roadmap module to execute the phases.
 
 After that, your target project should have the required agent files, rubrics, traces, and the working agreements needed for day-to-day use.
 
@@ -85,7 +85,8 @@ Most changes are spec edits, agent prompt edits, or pipeline code changes.
 
 ## Upgrading
 
-When `framework/00-multi-agent-development-spec.md` changes, follow the "Upgrade an existing project" procedure in the spec. The expected baseline is recorded in the target project's `PROJECT.md` as the previously used spec version.
+When `framework/00-multi-agent-development-spec.md` changes, follow **Framework operations** → Upgrade and run the Spec Upgrade Agent prompt from the Adoption Roadmap module. The expected baseline is recorded in the target project's `PROJECT.md` as the previously used spec version.
+
 
 ## Contributing
 

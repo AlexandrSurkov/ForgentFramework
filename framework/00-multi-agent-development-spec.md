@@ -1,69 +1,18 @@
 # Multi-Agent Development Specification
 
-> **Version:** 0.21.12 · **Updated:** 2026-02-27
+> **Version:** 0.21.13 · **Updated:** 2026-02-27
 
 > This is a universal specification: it defines principles, protocols, and critique rubrics **independent of technology**.
 > Project-specific application (stack, models, prompts, technology-specific rubric triggers) lives in a separate file at the **AgentConfig repo root** (e.g., `PROJECT.md` next to `framework/`).
 
 > This umbrella file is intentionally small. The full spec is split into modules under `framework/spec/`.
 
----
 
-## 🚀 Quick Start
+## Framework operations
 
-### Apply the spec to a new project
+Install / Upgrade / Remove procedures live in: **[spec/07-framework-operations.md](spec/07-framework-operations.md)**.
 
-**Step 1.** Create a `PROJECT.md` file at the **repo root** of your AgentConfig repo (`<project>-AgentConfig/PROJECT.md`, next to `framework/`).
-Copy the template from the infrastructure module and fill the `## §pre: Project parameters` section using the questions from the roadmap module.
-
-- Project file template: [spec/00-infrastructure.md#081-required-sections-of-projectmd](spec/00-infrastructure.md#081-required-sections-of-projectmd)
-- PROJECT.md §pre section: [spec/00-infrastructure.md#pre-project-parameters](spec/00-infrastructure.md#pre-project-parameters)
-- Project-parameter questions: [spec/06-adoption-roadmap.md#6pre-before-you-start-capture-project-parameters](spec/06-adoption-roadmap.md#6pre-before-you-start-capture-project-parameters)
-
-> **Don’t want to fill it manually?** Use the prompt interview below — paste it into Copilot Chat:
->
-> ```text
-> You are a Project Setup Interviewer. Ask me the questions from the Roadmap module (spec/06-adoption-roadmap.md, section "6.pre")
-> one by one (or in small groups). Based on my answers, create PROJECT.md using the template in the Infrastructure module
-> (spec/00-infrastructure.md, section "0.8.1 Required sections of PROJECT.md") and fill the §pre section.
-> Place PROJECT.md at the repo root (next to framework/).
-> Speak with me in English by default. If I request another language, use it and record it in PROJECT.md §pre
-> under "User communication language" (default is English). Start with the first question.
-> ```
-
-**Step 2.** Copy the prompt below and run it as the system instruction for Copilot Chat / an agent:
-
-```text
-You are an Implementation Agent. Read 00-multi-agent-development-spec.md (umbrella index) and PROJECT.md
-(§pre answers are already filled). Execute the Roadmap phases in spec/06-adoption-roadmap.md (§6.0–6.8) sequentially.
-Start with Phase 0 and ask for confirmation before each next step.
-The full prompt with rules is in the Roadmap module: spec/06-adoption-roadmap.md (§6.agent).
-```
-
-> Result: all agents, SKILL.md, MCP, traces, and (optionally) golden tests are set up — the project is ready to work.
-
----
-
-### Upgrade an existing project to a new spec version
-
-> Use this when `00-multi-agent-development-spec.md` has changed, but your project was set up using an older version.
-> The setup baseline is recorded in `PROJECT.md` → field `Spec version: vX.Y.Z`.
-
-**Step 1.** Ensure `PROJECT.md §pre` includes `Spec version: vOLD`.
-If it doesn’t, set the current spec version manually as a baseline before upgrading.
-
-**Step 2.** Copy the prompt below and run it as the system instruction for Copilot Chat / an agent:
-
-```text
-You are a Spec Upgrade Agent. 00-multi-agent-development-spec.md has been updated.
-Read the new 00-multi-agent-development-spec.md and PROJECT.md (the field Spec version: is the old version).
-Follow the upgrade procedure in §6.agent.2: identify the delta, classify changes
-(BREAKING / ADDITIVE), apply updates to project files, run golden tests (if configured), and update the version in PROJECT.md.
-
-(Upgrade procedure: spec/06-adoption-roadmap.md §6.agent.2.)
-```
-
-> Result: agents, rubrics, and configs are synchronized with the new spec; changes are recorded in `AGENTS_CHANGELOG.md`.
+For the detailed, phase-by-phase setup workflow and the agent prompts (Implementation Agent / Spec Upgrade Agent), use: **[spec/06-adoption-roadmap.md](spec/06-adoption-roadmap.md)**.
 
 ---
 
@@ -73,10 +22,11 @@ Follow the upgrade procedure in §6.agent.2: identify the delta, classify change
 - [0. Agent infrastructure organization](spec/00-infrastructure.md)
 - [1. Agent system architecture](spec/01-architecture.md)
 - [2. Work Protocol: Sessions and Memory](spec/02-sessions-and-memory.md)
-- [3. Critique Rubrics (Constitutional Checklists)](spec/03-rubrics/)
+- [3. Critique Rubrics (Constitutional Checklists)](spec/03-rubrics/00-constitutional-principles.md)
 - [4. Observability AI workflow](spec/04-observability.md)
 - [5. Agent prompt versioning policy](spec/05-prompt-versioning.md)
 - [6. Adoption roadmap](spec/06-adoption-roadmap.md)
+- [7. Framework operations](spec/07-framework-operations.md)
 - [G. Glossary](spec/06-adoption-roadmap.md#g-glossary)
 
 ---
@@ -134,3 +84,5 @@ These are the canonical locations for the full specification content:
 - **§4 Observability** → [spec/04-observability.md](spec/04-observability.md)
 - **§5 Prompt versioning** → [spec/05-prompt-versioning.md](spec/05-prompt-versioning.md)
 - **§6 Roadmap + glossary** → [spec/06-adoption-roadmap.md](spec/06-adoption-roadmap.md)
+- **§7 Framework operations** → [spec/07-framework-operations.md](spec/07-framework-operations.md)
+

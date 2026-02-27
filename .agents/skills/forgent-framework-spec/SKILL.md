@@ -50,7 +50,7 @@ Use this as a fast “jump table”. After jumping, always open the exact sectio
 
 | Question / intent | Open |
 |---|---|
-| “How do I apply the spec to a new project?” | `framework/00-multi-agent-development-spec.md` → Quick Start; then `framework/spec/06-adoption-roadmap.md` |
+| “How do I apply the spec to a new project?” | `framework/spec/07-framework-operations.md` → Install; then `framework/spec/06-adoption-roadmap.md` |
 | “What is the AgentConfig repo supposed to contain?” | `framework/spec/00-infrastructure.md` → §0.1 |
 | “How do multi-root workspaces work?” | `framework/spec/00-infrastructure.md` → §0.2 |
 | “Do we need AGENTS.md in every repo?” | `framework/spec/00-infrastructure.md` → §0.3 |

@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.13] - 2026-02-27
+
+### Changed
+- Moved the umbrella file’s setup/upgrade guidance into a dedicated operations module.
+
+### Added
+- New module: `spec/07-framework-operations.md` (Install / Upgrade / Remove), including minimal removal and full cleanup modes.
+
 ## [0.21.12] - 2026-02-27
 
 ### Fixed
@@ -13,6 +21,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Clarified docs+feature wording so Phase 0 roles don’t contradict Phase 6 documentation work.
 - Fixed broken Markdown code fences in the golden-tests section.
 - Aligned orchestrator golden-test examples for `docs-only` and `docs+feature` with the shortened pipeline paths (Phase 6 and Phase 0+6).
+
 
 ## [0.21.11] - 2026-02-26
 
