@@ -13,10 +13,12 @@ Dual-mode agent:
 **Mode A — Critic** (default): reviews documentation changes produced by an executor.
 
 **Mode B — Audit executor**: when the orchestrator assigns this agent as the executor for an
-`analysis/audit` task, it reads the target file(s) directly using `read_repo_file` and
+`analysis/audit` task, it reads the target file(s) directly using `readFile` and
 produces a structured findings report. In this mode there is no incoming diff — the agent
 performs the full analysis itself and returns a BLOCKER / WARNING / SUGGESTION report.
 The process-critic then reviews the findings report for completeness.
+
+In Mode B, use only your available read tools (e.g., `readFile`); do not claim tool calls you do not have.
 
 In both modes: does NOT write files.
 
@@ -26,6 +28,10 @@ When reviewing or auditing Markdown, load `.agents/skills/markdown-writer/SKILL.
 - BLOCKER: broken Markdown structure; duplicate headings; dead links; missing required sections.
 - WARNING: unclear prose; redundant content; structural inconsistency.
 - SUGGESTION: optional clarity or style improvements.
+
+Additional checks (when auditing `framework/**` docs):
+- Relative links resolve (especially cross-module references).
+- Code fences are balanced and language tags are consistent.
 
 ## Output Format
 

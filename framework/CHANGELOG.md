@@ -6,6 +6,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.12] - 2026-02-27
+
+### Fixed
+- Aligned hotfix Phase 1 iteration cap with `max_iterations: 3`.
+- Clarified docs+feature wording so Phase 0 roles don’t contradict Phase 6 documentation work.
+- Fixed broken Markdown code fences in the golden-tests section.
+- Aligned orchestrator golden-test examples for `docs-only` and `docs+feature` with the shortened pipeline paths (Phase 6 and Phase 0+6).
+
+## [0.21.11] - 2026-02-26
+
+### Fixed
+- Clarified the canonical location of `PROJECT.md` (AgentConfig repo root) and updated Quick Start guidance/links.
+- Clarified `span_id` uniqueness and ordering rules for JSONL traces.
+- Aligned escalation/iteration wording to `max_iterations: 3` across spec modules.
+- Marked the GitHub Actions critic-review workflow example as pseudocode/non-authoritative.
+
+## [0.21.10] - 2026-02-26
+
+### Fixed
+- Normalized VS Code Copilot tool names in spec examples and templates.
+
 ## [0.21.9] - 2026-02-26
 
 ### Changed

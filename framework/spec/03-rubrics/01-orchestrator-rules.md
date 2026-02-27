@@ -11,11 +11,17 @@
 > If there is a conflict — NEEDS_HUMAN before any work starts.
 
 **Rule 2 — Choose the fast-track before starting the pipeline**
-> Orchestrator determines the change type (feature / hotfix / docs-only / infra) and records it explicitly in `TASK_CONTEXT.md`.
-> The full 9-phase pipeline runs only for feature branches (see §1.3 Fast-tracks).
+> Orchestrator chooses a single `fast_track` value from the canonical enum in [01-architecture.md](../01-architecture.md#fast-track-enum) and records it explicitly in `TASK_CONTEXT.md`.
+> `.feature` classification rule: if the change set would otherwise be `docs-only` but includes one or more `.feature` files, `fast_track` MUST be `docs+feature` (never `docs-only`); otherwise keep `feature` / `lightweight-feature` as applicable.
+> The full 9-phase pipeline runs only for `fast_track: feature` (see [01-architecture.md](../01-architecture.md#fast-track-enum)).
 
 **Rule 3 — Create the trace first**
 > Create `.agents/traces/<trace_id>.jsonl` and write the root span (`operation: "plan"`) before assigning the first subtask.
+
+**Rule 3.1 — Trace writing (least-privilege)**
+> Orchestrator is the only agent that writes to `.agents/traces/**`.
+> After each executor or critic step, orchestrator appends one JSONL record using the `trace_event` metadata returned by that agent.
+> If an agent fails to return a `trace_event`, orchestrator appends a synthetic record (`"synthetic": true`) and records a warning in `TASK_CONTEXT.md`.
 
 **Rule 4 — Fill `## Previous Attempts` before returning**
 > After each REQUEST_CHANGES, orchestrator must copy findings from the Critique Report into `## Previous Attempts` in `TASK_CONTEXT.md` for the next iteration.
@@ -34,6 +40,6 @@
 > WONT_FIX for a BLOCKER subtask related to security or ADR requires explicit user confirmation in `TASK_CONTEXT.md`.
 
 **Rule 6 — Close the task with a complete trace**
-> Before writing `operation: "complete"`, orchestrator verifies that `.agents/traces/<trace_id>.jsonl` contains entries from every agent that participated.
-> If an agent’s entries are missing, orchestrator adds a synthetic span (`"synthetic": true`) and records a warning in `TASK_CONTEXT.md`.
+> Before writing `operation: "complete"`, orchestrator verifies that `.agents/traces/<trace_id>.jsonl` contains one record for each executor/critic step it ran.
+> If any expected step is missing, orchestrator adds a synthetic span (`"synthetic": true`) and records a warning in `TASK_CONTEXT.md`.
 > The task is not DoD-complete without the final trace entry `operation: "complete"`.

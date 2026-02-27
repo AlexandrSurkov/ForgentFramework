@@ -23,7 +23,7 @@ Change types:
 |---|---|
 | `behavior` | System prompt/rubric/rule changed — agent behavior changes |
 | `model` | Agent model changed |
-| `tools` | A tool was added/removed (read_file, run_in_terminal, etc.) |
+| `tools` | A tool was added/removed (`readFile`, `runTerminal`, etc.) |
 | `fix` | Typos/clarifications without behavior change |
 
 ## 5.2 Golden tests after a Critic change
@@ -44,13 +44,18 @@ Recommended minimum (if you adopt golden tests): 3 golden tests per agent:
    2. REQUEST_CHANGES scenario  — output with one clear BLOCKER
    3. REJECT scenario           — critical constitutional violation
 
-Run: npx promptfoo eval
+```
+
+Run:
+
+```bash
+npx promptfoo eval
+```
 
 If you split evals into multiple configs (one per agent), run them together:
 
 ```bash
 promptfoo eval -c .agents/evals/*-promptfooconfig.yaml
-```
 ```
 
 Example lines for `backend-critic-golden.jsonl`:
@@ -64,8 +69,8 @@ Example lines for `backend-critic-golden.jsonl`:
 Orchestrator golden tests (`orchestrator-golden.jsonl`) validate fast-track selection and decomposition correctness:
 
 ```json
-{"id":"orch-001","input":{"task":"Fix typo in README.md"},"expected_fast_track":"docs-only","expected_agents":[],"description":"Docs-only: no executors needed"}
-{"id":"orch-002","input":{"task":"Update feature spec for login flow"},"expected_fast_track":"docs+feature","expected_agents":["architect-critic"],"description":"Docs+feature: architect-critic required (spec changed)"}
+{"id":"orch-001","input":{"task":"Fix typo in README.md"},"expected_fast_track":"docs-only","expected_agents":["documentation-writer","documentation-critic"],"description":"Docs-only: Phase 6 documentation update + documentation-critic review"}
+{"id":"orch-002","input":{"task":"Update feature spec for login flow"},"expected_fast_track":"docs+feature","expected_agents":["architect","architect-critic","documentation-writer","documentation-critic"],"description":"Docs+feature: Phase 0 architect review of .feature + Phase 6 documentation update"}
 {"id":"orch-003","input":{"task":"Add POST /users endpoint with JWT auth"},"expected_fast_track":"feature","expected_agents":["architect","backend-dev","security-critic"],"description":"Feature: full pipeline; security-critic required for new auth endpoint"}
 ```
 

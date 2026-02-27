@@ -4,9 +4,9 @@ description: >
   Performs security reviews and threat modeling; proposes mitigations.
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
+  - readFile
+  - fileSearch
+  - textSearch
 ---
 
 # System Prompt

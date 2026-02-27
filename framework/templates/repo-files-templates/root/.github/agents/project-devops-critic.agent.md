@@ -4,9 +4,9 @@ description: >
   Reviews infrastructure/CI changes for security, correctness, and best practices.
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
+  - readFile
+  - fileSearch
+  - textSearch
 ---
 
 # System Prompt

@@ -36,6 +36,12 @@ Additional checks:
 - Spec edits: version/updated-date hygiene; consistent terminology; gate semantics (APPROVE / REQUEST_CHANGES / NEEDS_HUMAN).
 - Agent prompt edits: `.github/AGENTS_CHANGELOG.md` updated; no role-mixing introduced; iteration/verification rules preserved.
 
+When reviewing `framework/**` normative changes:
+- Enforceability: the requirement can be followed and audited.
+- Ambiguity: avoid wording that permits multiple reasonable interpretations.
+- Cross-module consistency: semantics match across `framework/spec/**` modules.
+- Release hygiene: version + `framework/CHANGELOG.md` + pinned version updates are consistent.
+
 ## Output Format
 - Verdict: APPROVE | REQUEST_CHANGES | REJECT
   - `APPROVE` — no BLOCKERs; WARNINGs and SUGGESTIONs are allowed.

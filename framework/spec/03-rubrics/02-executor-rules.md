@@ -16,4 +16,11 @@
 > If changes are needed in another area, executor requests orchestrator action rather than editing directly.
 
 **Rule 3 — Trace writing**
-> After completing each iteration (execute or critique), append one JSONL line to `.agents/traces/<trace_id>.jsonl`.
+> Executors MUST NOT write to `.agents/traces/**`.
+> After completing each iteration, include a `trace_event` JSON object in the response so the orchestrator can append a JSONL record to `.agents/traces/<trace_id>.jsonl`.
+
+Minimal example:
+
+```json
+{"trace_event":{"agent":"backend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+```

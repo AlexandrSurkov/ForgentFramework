@@ -4,10 +4,13 @@ description: >
   Orchestrator: decomposes tasks and routes executors + critics (max 3 iterations).
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
-  - apply_patch
+  - readFile
+  - fileSearch
+  - textSearch
+  - editFiles
+  - createFiles
+  - changes
+  - agent
 ---
 
 # System Prompt

@@ -141,21 +141,20 @@ description: >
 model: <model-name>          # see PROJECT.md §2 + tiers in 00-multi-agent-development-spec.md §1
 tools:
    # --- all agents: navigation (read-only) ---
-   - read_file
-   - grep_search
-   - semantic_search
-   - list_dir
-   - file_search
+   - readFile
+   - fileSearch
+   - textSearch
    # --- executor agents add: ---
-   # - create_file
-   # - create_directory
-   # - replace_string_in_file
-   # - run_in_terminal
+   # - codebase            ← optional: workspace-wide navigation (if available)
+   # - editFiles
+   # - createFiles
+   # - runTerminal
+   # - problems
+   # - changes
    # --- orchestrator additionally: ---
-   # - manage_todo_list    ← task decomposition + subtask status
+   # - agent               ← required when using `agents:` (subagents)
    # --- critic agents: read-only; devops-critic adds: ---
-   # - get_errors          ← syntax validation (terraform, docker)
-   # - run_in_terminal     ← only validate/fmt, never apply
+   # - runTerminal         ← only validate/fmt, never apply
 ---
 
 # System Prompt
@@ -181,21 +180,22 @@ tools:
 [What exactly to return: files, diff, Critique Report, TASK_CONTEXT.md updates]
 
 ## Trace Recording
-After each iteration, append one JSONL line to `.agents/traces/<trace_id>.jsonl`.
-`trace_id` comes from the TASK_CONTEXT.md header.
+Do NOT write trace files.
+
+After each iteration, return a `trace_event` JSON object in your response so the orchestrator can append one JSONL line to `.agents/traces/<trace_id>.jsonl`.
+`trace_id` comes from the TASK_CONTEXT.md header (provided by orchestrator).
 
 Executor (operation: "execute"):
-   {"ts":"<ISO8601>","trace_id":"<id>","span_id":"s<N>","parent_span_id":"s01",
-    "agent":"<name>","operation":"execute","subtask":<N>,"iteration":<N>,
-    "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}
+   {"trace_event":{"agent":"<name>","operation":"execute","subtask":<N>,"iteration":<N>,
+    "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}}
 
 Critic (operation: "critique") — include verdict / blockers / warnings:
-   {"ts":"<ISO8601>","trace_id":"<id>","span_id":"s<N>","parent_span_id":"s01",
-    "agent":"<name>-critic","operation":"critique","subtask":<N>,"iteration":<N>,
+   {"trace_event":{"agent":"<name>-critic","operation":"critique","subtask":<N>,"iteration":<N>,
     "verdict":"APPROVE|REQUEST_CHANGES|REJECT","blockers":<N>,"warnings":<N>,
-    "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}
+    "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}}
 
-Full format — see 00-multi-agent-development-spec.md §4.5–4.6.
+Full format — see [04-observability.md](04-observability.md) §4.5–§4.6.
+
 ```
 
 > `name`, `description`, `model`, `tools` are read by VS Code Copilot from the YAML frontmatter; the system prompt is the file body after `---`.
@@ -236,11 +236,9 @@ description: >
    to get a structured Critique Report (APPROVE / REQUEST_CHANGES / REJECT).
 model: claude-sonnet-4.6
 tools:
-   - read_file
-   - grep_search
-   - semantic_search
-   - list_dir
-   - file_search
+   - readFile
+   - fileSearch
+   - textSearch
 ---
 
 # System Prompt
@@ -260,11 +258,11 @@ Does NOT write code. Does NOT read executor's chain-of-thought — only the fina
 2. For each file: apply Backend Critic checklist (§3.4 + PROJECT.md §4 triggers).
 3. Check Constitutional principles §3.0: zone violations, hardcoded config, skipped tests.
 4. Compose Critique Report (see Output Format below).
-5. Append one JSONL line to .agents/traces/<trace_id>.jsonl (trace_id from TASK_CONTEXT.md).
+5. Return a `trace_event` JSON object (so the orchestrator can append the JSONL trace line).
 
 ## Constitutional Constraints
 - Follow 00-multi-agent-development-spec.md §3.0 and §3.3 (all critic rules).
-- Only read_file / grep_search — no write operations.
+- Only read-only tools (readFile, fileSearch, textSearch) — no write operations.
 - Findings without file:line reference are not valid — do not include them.
 - 0 findings is valid only if the implementation is genuinely correct;
    if you suspect sycophancy, re-read the rubric and check one more time.
@@ -282,11 +280,10 @@ Does NOT write code. Does NOT read executor's chain-of-thought — only the fina
 | SUGGESTION | conventions | models/host.go:33 | No godoc | Add comment |
 
 ### Trace Recording
-After issuing the verdict, append to .agents/traces/<trace_id>.jsonl:
-{"ts":"<ISO8601>","trace_id":"<id>","span_id":"s<N>","parent_span_id":"s01",
- "agent":"<project>-backend-critic","operation":"critique","subtask":<N>,"iteration":<N>,
+After issuing the verdict, return a `trace_event` object:
+{"trace_event":{"agent":"<project>-backend-critic","operation":"critique","subtask":<N>,"iteration":<N>,
  "verdict":"<APPROVE|REQUEST_CHANGES|REJECT>","blockers":<N>,"warnings":<N>,
- "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}
+ "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}}
 ````
 
 ---
@@ -540,8 +537,12 @@ PR is open → developer opens Copilot Chat and writes:
 
 **Option B — GitHub Actions job**
 
+> **Note:** the workflow below is **pseudocode / non-authoritative**.
+> GitHub Actions integration depends on your org setup and available Copilot/LLM tooling.
+> Treat it as an example shape only; verify the exact commands/APIs in your environment.
+
 ```yaml
-# .github/workflows/critic-review.yml
+# .github/workflows/critic-review.yml (pseudocode)
 on:
    pull_request:
       types: [opened, synchronize]
@@ -550,7 +551,8 @@ jobs:
       runs-on: ubuntu-latest
       steps:
          - uses: actions/checkout@v4
-         - name: Run critic review
+         -
+            name: Run critic review
             run: gh copilot suggest --agent backend-critic "Review this PR"
 ```
 
@@ -575,7 +577,7 @@ Critic replies:
    - Withdraws the finding → closes the thread with ACKNOWLEDGED
    - Insists              → strengthens the argument (iteration +1)
 
-If a BLOCKER/WARNING is not resolved within 2 iterations → orchestrator escalates: NEEDS_HUMAN
+If a BLOCKER/WARNING is not resolved within `max_iterations` (3) → orchestrator escalates: NEEDS_HUMAN
 SUGGESTION may be rejected by the executor without escalation (ACKNOWLEDGED is sufficient).
 ```
 
@@ -751,7 +753,7 @@ before spending iterations on a wrong implementation.
 ## 0.8 PROJECT.md — project file template
 
 > The project file applies this universal specification to a specific stack, platform, and team.
-> It is created in `<project>-AgentConfig/` next to 00-multi-agent-development-spec.md.
+> It is created at the **repo root** of `<project>-AgentConfig/` (next to `AGENTS.md` and `framework/`).
 > This spec contains principles; PROJECT.md contains concrete project facts: stack, agent models, environments, CI commands.
 
 ### 0.8.1 Required sections of PROJECT.md

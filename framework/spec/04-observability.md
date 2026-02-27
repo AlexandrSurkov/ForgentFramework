@@ -33,7 +33,7 @@ Nested calls form a tree:
 ```text
 [orchestrator]         ← root span of the task
    ├── [backend-dev]    iteration 1
-   │     └── tool: run_in_terminal
+   │     └── tool: runTerminal
    ├── [backend-critic] iteration 1 → REQUEST_CHANGES
    └── [backend-dev]    iteration 2 → APPROVE
 ```
@@ -105,29 +105,54 @@ Single-record format examples:
  "input_tokens":980,"output_tokens":310,"duration_ms":9100}
 ```
 
+**Span identity and ordering rules:**
+
+- `span_id` MUST be **unique within a trace** (`trace_id`). Never reuse a `span_id` in the same trace.
+- `span_id` is an **identifier**, not a timestamp. Do not infer time ordering from it.
+- Orchestrator SHOULD allocate `span_id` values (e.g., a monotonic counter like `s01`, `s02`, …) to avoid collisions.
+- For ordering, prefer `ts`; if multiple records share the same `ts`, preserve file append order as a stable tie-breaker.
+
 ## 4.6 Trace writing protocol (who writes what and when)
 
-There is no automatic instrumentation — agents write traces manually using normal file tools.
+There is no automatic instrumentation.
+
+To enforce least-privilege (critics are read-only), only the **orchestrator** writes to `.agents/traces/**`.
+
+- Executors and critics MUST NOT write trace files.
+- Executors and critics MUST return a small `trace_event` JSON object as part of their response.
+- Orchestrator appends one JSONL record per step to `.agents/traces/<trace_id>.jsonl`, filling `ts`, `trace_id`, `span_id`, and `parent_span_id`.
 
 ### 4.6.1 Rules for agents
 
 **Orchestrator** (when creating `TASK_CONTEXT.md`):
 1. Assigns `trace_id` (collision-resistant; recommended format: `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`, e.g., `20260223T143200Z-bulk-endpoint-9f2c`)
 2. Creates `.agents/traces/<trace_id>.jsonl`
-3. Writes the root span (`operation: "plan"`)
+3. Writes the root span (`operation: "plan"`) and assigns its `span_id`
 
 **Each executor and critic** (after completing its operation):
-1. Appends one JSONL line to the same file
-2. Sets `parent_span_id` to the orchestrator’s `span_id`
-3. Critics add `verdict`, `blockers`, `warnings`
+1. Returns a `trace_event` object in a `json` code block (no file writes)
+2. Includes `agent`, `operation`, `subtask`, `iteration` (when applicable)
+3. Critics additionally include `verdict`, `blockers`, `warnings`
+
+Minimal example (executor):
+
+```json
+{"trace_event":{"agent":"backend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+```
+
+Minimal example (critic):
+
+```json
+{"trace_event":{"agent":"backend-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}}
+```
 
 ### 4.6.2 When to write
 
 | Event | Who writes | `operation` |
 |---|---|---|
 | Orchestrator created the task plan | orchestrator | `"plan"` |
-| Executor completed an iteration | executor (backend-dev, frontend-dev, ...) | `"execute"` |
-| Critic produced a verdict | critic (backend-critic, ...) | `"critique"` |
+| Executor completed an iteration | orchestrator (records `agent: <executor>`) | `"execute"` |
+| Critic produced a verdict | orchestrator (records `agent: <critic>`) | `"critique"` |
 | Orchestrator reached NEEDS_HUMAN | orchestrator | `"escalate"` |
 | Orchestrator closed the task | orchestrator | `"complete"` |
 

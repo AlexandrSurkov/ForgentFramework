@@ -11,7 +11,7 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 
 | Path | Description |
 |---|---|
-| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.9) |
+| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.12) |
 | `framework/CHANGELOG.md` | Spec release notes shipped with the spec package |
 | `PROJECT.md` | Project parameters: stack, models, rate limits, §pre answers |
 | `AGENTS.md` | This file — pinned into orchestrator context on every run |
@@ -34,24 +34,67 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 | `forgent-spec-editor` | `.github/agents/forgent-spec-editor.agent.md` | Executor | Edits spec, docs, agent prompts, README, llms.txt |
 | `forgent-docs-critic` | `.github/agents/forgent-docs-critic.agent.md` | Critic / Audit executor | **Mode A** — critic for Markdown quality. **Mode B** — audit executor for read-only analysis tasks |
 | `forgent-process-critic` | `.github/agents/forgent-process-critic.agent.md` | Critic | Consistency, enforceability, spec alignment, safety |
-| `forgent-agent-architect` | `.github/agents/forgent-agent-architect.agent.md` | Advisor + Executor | AI agent systems architect: multi-agent patterns, agent file standards, AI security/governance. Reads `framework/spec/appendices/01-appendix-a1-ai-and-llm-standards.md` as primary reference. Can edit files. Call directly from Copilot Chat. |
+| `forgent-agent-architect` | `.github/agents/forgent-agent-architect.agent.md` | Advisor + Executor | Out-of-workflow advisor. Not routed by `forgent-orchestrator`; invoke directly for design consultation only. |
 
 ## Responsibility zones
 
 | Change type | Executor | Critic(s) |
 |---|---|---|
-| Spec / doc edits | `spec-editor` | `docs-critic` + `process-critic` |
+| Docs-only edits (non-normative) | `spec-editor` | `docs-critic` |
+| Framework normative changes (`framework/**`) | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy) |
 | Agent prompt changes | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy); update `AGENTS_CHANGELOG.md` |
 | Analysis / audit (read-only) | `docs-critic` (Mode B) | `process-critic` |
 
 ## Orchestrator fast-track types
 
+> Note: these are **ForgentFramework repo-maintenance routing labels** for the local orchestrator workflow.
+> They are distinct from the framework spec’s canonical `fast_track` enum (used in `TASK_CONTEXT.md` for product work) defined in `framework/spec/01-architecture.md`.
+> When working in a downstream project repo, ignore this table and use the canonical `fast_track` values instead.
+
 | Fast-track | When | Agents involved |
 |---|---|---|
 | `analysis/audit` | Read-only inspection, no file changes | `docs-critic` (Mode B) + `process-critic` |
-| `docs-only` | Only `.md`/`.txt` changed | `spec-editor` + `docs-critic` |
-| `spec/process-change` | Logic or rules in 00-multi-agent-development-spec.md changed | `spec-editor` + `process-critic` |
-| `agent-prompt-change` | Any `.github/agents/*.agent.md` changed | `spec-editor` + `process-critic`; AGENTS_CHANGELOG required |
+| `docs-only` | Only `.md`/`.txt` changed **and** change is non-normative | `spec-editor` + `docs-critic` |
+| `tooling-only` | Repo tooling / CI scripts / workflows (no `framework/**` changes) | `spec-editor` + `process-critic` |
+| `spec/process-change` | Any normative change under `framework/**` (umbrella spec, spec modules, or templates shipped downstream) | `spec-editor` + `process-critic` |
+| `agent-prompt-change` | Any `.github/agents/*.agent.md` changed (aka “agent prompt update” in the framework canonical enum) | `spec-editor` + `process-critic`; AGENTS_CHANGELOG required |
+
+## Workflow: maintaining `framework/**`
+
+Use this workflow for evolving the spec itself.
+
+### 1) Classify each subtask
+
+- **Editorial**: spelling/formatting/link fixes; explanations/examples that do not change obligations.
+- **Normative**: any change to MUST/SHOULD/MAY, gates, iteration rules, routing, or any shipped template behavior.
+- If unsure, classify as **Normative**.
+
+### 2) Split when needed
+
+Do not mix large Markdown cleanup with normative changes. Prefer two subtasks/commits:
+1) normative (minimal formatting)
+2) editorial cleanup
+
+### 3) Release hygiene (required for any `framework/**` change)
+
+- Bump spec version in `framework/00-multi-agent-development-spec.md`.
+- Add a release entry in `framework/CHANGELOG.md`.
+- Update this repo’s pinned spec version in `PROJECT.md` and `AGENTS.md`.
+
+### 4) Consistency sweep (required for “large” changes)
+
+Add an `analysis/audit` subtask when any of these apply:
+- 2+ files changed in `framework/spec/**`, or
+- 3+ files changed under `framework/**` total, or
+- changes to gates/iteration rules/routing/critic isolation/Reflexion, or
+- changes under `framework/templates/**`.
+
+### Definition of Done (DoD)
+
+- Correct fast-track classification; correct critic assigned.
+- No open BLOCKERs.
+- Release hygiene completed when `framework/**` changed.
+- Consistency sweep completed for large changes.
 
 ## Execution Workflow
 
@@ -87,7 +130,8 @@ Orchestrator  ──── classifies fast-track type
     │                      TASK_CONTEXT.md § Previous Attempts   │
     │                      re-invoke Executor (max 3 iterations) ┘
     │
-    └─ REJECT / 3 iterations without APPROVE ──► NEEDS_HUMAN
+    └─ REJECT ────────────────────────────────► NEEDS_HUMAN
+    └─ 3 iterations without APPROVE ─────────► NEEDS_HUMAN
 ```
 
 After all subtasks are approved → Orchestrator runs final verification → `TASK_COMPLETE`.
@@ -111,7 +155,7 @@ What is passed to each agent role — these rules are absolute and must never be
 |---|---|
 | Critic returns `APPROVE` | Move to next subtask |
 | Critic returns `REQUEST_CHANGES` | Write each BLOCKER/WARNING to `TASK_CONTEXT.md` → re-invoke executor |
-| Critic returns `REJECT` | Treat as `REQUEST_CHANGES` for iteration 1–2; escalate to `NEEDS_HUMAN` on iteration 3 |
+| Critic returns `REJECT` | Escalate immediately: output `NEEDS_HUMAN` with a disagreement summary (no further iterations for this subtask) |
 | 3 iterations without `APPROVE` | Escalate: output `NEEDS_HUMAN` with disagreement summary |
 
 Format for `TASK_CONTEXT.md` entries (used by Reflexion loop):
@@ -127,6 +171,7 @@ Executor MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before starting e
 |---|---|---|
 | `analysis/audit` | `docs-critic` (Mode B — read-only, produces findings) | `process-critic` |
 | `docs-only` | `spec-editor` | `docs-critic` |
+| `tooling-only` | `spec-editor` | `process-critic` |
 | `spec/process-change` | `spec-editor` | `process-critic` |
 | `agent-prompt-change` | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy); AGENTS_CHANGELOG.md must be updated |
 
@@ -134,7 +179,7 @@ Executor MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before starting e
 
 ## Active constraints
 
-- **Max 3 iterations** per subtask → `NEEDS_HUMAN` if unresolved.
+- **Max 3 iterations** per subtask → `NEEDS_HUMAN` if unresolved (if critic returns `REJECT`, escalate immediately).
 - **Reflexion**: executors MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before each iteration.
 - **Critic isolation**: critics receive only original task + criteria + result. No chain-of-thought forwarding.
 - **ACKNOWLEDGED**: executor may write `ACKNOWLEDGED: WARNING | <category> | <location> | <reason>` to defer a WARNING; critic must honour it on next review.

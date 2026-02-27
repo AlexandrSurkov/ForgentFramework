@@ -35,7 +35,7 @@ Healthy-critic signal:
 **Rule 4 — Critic tools (CRITIC paper)**
 
 ```text
-All critics: read-only tools only (read_file, grep_search)
+All critics: read-only tools only (readFile, fileSearch, textSearch)
 Exception: devops-critic is additionally allowed syntax validators
    (e.g., terraform validate, docker compose config --quiet)
 Without tools, critics hallucinate syntax checks.
@@ -57,7 +57,7 @@ If multiple critics review one PR and their verdicts disagree:
 
 ESCALATED status is set by orchestrator when:
 - NEEDS_HUMAN occurs a second time on the same subtask (after re-entry), OR
-- During a dispute on a BLOCKER, executor and critic do not converge after 2 iterations
+- During a dispute on a BLOCKER, executor and critic do not converge within `max_iterations` (3)
 
 What orchestrator records in `TASK_CONTEXT.md`:
 
@@ -108,19 +108,18 @@ What happens after ESCALATED:
 
 After recording, the pipeline resumes per the chosen option. If ESCALATED repeats for the same subtask, pause the task until an out-of-band architecture review.
 
-**Rule 7 — Trace writing (critic)**
-> After each verdict, append a JSONL line to `.agents/traces/<trace_id>.jsonl`.
-> `trace_id` comes from `TASK_CONTEXT.md`.
-> Set `parent_span_id` to the orchestrator’s `span_id`.
+**Rule 7 — Trace reporting (critic)**
+> Critics MUST NOT write to `.agents/traces/**`.
+> After each verdict, include a `trace_event` JSON object in the response so the orchestrator can append a JSONL record to `.agents/traces/<trace_id>.jsonl`.
+> `trace_id` comes from `TASK_CONTEXT.md` (provided by orchestrator).
 
-> Example critic line (`operation: "critique"`):
-> ```json
-> {"ts":"2026-02-24T10:00:00Z","trace_id":"20260224-task","span_id":"s03",
->  "parent_span_id":"s01","agent":"backend-critic","operation":"critique",
->  "subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES",
->  "blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}
-> ```
-> Full format: [04-observability.md](../04-observability.md) §4.5–4.6.
+Minimal example (`operation: "critique"`):
+
+```json
+{"trace_event":{"agent":"backend-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}}
+```
+
+Full JSONL format (written by orchestrator): [04-observability.md](../04-observability.md) §4.5–4.6.
 
 ---
 

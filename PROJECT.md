@@ -1,6 +1,6 @@
 # PROJECT.md — ForgentFramework
 
-> Spec: Multi-Agent Development Specification v0.21.9
+> Spec: Multi-Agent Development Specification v0.21.12
 
 ## §pre: Project parameters
 
@@ -12,7 +12,7 @@ Project:
    User communication language: English
    Components (repositories):   single repo
    Codebase baseline:           greenfield
-   Spec version:               v0.21.9
+   Spec version:               v0.21.12
 
 Tech stack:
    Languages and frameworks:    none (pure Markdown + VS Code Copilot agents)

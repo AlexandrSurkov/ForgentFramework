@@ -4,9 +4,9 @@ description: >
   Reviews architectural proposals and spec/ADR changes.
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
+  - readFile
+  - fileSearch
+  - textSearch
 ---
 
 # System Prompt

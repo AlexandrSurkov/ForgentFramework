@@ -48,7 +48,7 @@ For any change:
 - [ ] Pre-commit hooks passed: fmt, lint, validate (before commit)
 - [ ] TASK_CONTEXT.md updated with APPROVED status
 - [ ] CHANGELOG.md updated if a release commit exists
-- [ ] Trace entry `operation: "complete"` added to .agents/traces/<trace_id>.jsonl
+- [ ] Orchestrator appended the trace record `operation: "complete"` to .agents/traces/<trace_id>.jsonl
 
 PR merge gates (Gate 1–3; see §0.6):
 - [ ] CI: all tests green; build succeeds

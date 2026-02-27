@@ -4,9 +4,9 @@ description: >
   Reviews QA artifacts (test plans, coverage) and reports gaps.
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
+  - readFile
+  - fileSearch
+  - textSearch
 ---
 
 # System Prompt

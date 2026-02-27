@@ -4,10 +4,12 @@ description: >
   Writes and updates documentation (README, guides, ADRs) in English.
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
-  - apply_patch
+  - readFile
+  - fileSearch
+  - textSearch
+  - editFiles
+  - createFiles
+  - changes
 ---
 
 # System Prompt

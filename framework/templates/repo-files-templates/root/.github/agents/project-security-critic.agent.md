@@ -4,9 +4,9 @@ description: >
   Reviews changes for security issues (OWASP, secrets, authz/authn).
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
+  - readFile
+  - fileSearch
+  - textSearch
 ---
 
 # System Prompt

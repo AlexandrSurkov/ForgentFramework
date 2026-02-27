@@ -31,6 +31,16 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-02-26 | `forgent-orchestrator` | behavior | Updated sessions for parallel runs: create per-session `.agents/session/<trace_id>/TASK_CONTEXT.md`, and use collision-resistant `trace_id` (recommended `YYYYMMDDTHHMMSSZ-<slug>-<rand4>`); TASK_CONTEXT header now includes `task_context_file`. | copilot |
 | 2026-02-26 | `forgent-spec-editor` | behavior | Updated Reflexion rule to read `TASK_CONTEXT.md` from the orchestrator-provided session file path (typically `.agents/session/<trace_id>/TASK_CONTEXT.md`) rather than a fixed `.agents/session/TASK_CONTEXT.md`. | copilot |
 | 2026-02-26 | `forgent-agent-architect` | knowledge | Added `forgent-framework-spec` SKILL: fast lookup index for `framework/00-multi-agent-development-spec.md` and `framework/spec/*` modules; wired into activation triggers for spec location questions. | copilot |
+| 2026-02-26 | `forgent-orchestrator` | behavior | Implemented framework maintenance workflow: normative vs editorial classification, mixed-change splitting, large-change consistency sweep, tooling-only routing; explicitly marked `forgent-agent-architect` as out-of-workflow (not routed). | copilot |
+| 2026-02-26 | `forgent-spec-editor` | behavior | Added framework editing expectations: split normative vs formatting, treat templates as normative by default, enforce release hygiene for `framework/**` changes. | copilot |
+| 2026-02-26 | `forgent-docs-critic` | fix | Clarified Mode B audit uses available read tools; added framework doc audit checks (links/code fences). | copilot |
+| 2026-02-26 | `forgent-process-critic` | behavior | Added framework normative review checklist: enforceability, ambiguity, cross-module consistency, release hygiene. | copilot |
+| 2026-02-26 | `forgent-orchestrator`, `forgent-docs-critic` | fix | Refined workflow wording to match fast-track types; removed redundant Mode B wording and tool mentions. | copilot |
+| 2026-02-26 | `forgent-spec-editor` | tools | Added `createFiles` to avoid blocking spec/module/template creation work. | copilot |
+| 2026-02-26 | `forgent-spec-editor` | fix | Clarified Role ownership of `framework/spec/**` modules and `framework/templates/**` shipped templates. | copilot |
+| 2026-02-26 | `forgent-orchestrator` | fix | Updated trace template `ts` placeholder to `<ISO8601>` for all spans. | copilot |
+| 2026-02-26 | `forgent-orchestrator` | tools | Replaced invalid tool names (`read`, `edit`) with valid VS Code Copilot tools (`readFile`, `editFiles`, `createFiles`, `fileSearch`, `textSearch`). | copilot |
+| 2026-02-26 | `forgent-orchestrator` | behavior | Aligned `REJECT` semantics with canonical spec: `REJECT` escalates immediately to `NEEDS_HUMAN` (no further iterations for that subtask). | copilot |
 
 ## Change Types
 

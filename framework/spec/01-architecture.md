@@ -534,22 +534,39 @@ Each phase consists of one or more subtasks, each going through a Reflexion cycl
 The full 9-phase pipeline is intended for **feature work** on `feature/*` branches.
 For other types of changes — shortened paths:
 
+<a id="fast-track-enum"></a>
+
+**Canonical `fast_track` enum (used in `TASK_CONTEXT.md`)**
+
+The orchestrator MUST set `fast_track` to exactly one of these string values:
+
+| `fast_track` | Meaning (classification rule) |
+|---|---|
+| `feature` | Default: new behavior or non-trivial change; run the full 9-phase pipeline. |
+| `lightweight-feature` | Small, atomic feature change on `feature/*` that meets all “Lightweight feature criterion” conditions below. |
+| `hotfix` | Urgent bug fix in `main` with shortened verification. |
+| `docs-only` | Documentation-only change that does **not** modify any `.feature` file. |
+| `docs+feature` | Documentation-only change that modifies one or more `.feature` files (no code/IaC changes). |
+| `infra` | IaC/config-only changes (no product logic changes). |
+| `security-patch` | Dependency update due to CVE with no intentional logic change. |
+| `agent-prompt-update` | Update to agent prompts / prompt procedures (see §5 procedure). |
+
 | Change type | Branch | Active phases | Skip |
 |---|---|---|---|
-| **Feature** (default) | `feature/*` | 0 → 1 → 2 → 2.5 → 3 → 3.5 → 4 → 5 → 6 | — |
-| **Lightweight feature** (atomic change with no architectural impact) | `feature/*` | 1 → 2 (unit+edge) → 5 | 0, 2.5, 3, 3.5, 4, 6 |
-| **Hotfix** (urgent bug in `main`) | `hotfix/*` | 1 → 2 (unit+regression only) → CI Gate 1 → 5 | 0, 2.5, 3, 3.5, 4, 6 |
-| **Docs-only** | `docs/*` | 6 → CI Gate 1 | 0, 1, 2, 2.5, 3, 3.5, 4, 5 |
-| **Docs + `.feature` changed** | `docs/*` | 0 → 6 → CI Gate 1 | 1, 2, 2.5, 3, 3.5, 4, 5 |
-| **IaC/Config-only** | `infra/*` | 1 → 2 (integration) → 2.5 (smoke) → 5 | 0, 3, 3.5, 4, 6 |
-| **Security-patch** (dependency update due to CVE, no logic change) | `hotfix/*` or `infra/*` | 2 (unit+regression) → 5 (CVE-scan) → CI Gate 1 | 0, 2.5, 3, 3.5, 4, 6 |
-| **Agent prompt update** | `feature/*` | §5 procedure → CI Gate 1 | 0–6 pipeline |
+| **Feature** (default) (`fast_track: feature`) | `feature/*` | 0 → 1 → 2 → 2.5 → 3 → 3.5 → 4 → 5 → 6 | — |
+| **Lightweight feature** (atomic change with no architectural impact) (`fast_track: lightweight-feature`) | `feature/*` | 1 → 2 (unit+edge) → 5 | 0, 2.5, 3, 3.5, 4, 6 |
+| **Hotfix** (urgent bug in `main`) (`fast_track: hotfix`) | `hotfix/*` | 1 → 2 (unit+regression only) → CI Gate 1 → 5 | 0, 2.5, 3, 3.5, 4, 6 |
+| **Docs-only** (`fast_track: docs-only`) | `docs/*` | 6 → CI Gate 1 | 0, 1, 2, 2.5, 3, 3.5, 4, 5 |
+| **Docs + `.feature` changed** (`fast_track: docs+feature`) | `docs/*` | 0 → 6 → CI Gate 1 | 1, 2, 2.5, 3, 3.5, 4, 5 |
+| **IaC/Config-only** (`fast_track: infra`) | `infra/*` | 1 → 2 (integration) → 2.5 (smoke) → 5 | 0, 3, 3.5, 4, 6 |
+| **Security-patch** (dependency update due to CVE, no logic change) (`fast_track: security-patch`) | `hotfix/*` or `infra/*` | 2 (unit+regression) → 5 (CVE-scan) → CI Gate 1 | 0, 2.5, 3, 3.5, 4, 6 |
+| **Agent prompt update** (`fast_track: agent-prompt-update`) | `feature/*` | §5 procedure → CI Gate 1 | 0–6 pipeline |
 
 **Hotfix procedure:**
 
 ```text
 1. branch: hotfix/<id>-<slug> from main
-2. Phase 1: executor → quick fix (max 2 iter, no full TDD)
+2. Phase 1: executor → quick fix (max 3 iter, no full TDD)
 3. Phase 2: unit tests only — existing tests are not broken, regression test for the bug
 4. CI Gate 1: all tests green
 5. Phase 5: security-critic — no secrets leaked?
@@ -569,7 +586,8 @@ For other types of changes — shortened paths:
 
 > **Rule:** orchestrator checks the change type before starting the pipeline.
 > Hotfix criterion: bug is reproducible in `main`, no time for the full cycle.
-> Docs-only criterion: only `*.md`, `*.txt`, `*.rst`, `*.feature` files changed, no code/IaC changes.
+> Docs-only criterion: only `*.md`, `*.txt`, `*.rst` files changed (no `.feature`), and no code/IaC changes.
+> `.feature` classification rule: if the change set would otherwise be `docs-only` but includes one or more `.feature` files, `fast_track` MUST be `docs+feature` (never `docs-only`); otherwise keep `feature` / `lightweight-feature` as applicable.
 > **Lightweight feature criterion** (ALL conditions must be met):
 >   - Change is isolated within one module / package; no cross-module API changes
 >   - No new external dependencies and no database schema migrations
@@ -577,8 +595,7 @@ For other types of changes — shortened paths:
 >   - No public API changes (adding a field to an internal type / method is allowed)
 >   - Change does not touch authentication, authorization, or PII
 >   If any condition is not met — run the full feature pipeline.
-> **Exception:** if docs-only includes changes to `.feature` files — architect-critic is **required** (Phase 0 is not skipped because the observable behaviour specification has changed).
-> **Docs + `.feature`: roles in Phase 0** — `architect` reviews the modified `.feature` files; `architect-critic` issues the verdict (APPROVE / REQUEST_CHANGES). Other executors are not involved in this Fast-Track.
+> **Docs + `.feature`: roles in Phase 0** — `architect` reviews the modified `.feature` files; `architect-critic` issues the verdict (APPROVE / REQUEST_CHANGES). This Phase 0 review does not involve code/IaC executors; documentation work still runs in Phase 6.
 
 ---
 

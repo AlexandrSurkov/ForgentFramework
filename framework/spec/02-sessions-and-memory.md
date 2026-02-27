@@ -12,7 +12,8 @@ Orchestrator creates this file at the beginning of each session:
 **trace_id:** YYYYMMDDTHHMMSSZ-task-slug-rand4  
 **trace_file:** .agents/traces/YYYYMMDDTHHMMSSZ-task-slug-rand4.jsonl  
 **task_context_file:** .agents/session/YYYYMMDDTHHMMSSZ-task-slug-rand4/TASK_CONTEXT.md
-**fast_track:** feature | hotfix | docs-only | docs+feature | infra | security-patch | agent-prompt-update
+**fast_track:** feature | lightweight-feature | hotfix | docs-only | docs+feature | infra | security-patch | agent-prompt-update
+<!-- Canonical meanings: 01-architecture.md#fast-track-enum -->
 
 ## Task
 [Full description from the user — ORIGINAL text, not a paraphrase]
@@ -74,7 +75,7 @@ Parallel agents and `TASK_CONTEXT.md`:
    - If `TASK_CONTEXT.md` exceeds ~200 lines / ~4000 words, or orchestrator observes planning quality degradation, create a summarized version (replace detailed history of completed phases with a short recap).
    - The summary must contain: the current plan + the last 2 entries from `## Previous Attempts`.
    - Archive the full file as `.agents/session/<trace_id>/TASK_CONTEXT_archive_<date>.md` (gitignored). Long-term memory remains in ADRs and traces (retained according to `PROJECT.md` Trace mode).
-   - Agents use `grep_search` to jump to the needed section.
+   - Agents use `textSearch` (or `search`) to jump to the needed section.
 
 Example summary version (replaces a verbose TASK_CONTEXT after ~200 lines):
 

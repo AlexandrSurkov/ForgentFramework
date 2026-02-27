@@ -4,9 +4,9 @@ description: >
   Reviews documentation changes for correctness, links, and structure.
 model: TODO
 tools:
-  - read_file
-  - grep_search
-  - file_search
+  - readFile
+  - fileSearch
+  - textSearch
 ---
 
 # System Prompt
