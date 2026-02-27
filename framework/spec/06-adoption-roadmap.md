@@ -13,10 +13,7 @@ Project:
 - Components (repos): how many repos and what types (backend, frontend, infra, etc.)
 - Current baseline (existing project / greenfield / legacy+rescue)
 
-Spec pinning is recorded in one canonical place only:
-- `PROJECT.md` header line: `> Spec: Multi-Agent Development Specification vX.Y.Z`
-
-Do not add secondary spec-version fields (for example `Spec version: vX.Y.Z`) anywhere in `PROJECT.md`.
+Spec pinning invariant: see Operations 07 §7.4: [07-framework-operations.md](07-framework-operations.md).
 
 Tech stack:
 - Languages and frameworks (backend / frontend / mobile)
@@ -61,7 +58,32 @@ Language:
 ## 6.bootstrap Vanilla Copilot pre-install: create Bootstrap (Group 2) agents
 
 When a repo does not yet have the framework’s bootstrap agents (Group 2), you must create them once using vanilla Copilot chat (non-agent mode).
-After that, all Install/Upgrade/Remove operations MUST be routed to Group 2 (see [07-framework-operations.md](07-framework-operations.md) §7.1–7.2).
+After that, see Operations 07 for two-tier routing and the safety gate: [07-framework-operations.md](07-framework-operations.md) §7.1–7.2.
+
+### Bootstrap pre-install playbook (vanilla Copilot → install Group 2)
+
+1. Confirm you are using **vanilla Copilot chat** (non-agent mode) and that the target repo does not already contain Group 2 agents.
+2. Ask the user for the minimal required inputs:
+   - Which bootstrap entrypoint they want to run later: `bootstrap-orchestrator` (recommended) or direct executors.
+   - Which model IDs to set for each created bootstrap agent (`model: ...` in frontmatter) and any tool restrictions.
+   - Whether `.github/agents/` already exists and contains repurposed (non-framework) agents that must be preserved.
+3. Create the Group 2 bootstrap agent files under `.github/agents/` by copying/adapting the shipped templates:
+   - Template source: `framework/templates/bootstrap-agents-templates/root/.github/agents/`
+   - Expected outputs:
+     - `.github/agents/bootstrap-orchestrator.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-orchestrator.agent.md`)
+     - `.github/agents/bootstrap-installer.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md`)
+     - `.github/agents/bootstrap-upgrader.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-upgrader.agent.md`)
+     - `.github/agents/bootstrap-remover.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-remover.agent.md`)
+     - `.github/agents/bootstrap-critic.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-critic.agent.md`)
+4. Apply the required framework-operation checks/gates for agent/prompt edits by following (link only):
+   - Two-tier routing and scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
+   - AWESOME-COPILOT gate (because you are creating `.github/agents/**`): [07-framework-operations.md](07-framework-operations.md) §7.3
+5. Create the minimal gate artifact expected by Operations when the AWESOME-COPILOT trigger fires:
+   - Expected output: `.agents/compliance/awesome-copilot-gate.md` (template: `framework/templates/repo-files-templates/root/.agents/compliance/awesome-copilot-gate.md`)
+6. Stop and list the created files.
+7. Run the next stage using Group 2 (not Group 1) per [07-framework-operations.md](07-framework-operations.md) §7.1:
+   - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` and request **Install**.
+   - Alternatively: run `.github/agents/bootstrap-installer.agent.md` directly.
 
 Minimum required bootstrap set (enables two-tier routing for operations):
 - `bootstrap-installer` (Install)
@@ -88,10 +110,7 @@ Task: Create Group 2 bootstrap agents as `.github/agents/*.agent.md` files.
 
 Constraints:
 - Use the `.agent.md` format from `framework/spec/appendices/01-appendix-a1-ai-and-llm-standards.md` (A1.1).
-- The bootstrap agents MUST follow `framework/spec/07-framework-operations.md`:
-   - Two-tier model (Group 2 responsibilities)
-   - Safety gate: dry-run → wait for exact token APPLY → apply
-   - AWESOME-COPILOT gate: when editing `.github/agents/**` or `.github/prompts/**`, update `.agents/compliance/awesome-copilot-gate.md`.
+- Follow Operations 07 for all framework-operation invariants and gates (routing, safety gate, AWESOME-COPILOT, spec pinning): [07-framework-operations.md](07-framework-operations.md) (§7.1–7.4).
 - Keep bootstrap agents narrowly scoped to framework install/upgrade/remove. Do not add product features.
 
 Create these agents:
@@ -110,10 +129,34 @@ After creating the agent files, stop and list the created files.
 
 This playbook is executed by the **Bootstrap Installer (Group 2)**.
 
-1. Ensure the framework package exists at repo root (`framework/` vendored copy).
-2. Create `PROJECT.md` using the template in [00-infrastructure.md](00-infrastructure.md) §0.8 and fill `## §pre: Project parameters` (use the checklist above).
-3. Ensure Group 2 bootstrap agents exist (see §6.bootstrap).
-4. Run the Bootstrap Installer prompt (next section) and follow phases §6.0–§6.8.
+1. Run the Group 2 entrypoint:
+   - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-orchestrator.agent.md`) and request **Install**.
+   - Alternatively: run `.github/agents/bootstrap-installer.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md`).
+2. Ask the user for required inputs before planning any file changes:
+   - Confirm the framework package is available at repo root as `framework/` (vendored copy) or ask where to source it from.
+   - Confirm `PROJECT.md` exists and that `## §pre: Project parameters` is complete (use §6.pre checklist). If missing/incomplete, stop and request the user provide the missing answers.
+   - Confirm whether this is a single repo or multi-repo setup (AgentConfig repo + component repos) and which repo(s) you are allowed to edit in this run.
+   - Confirm whether any existing `.github/agents/**`, `.agents/**`, `AGENTS.md`, `llms.txt`, or `.github/copilot-instructions.md` are already in use and must be merged/preserved.
+3. Apply the operational invariants (link only) before and during execution:
+   - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
+   - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
+   - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
+   - Spec pinning location (`PROJECT.md` header only): [07-framework-operations.md](07-framework-operations.md) §7.4
+4. Dry-run: produce a complete phase-by-phase plan for §6.0–§6.8 and enumerate every create/modify/delete operation with paths (per [07-framework-operations.md](07-framework-operations.md) §7.2).
+5. Apply (only after the Operations safety confirmation per §7.2), using shipped templates as the baseline:
+   - Template sources:
+     - Repo context files: `framework/templates/repo-files-templates/root/**`
+     - Bootstrap agents (Group 2): `framework/templates/bootstrap-agents-templates/root/**`
+   - Expected outputs (minimum; merge instead of overwrite when files already exist):
+     - `PROJECT.md` (includes `> Spec: ...` header pin)
+     - `AGENTS.md` and `llms.txt` (at repo root; and per-component when applicable)
+     - `.github/copilot-instructions.md`
+     - `.github/agents/` (Group 1 project agents + Group 2 bootstrap agents)
+     - `.agents/skills/**` (project/component skills)
+     - `.agents/compliance/awesome-copilot-gate.md` (create/update when Operations §7.3 triggers)
+     - `.vscode/mcp.json` (when adopting MCP in §6.4)
+6. Verify the installation results at the roadmap level:
+   - Follow phases §6.0–§6.8 checklists and stop with a summary of created/modified files and any deferred items.
 
 ---
 
@@ -138,10 +181,7 @@ Rules:
    Communicate with the user in the configured User communication language (PROJECT.md §pre; default English).
 - After each phase: summarise what was created and list any deferred items.
 
-Safety gate (deterministic):
-- Step A (dry-run): present a complete file-by-file change plan.
-- Step B (confirm): wait for the user to reply with the exact token APPLY.
-- Step C (apply): only after APPLY, create/modify files.
+Safety gate: follow Operations 07 §7.2 (link only): [07-framework-operations.md](07-framework-operations.md).
 
 Context files to read first (in this order):
    1. 00-multi-agent-development-spec.md (umbrella index)
@@ -341,16 +381,36 @@ repos:
 
 This playbook is executed by the **Bootstrap Upgrader (Group 2)**.
 
-1. Identify versions:
-  - NEW: `framework/00-multi-agent-development-spec.md` header.
-  - OLD: `PROJECT.md` header line `> Spec: Multi-Agent Development Specification vX.Y.Z`.
-2. Update the vendored `framework/` package.
-3. Run the Bootstrap Upgrader prompt (next section).
-4. If any `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md` changed:
-  - Update `.github/AGENTS_CHANGELOG.md` (Prompt Versioning module).
-  - Update `.agents/compliance/awesome-copilot-gate.md` (07-framework-operations gate).
-  - Run evals/golden tests if your repo uses them.
-5. Update `PROJECT.md` header `> Spec:` to the new version.
+1. Run the Group 2 entrypoint:
+   - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` and request **Upgrade**.
+   - Alternatively: run `.github/agents/bootstrap-upgrader.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-upgrader.agent.md`).
+2. Ask the user for required inputs before planning changes:
+   - Confirm the new framework package contents are available (updated `framework/` vendored copy).
+   - Confirm the project’s current pinned spec version is present in `PROJECT.md` header (`> Spec: Multi-Agent Development Specification vX.Y.Z`).
+   - Confirm whether `.github/agents/**` and `.github/prompts/**` are allowed to change in this upgrade (some teams lock these behind review).
+3. Apply the operational invariants (link only) before and during execution:
+   - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
+   - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
+   - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
+   - Spec pinning and mandatory update of `PROJECT.md` header: [07-framework-operations.md](07-framework-operations.md) §7.4
+4. Identify versions:
+   - NEW: `framework/00-multi-agent-development-spec.md` header.
+   - OLD: `PROJECT.md` header line `> Spec: Multi-Agent Development Specification vX.Y.Z`.
+5. Dry-run: enumerate every file create/modify/delete and explicitly call out destructive steps (per [07-framework-operations.md](07-framework-operations.md) §7.2).
+6. Apply (only after the Operations safety confirmation per §7.2):
+   - Update the vendored `framework/` package.
+   - Run the Bootstrap Upgrader procedure (next section).
+   - Update `PROJECT.md` header `> Spec:` to the new version.
+7. After apply, perform required follow-ups when the AWESOME-COPILOT trigger fired (link only):
+   - Update `.agents/compliance/awesome-copilot-gate.md` per [07-framework-operations.md](07-framework-operations.md) §7.3.
+   - If your repo maintains prompt version history and/or evals, run the project’s configured process (Prompt Versioning / Evals modules).
+
+Expected outputs/files (after APPLY):
+- `framework/` updated (vendored copy)
+- `PROJECT.md` header pin updated (`> Spec: Multi-Agent Development Specification vNEW`)
+- `.github/agents/**` updated as required (Group 1 project agents; and Group 2 bootstrap agents if bootstrap templates changed)
+- `.agents/compliance/awesome-copilot-gate.md` updated when Operations §7.3 triggers
+- `.github/AGENTS_CHANGELOG.md` updated when prompt-versioning is in use and any `.github/agents/**` prompts changed
 
 ---
 
@@ -364,10 +424,7 @@ Prerequisite: the project records the applied spec version in `PROJECT.md` heade
 You — Bootstrap Upgrader (Group 2). 00-multi-agent-development-spec.md has been updated.
 Your task is to bring the project's agent configuration up to date with the new version.
 
-Safety gate (deterministic):
-- Step A (dry-run): present a complete file-by-file change plan.
-- Step B (confirm): wait for the user to reply with the exact token APPLY.
-- Step C (apply): only after APPLY, create/modify files.
+Safety gate: follow Operations 07 §7.2 (link only): [07-framework-operations.md](07-framework-operations.md).
 
 Input:
   - 00-multi-agent-development-spec.md new version (umbrella index)
@@ -427,9 +484,35 @@ Rules:
 
 This playbook is executed by the **Bootstrap Remover (Group 2)**.
 
-1. Dry-run: enumerate all files that will be deleted or modified.
-2. Confirm: wait for exact token APPLY.
-3. Apply: remove framework integration artifacts.
+1. Run the Group 2 entrypoint:
+   - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` and request **Remove**.
+   - Alternatively: run `.github/agents/bootstrap-remover.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-remover.agent.md`).
+2. Ask the user for required inputs before planning deletions:
+   - Removal mode: **Minimal removal** (spec-only) or **Full cleanup** (spec + agent system scaffolding).
+   - Confirm whether any of these paths are repurposed for non-framework use and must be preserved/merged instead of deleted:
+     `.github/agents/**`, `.github/prompts/**`, `.agents/**`, `PROJECT.md`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`, `.vscode/**`.
+   - Confirm whether the repo has multiple components (and which ones are in-scope for removal in this run).
+3. Apply the operational invariants (link only) before and during execution:
+   - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
+   - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
+   - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
+4. Dry-run: enumerate all files that will be deleted or modified, and list all references/links that must be updated to avoid broken paths.
+5. Apply (only after the Operations safety confirmation per §7.2):
+   - Remove framework-owned agent prompts (unless confirmed as repurposed by the user):
+     - Group 2 (bootstrap) agents: `.github/agents/bootstrap-*.agent.md`
+     - Group 1 (project) agents installed for this framework (enumerate from `AGENTS.md` and the current `.github/agents/` contents)
+   - Minimal removal (spec-only): delete `framework/` and update any links that reference `framework/**` paths.
+   - Full cleanup (spec + agent system): additionally remove framework-introduced scaffolding under `.github/prompts/**`, `.agents/**`, `.vscode/**`, and framework-owned docs/config files, while preserving any repurposed files confirmed by the user.
+6. Stop and summarize what was deleted/changed, and list any preserved files that were treated as repurposed.
+
+Expected outputs/files:
+- Minimal removal (spec-only):
+  - Deleted: `framework/`
+  - Deleted: `.github/agents/bootstrap-*.agent.md`
+  - Deleted: Group 1 framework agent prompts under `.github/agents/` (exact list enumerated in the dry-run)
+  - Updated: any references/links to `framework/**` paths
+- Full cleanup (spec + agent system):
+  - Everything in Minimal removal, plus deleted framework-introduced scaffolding under `.github/prompts/**`, `.agents/**`, `.vscode/**`, and other framework-owned docs/config files (as enumerated in the dry-run)
 
 Recommended removal modes:
 

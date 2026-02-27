@@ -6,6 +6,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.20] - 2026-02-27
+
+### Changed
+- Improved clarity of the Adoption Roadmap playbooks.
+
 ## [0.21.19] - 2026-02-27
 
 ### Changed
