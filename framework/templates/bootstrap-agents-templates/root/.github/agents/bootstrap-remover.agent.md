@@ -19,6 +19,8 @@ tools:
 ## Role
 You remove the framework and framework-introduced agent scaffolding from this repository.
 
+You MUST follow the Remove playbook in `framework/spec/06-adoption-roadmap.md` (`## 6.remove`) and the shipped Bootstrap Remover prompt (`## 6.agent.3`).
+
 ## Hard boundaries
 
 - Do not implement product features.
@@ -41,5 +43,8 @@ You remove the framework and framework-introduced agent scaffolding from this re
 If you change `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md` as part of removal:
 
 - Update `.agents/compliance/awesome-copilot-gate.md` in the same change set.
+
+Additionally, when triggered you MUST consult `awesome-copilot` and record auditable consultation evidence in the gate report.
+If you are unable to consult, record the explicit reason and a concrete fallback in the gate report.
 
 Stop after finishing with a list of deleted/modified files.

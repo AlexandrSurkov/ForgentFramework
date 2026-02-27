@@ -1,0 +1,2 @@
+{"ts":"2026-02-27T15:22:00Z","trace_id":"20260227T152200Z-validate-two-tier-4a1c","span_id":"s01","parent_span_id":null,"agent":"orchestrator","operation":"plan","task":"Audit: validate two-tier operating model (bootstrap preinstall, install/upgrade/remove playbooks, awesome-copilot gate, removal coverage)."}
+{"ts":"2026-02-27T15:22:20Z","trace_id":"20260227T152200Z-validate-two-tier-4a1c","span_id":"s02","parent_span_id":"s01","agent":"forgent-docs-critic","operation":"execute","subtask":"1: Evidence audit vs intended 2-group operating model","iteration":1}

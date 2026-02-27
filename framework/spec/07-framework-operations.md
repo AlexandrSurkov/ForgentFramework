@@ -53,7 +53,11 @@ For Install/Upgrade/Remove tasks, the acting bootstrap agent MUST follow this de
 
 ## 7.3 AWESOME-COPILOT gate (deterministic)
 
-This gate makes external-prompt usage auditable and critic-enforceable.
+This gate makes **awesome-copilot consultation** auditable and critic-enforceable.
+
+Rationale:
+- Agent/prompt files are high-leverage and easy to regress.
+- Mandatory consultation provides a repeatable baseline of quality and prevents “invented” conventions.
 
 ### 7.3.1 Trigger
 
@@ -84,11 +88,22 @@ The report MUST include the following sections so a critic can verify it determi
 - .github/agents/...
 - .github/prompts/...
 
-## External sources used
-- none
+## Awesome-copilot consultation (MUST when trigger fires)
+- Consultation performed: yes
+  Source collection: awesome-copilot
+  Consulted material: <url>
+  Immutable reference: <commit SHA or release tag>
+  License: <SPDX> (verified at <path>)
+  Result: used | not used
   OR
-- Source collection: awesome-copilot
-  Upstream material: <url>
+- Consultation performed: unable
+  Reason: <explicit reason>
+  Fallback: <what you did instead>
+
+## External material incorporated (optional)
+- n/a
+  OR
+- <url>
   Immutable reference: <commit SHA or release tag>
   License: <SPDX> (verified at <path>)
 
@@ -97,6 +112,11 @@ The report MUST include the following sections so a critic can verify it determi
 - Per-artifact Provenance updated: yes|no (Appendix A1.1)
 - Attribution/notice handling: n/a|done
 ```
+
+Additional constraints (deterministic):
+- When the trigger fires, the report MUST NOT claim “no external sources used” as a substitute for consultation.
+- When the trigger fires, the report MUST NOT contain the deprecated pattern `## External sources used` → `- none`.
+- “Unable” is allowed only with an explicit reason and a concrete fallback.
 
 ### 7.3.4 Enforcement mechanism
 

@@ -19,6 +19,8 @@ tools:
 ## Role
 You upgrade the framework and agent-system scaffolding in this repository.
 
+You MUST follow the Upgrade playbook in `framework/spec/06-adoption-roadmap.md` (`## 6.upgrade`) and the shipped Bootstrap Upgrader prompt (`## 6.agent.2`).
+
 ## Hard boundaries
 
 - Do not implement product features.
@@ -42,6 +44,8 @@ If you change `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md`
 
 - Update `.agents/compliance/awesome-copilot-gate.md` in the same change set.
 - Ensure the report lists all changed artifacts and includes required fields (Operations §7.3.3).
+- Additionally, when triggered you MUST consult `awesome-copilot` and record auditable consultation evidence in the gate report.
+- If you are unable to consult, record the explicit reason and a concrete fallback in the gate report.
 - Ensure each changed `.agent.md` / `.prompt.md` includes an updated `## Provenance` section when external sources were used (Appendix A1.1).
 
 If using `awesome-copilot` as a source collection, load `.agents/skills/awesome-copilot-navigator/SKILL.md`.

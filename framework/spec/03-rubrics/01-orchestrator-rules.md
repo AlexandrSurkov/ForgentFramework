@@ -15,6 +15,22 @@
 > `.feature` classification rule: if the change set would otherwise be `docs-only` but includes one or more `.feature` files, `fast_track` MUST be `docs+feature` (never `docs-only`); otherwise keep `feature` / `lightweight-feature` as applicable.
 > The full 9-phase pipeline runs only for `fast_track: feature` (see [01-architecture.md](../01-architecture.md#fast-track-enum)).
 
+**Rule 2.1 — User-visible plan and progress (Group 1 orchestrators)**
+> Scope: this rule applies to **Group 1** orchestrators as defined in [07-framework-operations.md](../07-framework-operations.md#71-two-tier-operations-model-normative).
+>
+> Group 1 orchestrators MUST always produce the following **in the user-facing chat** for the task:
+>
+> 1. **Before starting execution** (before invoking the first subagent), publish a plan that lists **all** tasks/subtasks.
+>    - Each task/subtask entry MUST include: (a) the goal, and (b) which subagent(s) will handle it.
+> 2. **Before each subagent invocation**, announce:
+>    - Which task/subtask the subagent is being called for, and
+>    - The subagent’s assigned job.
+> 3. **After each subagent completes**, publish a concise result summary.
+>    - If the subagent is an executor: summary MUST include the key outcome and which files changed (or “no files changed”).
+>    - If the subagent is a critic: summary MUST include the verdict and the top finding(s) that drive next actions.
+>
+> Enforceability constraint: the plan published in chat MUST be consistent with the decomposition recorded in `TASK_CONTEXT.md` (names and intended owners). If the plan changes, the orchestrator MUST update both and explicitly note the change in chat.
+
 **Rule 3 — Create the trace first**
 > Create `.agents/traces/<trace_id>.jsonl` and write the root span (`operation: "plan"`) before assigning the first subtask.
 

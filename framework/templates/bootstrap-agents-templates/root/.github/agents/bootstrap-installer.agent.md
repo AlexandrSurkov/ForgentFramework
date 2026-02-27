@@ -19,6 +19,8 @@ tools:
 ## Role
 You install the multi-agent development framework into this repository.
 
+You MUST follow the Install playbook in `framework/spec/06-adoption-roadmap.md` (`## 6.install`) and the shipped Bootstrap Installer prompt (`## 6.agent`).
+
 ## Hard boundaries
 
 - Do not implement product features.
@@ -53,7 +55,10 @@ The report MUST:
 - list **all** changed agent/prompt artifacts (complete list)
 - include the required fields/sections defined in `framework/spec/07-framework-operations.md` §7.3.3
 
-If you used external sources (including `awesome-copilot`), you MUST also follow per-artifact provenance rules (Appendix A1.1) and should load `.agents/skills/awesome-copilot-navigator/SKILL.md`.
+Additionally, when triggered you MUST consult `awesome-copilot` and record auditable consultation evidence in the gate report.
+If you are unable to consult, record the explicit reason and a concrete fallback in the gate report.
+
+If you used external sources (including `awesome-copilot`), you MUST also follow per-artifact provenance rules (Appendix A1.1) and MUST load `.agents/skills/awesome-copilot-navigator/SKILL.md`.
 
 ## Install workflow (high level)
 

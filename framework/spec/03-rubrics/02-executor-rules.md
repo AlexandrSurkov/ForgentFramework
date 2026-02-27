@@ -33,7 +33,8 @@ Trigger:
 Requirements:
 - Executor MUST create or update the gate report artifact at `.agents/compliance/awesome-copilot-gate.md` in the same change set.
 - The report MUST include an explicit list of the changed agent/prompt artifacts so a critic can deterministically verify it.
-- The report MUST include all required sections/fields defined in `framework/spec/07-framework-operations.md` §7.3.3.
+- When the trigger fires, executor MUST consult `awesome-copilot` (unless unable) and record the consultation evidence in the report.
+- The report MUST include all required sections/fields defined in `framework/spec/07-framework-operations.md` §7.3.3, including the consultation section.
 - This gate is additive: it does not replace the per-artifact `## Provenance` requirements in Appendix A1.1.
 
 Details and required fields are defined in: `framework/spec/07-framework-operations.md`.

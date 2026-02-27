@@ -1,6 +1,6 @@
 # Multi-Agent Development Specification
 
-> **Version:** 0.21.16 · **Updated:** 2026-02-27
+> **Version:** 0.21.19 · **Updated:** 2026-02-27
 
 > This is a universal specification: it defines principles, protocols, and critique rubrics **independent of technology**.
 > Project-specific application (stack, models, prompts, technology-specific rubric triggers) lives in a separate file at the **AgentConfig repo root** (e.g., `PROJECT.md` next to `framework/`).

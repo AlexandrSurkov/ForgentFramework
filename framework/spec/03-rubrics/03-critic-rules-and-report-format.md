@@ -123,11 +123,16 @@ Full JSONL format (written by orchestrator): [04-observability.md](../04-observa
 
 **Rule 8 — AWESOME-COPILOT gate enforcement (deterministic BLOCKER)**
 
-If the produced result includes any changes to `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md`, the critic MUST return `REQUEST_CHANGES` with a `BLOCKER` finding when either:
+If the produced result includes any changes to `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md`, the critic MUST return `REQUEST_CHANGES` with a `BLOCKER` finding when any of the following are true:
 
-- The required gate report `.agents/compliance/awesome-copilot-gate.md` is missing, OR
+- The required gate report `.agents/compliance/awesome-copilot-gate.md` is missing.
 - The report exists but does not list all changed agent/prompt artifacts (stale report).
 - The report exists but is missing one or more required sections/fields defined in `framework/spec/07-framework-operations.md` §7.3.3.
+- The report exists but the **Awesome-copilot consultation** evidence is invalid:
+   - Consultation performed is neither `yes` nor `unable`, OR
+   - Consultation performed is `yes` but any of: consulted material, immutable reference, or license verification is missing, OR
+   - Consultation performed is `unable` but the explicit reason and concrete fallback are missing.
+- The report uses the deprecated pattern `## External sources used` → `- none` (Operations §7.3.3).
 
 Reference: `framework/spec/07-framework-operations.md` (gate trigger + required report fields).
 

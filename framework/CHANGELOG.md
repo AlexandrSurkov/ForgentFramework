@@ -6,6 +6,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.19] - 2026-02-27
+
+### Changed
+- Made the orchestrator chat output protocol (Group 1 orchestrators) a MUST-level requirement: plan + pre-subagent invocation context + post-subagent result summary.
+- Updated the Group 2 bootstrap orchestrator template to implement the same chat output protocol.
+
+## [0.21.18] - 2026-02-27
+
+### Fixed
+- AWESOME-COPILOT gate report template now matches canonical required-fields formatting (deterministic enforcement).
+
+## [0.21.17] - 2026-02-27
+
+### Changed
+- Made awesome-copilot consultation mandatory and auditable for any changes to `.github/agents/**` or `.github/prompts/**` (gate report updated; “no external sources” is not a valid substitute).
+- Tightened executor/critic rubrics so missing or invalid consultation evidence is a deterministic BLOCKER.
+- Updated bootstrap agent templates to explicitly follow Adoption Roadmap playbooks (install/upgrade/remove).
+- Updated the shipped `AGENTS.md` template to mention two-tier routing for operations.
+
 ## [0.21.16] - 2026-02-27
 
 ### Added

@@ -6,6 +6,8 @@ This template subtree contains **Group 2 (bootstrap) agent definitions**.
 
 Provide a ready-to-merge bootstrap agent set that can perform framework **install / upgrade / remove** operations.
 
+The `bootstrap-orchestrator` template is designed to be chat-transparent: it always prints an upfront plan, and prints a short pre/post message around each subagent invocation.
+
 ## How to use
 
 Copy/merge the contents of:

@@ -41,3 +41,8 @@ TODO: One sentence describing what this repo builds.
 - Orchestrator/planner: `TODO`
 - Implementer/executor: `TODO`
 - Reviewer/critic: `TODO`
+
+Two-tier operations model (recommended):
+- Group 1 agents do project feature work.
+- Group 2 bootstrap agents handle framework Install/Upgrade/Remove.
+- Routing rule: any task whose primary goal is Install/Upgrade/Remove must be routed to Group 2 (see `framework/spec/07-framework-operations.md`).

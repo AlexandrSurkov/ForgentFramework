@@ -57,8 +57,14 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
    - If the task may introduce a durable rule/decision: check `.github/decisions/`.
 4. Decompose into subtasks (max 6) and track progress.
    - Each subtask must have: deliverable, verification, and an assigned executor + critic.
-   - Observability: before invoking an executor or critic, output exactly one line:
-     `Subtask <id>: <title> -> executor=<agent> -> critic=<agent> -> verification=<check or none>`
+   - **Chat plan (MANDATORY):** before the first subagent call, output a plan listing **all** subtasks.
+     For each subtask include: `<id>`, `<title>`, what it does (deliverable), and which subagents will handle it (executor + critic) + verification.
+   - Observability (MANDATORY): **before each subagent call** (executor OR critic), output exactly one line that provides the subtask context and the called subagent's job.
+     This line MUST start with `Subtask <id>:` (for compatibility) and MUST include `call=<executor|critic>`.
+     - Executor call format:
+       `Subtask <id>: <title> -> call=executor -> executor=<agent> -> critic=<agent> -> job=<one-clause job> -> verification=<check or none>`
+     - Critic call format:
+       `Subtask <id>: <title> -> call=critic -> critic=<agent> -> job=<one-clause job> -> verification=<check or none>`
    - Split “Mixed” work: do not combine large Markdown cleanup with normative changes; prefer two subtasks.
    - For large `framework/**` changes, add a dedicated `analysis/audit` consistency sweep subtask.
 5. Assign executors/critics based on change type:
@@ -87,6 +93,7 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
         Invoke the appropriate executor as a subagent. Do not read or analyze files yourself:
         - Use the forgent-spec-editor agent to perform doc/spec edits. Pass the subtask description and acceptance criteria.
         - Use the forgent-docs-critic agent to perform any read-only analysis, review, or audit. Pass the analysis scope and criteria.
+         After the executor subagent returns, output a concise result summary in chat (1–2 sentences; no chain-of-thought): what changed / what was produced.
      b) **Critic framing (§3.3 Rule 1):** the subagent prompt for the critic MUST include ONLY:
         (1) original task text verbatim, (2) acceptance criteria, (3) executor's final output or
         a precise summary of changed files. Do NOT include full conversation history or executor reasoning.
@@ -96,6 +103,7 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
         - For analysis/audit tasks: use the forgent-process-critic agent to review docs-critic's findings.
         Increment `<SPAN_SEQ>`. Append a `critique` span to `<TRACE_FILE>` after critic returns:
       `{"ts":"<ISO8601>","trace_id":"<TRACE_ID>","span_id":"s<SPAN_SEQ>","parent_span_id":"s01","agent":"<agent-name>","operation":"critique","subtask":"<N>: <title>","iteration":<iter>,"verdict":"<APPROVE|REQUEST_CHANGES|REJECT>","blockers":<n>,"warnings":<n>}`
+         After the critic subagent returns, output a concise result summary in chat (1–2 sentences; no chain-of-thought): verdict + counts, and what happens next (approve / reinvoke / escalate).
        d) If critic verdict is REQUEST_CHANGES:
         - Append the critic's findings to `<SESSION_FILE>` under `## Previous Attempts` (§3.1 Rule 4).
           **CRITICAL: Copy the critic's output VERBATIM. Do NOT summarize, paraphrase, or filter.**
