@@ -59,12 +59,12 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
    - Each subtask must have: deliverable, verification, and an assigned executor + critic.
    - **Chat plan (MANDATORY):** before the first subagent call, output a plan listing **all** subtasks.
      For each subtask include: `<id>`, `<title>`, what it does (deliverable), and which subagents will handle it (executor + critic) + verification.
-   - Observability (MANDATORY): **before each subagent call** (executor OR critic), output exactly one line that provides the subtask context and the called subagent's job.
+   - Observability (MANDATORY): **before each subagent call** (executor OR critic), output exactly one line that provides (a) the subtask context, (b) the called subagent name, (c) minimal relevant context (inputs/constraints/success criteria), and (d) the called subagent's job + verification.
      This line MUST start with `Subtask <id>:` (for compatibility) and MUST include `call=<executor|critic>`.
      - Executor call format:
-       `Subtask <id>: <title> -> call=executor -> executor=<agent> -> critic=<agent> -> job=<one-clause job> -> verification=<check or none>`
+          `Subtask <id>: <title> -> call=executor -> executor=<agent> -> critic=<agent> -> context=inputs:<...>; constraints:<...>; success:<...> -> job=<one-clause job> -> verification=<check or none>`
      - Critic call format:
-       `Subtask <id>: <title> -> call=critic -> critic=<agent> -> job=<one-clause job> -> verification=<check or none>`
+          `Subtask <id>: <title> -> call=critic -> critic=<agent> -> context=inputs:<...>; constraints:<...>; success:<...> -> job=<one-clause job> -> verification=<check or none>`
    - Split “Mixed” work: do not combine large Markdown cleanup with normative changes; prefer two subtasks.
    - For large `framework/**` changes, add a dedicated `analysis/audit` consistency sweep subtask.
 5. Assign executors/critics based on change type:

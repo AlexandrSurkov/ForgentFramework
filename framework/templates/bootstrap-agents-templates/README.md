@@ -8,6 +8,8 @@ Provide a ready-to-merge bootstrap agent set that can perform framework **instal
 
 The `bootstrap-orchestrator` template is designed to be chat-transparent: it always prints an upfront plan, and prints a short pre/post message around each subagent invocation.
 
+This includes calls to the critic (`bootstrap-critic`): the orchestrator must emit both the pre-call context line and the post-call result summary for every subagent call.
+
 ## How to use
 
 Copy/merge the contents of:

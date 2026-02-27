@@ -22,10 +22,12 @@
 >
 > 1. **Before starting execution** (before invoking the first subagent), publish a plan that lists **all** tasks/subtasks.
 >    - Each task/subtask entry MUST include: (a) the goal, and (b) which subagent(s) will handle it.
-> 2. **Before each subagent invocation**, announce:
->    - Which task/subtask the subagent is being called for, and
+> 2. **Before each subagent invocation** (executor or critic), announce:
+>    - The called subagent name,
+>    - Which task/subtask the subagent is being called for,
+>    - Minimal relevant context (inputs, constraints, success criteria), and
 >    - The subagent’s assigned job.
-> 3. **After each subagent completes**, publish a concise result summary.
+> 3. **After each subagent completes** (executor or critic), publish a concise result summary.
 >    - If the subagent is an executor: summary MUST include the key outcome and which files changed (or “no files changed”).
 >    - If the subagent is a critic: summary MUST include the verdict and the top finding(s) that drive next actions.
 >

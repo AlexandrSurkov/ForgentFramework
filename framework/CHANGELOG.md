@@ -6,6 +6,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.21] - 2026-02-27
+
+### Changed
+- Tightened orchestrator chat output protocol to explicitly include critic calls (subagent name + minimal context) and aligned shipped templates accordingly.
+
 ## [0.21.20] - 2026-02-27
 
 ### Changed
