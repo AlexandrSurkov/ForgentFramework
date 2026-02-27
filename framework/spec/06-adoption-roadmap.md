@@ -6,15 +6,17 @@ Universal roadmap for any new project. Project file extends it with stack-specif
 
 ## 6.pre Before you start: capture project parameters
 
-Before running the roadmap, answer the questions below. Answers go into PROJECT.md and are used by the Implementation Agent (§6.agent) while creating files.
+Before running the roadmap, answer the questions below. Answers go into PROJECT.md and are used by the Bootstrap Installer (§6.agent) while creating files.
 
 Project:
 - Project name and short description (what it does, target users)
 - Components (repos): how many repos and what types (backend, frontend, infra, etc.)
 - Current baseline (existing project / greenfield / legacy+rescue)
 
-Implementation agent must record the current spec version in PROJECT.md §pre:
-`Spec version: vX.Y.Z`.
+Spec pinning is recorded in one canonical place only:
+- `PROJECT.md` header line: `> Spec: Multi-Agent Development Specification vX.Y.Z`
+
+Do not add secondary spec-version fields (for example `Spec version: vX.Y.Z`) anywhere in `PROJECT.md`.
 
 Tech stack:
 - Languages and frameworks (backend / frontend / mobile)
@@ -56,14 +58,73 @@ Language:
 
 ---
 
-## 6.agent Implementation Agent prompt
+## 6.bootstrap Vanilla Copilot pre-install: create Bootstrap (Group 2) agents
+
+When a repo does not yet have the framework’s bootstrap agents (Group 2), you must create them once using vanilla Copilot chat (non-agent mode).
+After that, all Install/Upgrade/Remove operations MUST be routed to Group 2 (see [07-framework-operations.md](07-framework-operations.md) §7.1–7.2).
+
+Minimum required bootstrap set (enables two-tier routing for operations):
+- `bootstrap-installer` (Install)
+- `bootstrap-upgrader` (Upgrade)
+- `bootstrap-remover` (Remove)
+
+Template default (shipped in `framework/templates/bootstrap-agents-templates/`):
+- `bootstrap-orchestrator` (routes Install/Upgrade/Remove to the executors)
+- `bootstrap-installer`
+- `bootstrap-upgrader`
+- `bootstrap-remover`
+- `bootstrap-critic` (reviews bootstrap operations)
+
+For best effectiveness (recommended when available):
+- Use `bootstrap-orchestrator` as the Group 2 entrypoint.
+- It delegates to the matching executor and then invokes `bootstrap-critic` to enforce the bootstrap safety/boundary rules.
+
+Runnable vanilla-Copilot prompt (copy/paste):
+
+```text
+You are working in a repository that does not yet have bootstrap agents.
+
+Task: Create Group 2 bootstrap agents as `.github/agents/*.agent.md` files.
+
+Constraints:
+- Use the `.agent.md` format from `framework/spec/appendices/01-appendix-a1-ai-and-llm-standards.md` (A1.1).
+- The bootstrap agents MUST follow `framework/spec/07-framework-operations.md`:
+   - Two-tier model (Group 2 responsibilities)
+   - Safety gate: dry-run → wait for exact token APPLY → apply
+   - AWESOME-COPILOT gate: when editing `.github/agents/**` or `.github/prompts/**`, update `.agents/compliance/awesome-copilot-gate.md`.
+- Keep bootstrap agents narrowly scoped to framework install/upgrade/remove. Do not add product features.
+
+Create these agents:
+1) bootstrap-orchestrator
+2) bootstrap-installer
+3) bootstrap-upgrader
+4) bootstrap-remover
+5) bootstrap-critic
+
+After creating the agent files, stop and list the created files.
+```
+
+---
+
+## 6.install Install playbook (step-by-step)
+
+This playbook is executed by the **Bootstrap Installer (Group 2)**.
+
+1. Ensure the framework package exists at repo root (`framework/` vendored copy).
+2. Create `PROJECT.md` using the template in [00-infrastructure.md](00-infrastructure.md) §0.8 and fill `## §pre: Project parameters` (use the checklist above).
+3. Ensure Group 2 bootstrap agents exist (see §6.bootstrap).
+4. Run the Bootstrap Installer prompt (next section) and follow phases §6.0–§6.8.
+
+---
+
+## 6.agent Bootstrap Installer prompt (Group 2)
 
 Use this prompt as the system instruction for the agent that will implement this spec in a project.
 
 ```text
-You — Implementation Agent. Your task is to set up the multi-agent development
-system for a specific project, following 00-multi-agent-development-spec.md and the answers
-unlocked in PROJECT.md §pre.
+You — Bootstrap Installer (Group 2). Your task is to install the multi-agent development
+system into this repository, following 00-multi-agent-development-spec.md and the answers
+in PROJECT.md (`## §pre: Project parameters`).
 
 Rules:
 - Work through Roadmap phases §6.0–6.8 sequentially.
@@ -77,76 +138,17 @@ Rules:
    Communicate with the user in the configured User communication language (PROJECT.md §pre; default English).
 - After each phase: summarise what was created and list any deferred items.
 
+Safety gate (deterministic):
+- Step A (dry-run): present a complete file-by-file change plan.
+- Step B (confirm): wait for the user to reply with the exact token APPLY.
+- Step C (apply): only after APPLY, create/modify files.
+
 Context files to read first (in this order):
    1. 00-multi-agent-development-spec.md (umbrella index)
    2. spec/ (all spec modules linked from 00-multi-agent-development-spec.md)
    3. PROJECT.md (project parameters — must already exist with §pre filled in)
 
 Start: say which phase you are beginning and ask for confirmation.
-```
-
----
-
-## 6.agent.2 Spec upgrade agent prompt
-
-Use this when 00-multi-agent-development-spec.md was updated and you need to sync an already configured project.
-
-Prerequisite: PROJECT.md records the spec version used to set up the project (header field `Spec: Multi-Agent Development Specification vX.Y.Z`; see §0.8.1).
-
-```text
-You — Spec Upgrade Agent. 00-multi-agent-development-spec.md has been updated.
-Your task is to bring the project's agent configuration up to date with the new version.
-
-Input:
-   - 00-multi-agent-development-spec.md new version (umbrella index)
-   - spec/ (all spec modules linked from 00-multi-agent-development-spec.md)
-   - PROJECT.md (header field: Spec: Multi-Agent Development Specification vX.Y.Z — the version the project was set up with)
-
-Step 1 — Identify version delta.
-   Read the new spec version from 00-multi-agent-development-spec.md header.
-   Read the project's current spec version from PROJECT.md.
-   State: "Updating from vOLD to vNEW".
-   If versions are equal — report "No update needed" and stop.
-
-Step 2 — Audit each major section. Compare new spec with project files:
-   §0.3  AGENTS.md global + component — new required fields?
-   §0.8  PROJECT.md template — new required sections?
-   §0.9  copilot-instructions.md — new required sections?
-   §1.2  Model tiers — models removed or reclassified? Check PROJECT.md §2.2 for affected agents.
-   §1.3  Pipeline — new phases, gates or protocols?
-   §3.x  Critic rubrics — new BLOCKER/WARNING triggers? Update .agent.md critic prompts.
-   §5    Golden tests — new required test cases?
-   §6    Roadmap — new phases or checklist items?
-
-Step 3 — Classify each delta:
-   BREAKING — project cannot function correctly without this update
-      (e.g. verdict type renamed, gate logic changed, new mandatory TASK_CONTEXT field)
-   ADDITIVE — project works without it but quality improves
-      (e.g. new WARNING trigger, new recommended tool)
-
-Step 4 — Apply changes (BREAKING first, then ADDITIVE):
-   - Update .agent.md files that reference changed rubrics or pipeline logic
-   - Update PROJECT.md sections that gained new required fields (merge — do NOT overwrite
-      project-specific values: §pre answers, custom rubrics, model choices)
-   - Update copilot-instructions.md if §0.9 changed
-   - Leave explicitly project-customised sections untouched unless BREAKING
-
-Step 5 — After any .agent.md change: run golden tests (§5.3 procedure).
-   npx promptfoo eval
-   If tests pass → record in AGENTS_CHANGELOG.md:
-      type: spec-upgrade | description: Sync to spec vNEW
-
-Step 6 — Update PROJECT.md header:
-   Spec: Multi-Agent Development Specification vNEW
-
-Rules:
-   - NEEDS_HUMAN if a BREAKING change requires a team decision
-      (e.g. model removed from an available tier, new mandatory gate requiring CI reconfiguration)
-   - Additive changes that require significant effort may be deferred:
-      record as TODO in PROJECT.md §6 Roadmap with spec version reference
-    - Language: create all file content in the configured Artifact language (PROJECT.md §pre; default English).
-       Communicate with the user in the configured User communication language (PROJECT.md §pre; default English).
-   - After completing: summarise what was changed, what was deferred, what requires human decision
 ```
 
 ---
@@ -331,6 +333,129 @@ repos:
 - [ ] If needs_human_rate > 20% → simplify tasks or rubrics
 - [ ] If approve_on_first < 30% → upgrade executor model or refine SKILL.md
 - [ ] Quarterly: review AGENTS_CHANGELOG.md and remove obsolete rules
+```
+
+---
+
+## 6.upgrade Upgrade playbook (step-by-step)
+
+This playbook is executed by the **Bootstrap Upgrader (Group 2)**.
+
+1. Identify versions:
+  - NEW: `framework/00-multi-agent-development-spec.md` header.
+  - OLD: `PROJECT.md` header line `> Spec: Multi-Agent Development Specification vX.Y.Z`.
+2. Update the vendored `framework/` package.
+3. Run the Bootstrap Upgrader prompt (next section).
+4. If any `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md` changed:
+  - Update `.github/AGENTS_CHANGELOG.md` (Prompt Versioning module).
+  - Update `.agents/compliance/awesome-copilot-gate.md` (07-framework-operations gate).
+  - Run evals/golden tests if your repo uses them.
+5. Update `PROJECT.md` header `> Spec:` to the new version.
+
+---
+
+## 6.agent.2 Bootstrap Upgrader prompt (Group 2)
+
+Use this when the framework spec was updated and you need to sync an already configured project.
+
+Prerequisite: the project records the applied spec version in `PROJECT.md` header line `> Spec: Multi-Agent Development Specification vX.Y.Z`.
+
+```text
+You — Bootstrap Upgrader (Group 2). 00-multi-agent-development-spec.md has been updated.
+Your task is to bring the project's agent configuration up to date with the new version.
+
+Safety gate (deterministic):
+- Step A (dry-run): present a complete file-by-file change plan.
+- Step B (confirm): wait for the user to reply with the exact token APPLY.
+- Step C (apply): only after APPLY, create/modify files.
+
+Input:
+  - 00-multi-agent-development-spec.md new version (umbrella index)
+  - spec/ (all spec modules linked from 00-multi-agent-development-spec.md)
+  - PROJECT.md (header line: Spec: Multi-Agent Development Specification vX.Y.Z — the version the project was set up with)
+
+Step 1 — Identify version delta.
+  Read the new spec version from 00-multi-agent-development-spec.md header.
+  Read the project's current spec version from PROJECT.md.
+  State: "Updating from vOLD to vNEW".
+  If versions are equal — report "No update needed" and stop.
+
+Step 2 — Audit each major section. Compare new spec with project files:
+  §0.3  AGENTS.md global + component — new required fields?
+  §0.8  PROJECT.md template — new required sections?
+  §0.9  copilot-instructions.md — new required sections?
+  §1.2  Model tiers — models removed or reclassified? Check PROJECT.md §2.2 for affected agents.
+  §1.3  Pipeline — new phases, gates or protocols?
+  §3.x  Critic rubrics — new BLOCKER/WARNING triggers? Update .agent.md critic prompts.
+  §5    Golden tests — new required test cases?
+  §6    Roadmap — new phases or checklist items?
+
+Step 3 — Classify each delta:
+  BREAKING — project cannot function correctly without this update
+    (e.g. verdict type renamed, gate logic changed, new mandatory TASK_CONTEXT field)
+  ADDITIVE — project works without it but quality improves
+    (e.g. new WARNING trigger, new recommended tool)
+
+Step 4 — Apply changes (BREAKING first, then ADDITIVE):
+  - Update .agent.md files that reference changed rubrics or pipeline logic
+  - Update PROJECT.md sections that gained new required fields (merge — do NOT overwrite
+    project-specific values: §pre answers, custom rubrics, model choices)
+  - Update copilot-instructions.md if §0.9 changed
+  - Leave explicitly project-customised sections untouched unless BREAKING
+
+Step 5 — After any `.github/agents/**` or `.github/prompts/**` change:
+  - Update `.agents/compliance/awesome-copilot-gate.md` (required by 07-framework-operations).
+  - Maintain `.github/AGENTS_CHANGELOG.md` per the Prompt Versioning module.
+  - If evals exist → run evals: npx promptfoo eval
+
+Step 6 — Update PROJECT.md header:
+  > Spec: Multi-Agent Development Specification vNEW
+
+Rules:
+  - NEEDS_HUMAN if a BREAKING change requires a team decision
+    (e.g. model removed from an available tier, new mandatory gate requiring CI reconfiguration)
+  - Additive changes that require significant effort may be deferred:
+    record as TODO in PROJECT.md §6 Roadmap with spec version reference
+  - Language: create all file content in the configured Artifact language (PROJECT.md §pre; default English).
+    Communicate with the user in the configured User communication language (PROJECT.md §pre; default English).
+  - After completing: summarise what was changed, what was deferred, what requires human decision
+```
+
+---
+
+## 6.remove Remove playbook (step-by-step)
+
+This playbook is executed by the **Bootstrap Remover (Group 2)**.
+
+1. Dry-run: enumerate all files that will be deleted or modified.
+2. Confirm: wait for exact token APPLY.
+3. Apply: remove framework integration artifacts.
+
+Recommended removal modes:
+
+- Minimal removal (spec-only): remove vendored `framework/` package and fix links.
+- Full cleanup (spec + agent system): remove files introduced solely for this framework.
+
+If the repo has repurposed any files (e.g., `.github/agents/**` used for non-framework agents), removal MUST preserve them.
+
+---
+
+## 6.agent.3 Bootstrap Remover prompt (Group 2)
+
+```text
+You — Bootstrap Remover (Group 2). Your task is to remove the framework and framework-introduced agent scaffolding from this repository.
+
+Constraints:
+- Follow `framework/spec/07-framework-operations.md` safety gate: dry-run → wait for exact token APPLY → apply.
+- Default to the safest interpretation: never delete a file unless it was introduced solely for this framework.
+- If unsure whether a file is repurposed, ask NEEDS_HUMAN.
+
+Dry-run output MUST include:
+- A list of files to delete
+- A list of files to modify (and why)
+- A list of references/links that must be updated to avoid broken paths
+
+After the user replies APPLY, perform the removals and then summarise the result.
 ```
 
 ---

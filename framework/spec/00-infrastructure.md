@@ -77,6 +77,8 @@ Each project creates a dedicated agent-configuration repository (`<project>-Agen
 │   ├── session/                      ← .gitignore'd: per-session state (.agents/session/<trace_id>/TASK_CONTEXT.md)
 │   ├── traces/                       ← JSONL session logs (OTel GenAI format)
 │   ├── evals/                        ← golden tests for prompts (JSONL)
+│   ├── compliance/                   ← compliance artifacts (created on first trigger if absent)
+│   │   └── awesome-copilot-gate.md    ← required when editing .github/agents/** or .github/prompts/** (Operations §7.3)
 │   └── skills/                       ← Agent Skills (SKILL.md format)
 │       ├── <project>-backend/
 │       │   ├── SKILL.md
@@ -761,7 +763,7 @@ before spending iterations on a wrong implementation.
 ````markdown
 # PROJECT.md — <Project name>
 
-> Version: X.Y.Z · Stack: [Go / TS / ...] · Platform: [K8s / Azure / ...] · Spec: Multi-Agent Development Specification vX.Y.Z
+> Spec: Multi-Agent Development Specification vX.Y.Z
 
 ## 1. Stack and environments
 
@@ -925,7 +927,6 @@ Project:
    User communication language: English (default)
    Components (repositories):   ...
    Codebase baseline:           greenfield | legacy+rescue | old-project
-   Spec version:               vX.Y.Z  (spec version at project setup — see §6.agent.2)
 
 Tech stack:
    Languages and frameworks:    ...

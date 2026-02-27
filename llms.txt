@@ -14,9 +14,11 @@ software projects with AI agents. Spec is `framework/00-multi-agent-development-
 |---|---|
 | `framework/00-multi-agent-development-spec.md` | Canonical spec: roles, pipeline phases, rubrics, Reflexion, traces, upgrade procedure |
 | `framework/CHANGELOG.md` | Spec release notes shipped with the spec package |
+| `framework/templates/bootstrap-agents-templates/` | Bootstrap agent prompt templates for installing/upgrading the framework in downstream repos |
 | `AGENTS.md` | Machine-readable repo context — read first |
 | `PROJECT.md` | Project parameters: stack (no code — Copilot agents only), models, rate limits |
 | `.github/agents/` | System prompts: orchestrator, spec-editor, docs-critic, process-critic (`.agent.md` — VS Code Copilot agent definitions) |
+| `.agents/skills/awesome-copilot-navigator/` | Skill package: safely navigate/adapt examples from awesome-copilot (license + provenance + safe-use rules) |
 | `.agents/session/` | Gitignored per-session state: `.agents/session/<trace_id>/TASK_CONTEXT.md` |
 | `.agents/traces/` | JSONL session traces (OTel GenAI format). Retention per `PROJECT.md` → Trace mode (Mode 1 committed in this repo) |
 | `.github/copilot-instructions.md` | VS Code always-on context: workflow, constraints, active ADRs |

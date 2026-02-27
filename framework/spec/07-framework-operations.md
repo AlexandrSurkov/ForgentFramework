@@ -2,126 +2,124 @@
 
 > Split out of [00-multi-agent-development-spec.md](../00-multi-agent-development-spec.md) to keep the umbrella file small.
 
-This module describes how to use the framework in three operational tasks:
+This module defines **invariant operational policies and gates** for using the framework.
+It MUST NOT duplicate step-by-step procedures; the runnable Install/Upgrade/Remove playbooks live in the Adoption Roadmap module.
 
-- Install (apply the spec to a repo)
-- Upgrade (sync a repo to a newer spec version)
-- Remove (stop using the framework)
-
-For the detailed, phase-by-phase implementation workflow, see the Adoption Roadmap module: [06-adoption-roadmap.md](06-adoption-roadmap.md).
-
----
-
-## Install
-
-Goal: apply the framework to a repository (typically an AgentConfig repo) so agents have consistent prompts, skills, and governance.
-
-Checklist:
-
-```text
-- [ ] Add the `framework/` package to the repo root (vendored copy of the spec modules).
-- [ ] Create `PROJECT.md` at the repo root (next to `framework/`) using the template in the Infrastructure module: [00-infrastructure.md §0.8](00-infrastructure.md#08-projectmd--project-file-template).
-- [ ] Fill `PROJECT.md` → `## §pre: Project parameters` (see the questions in the Adoption Roadmap module).
-- [ ] Run the Implementation Agent prompt from the Adoption Roadmap module to create the agent system files.
-- [ ] Review diffs before committing; commit the resulting file set.
-```
-
-Notes:
-
-- Templates for `PROJECT.md`, `AGENTS.md`, `llms.txt`, and other baseline files are defined in [00-infrastructure.md](00-infrastructure.md).
-- The Implementation Agent prompt is defined in [06-adoption-roadmap.md](06-adoption-roadmap.md) under “Implementation Agent prompt”.
+Procedures (links only):
+- Install: [06-adoption-roadmap.md](06-adoption-roadmap.md) (`## 6.install`)
+- Upgrade: [06-adoption-roadmap.md](06-adoption-roadmap.md) (`## 6.upgrade`)
+- Remove: [06-adoption-roadmap.md](06-adoption-roadmap.md) (`## 6.remove`)
 
 ---
 
-## Upgrade
+## 7.1 Two-tier operations model (normative)
 
-Goal: update an existing repo that already uses the framework so it matches a newer spec version.
+The framework uses two distinct agent groups:
 
-Checklist:
+- **Group 1 — Project-working agents**: orchestrator + domain executors/critics (backend, frontend, devops, security, docs, QA, architect).
+  - Purpose: feature work, bugfixes, design, and reviews within the project.
+  - Constraint: Group 1 MUST NOT be used for framework installation/upgrade/removal tasks.
 
-```text
-- [ ] Identify versions:
-      - NEW: `framework/00-multi-agent-development-spec.md` header.
-      - OLD: `PROJECT.md` header and `PROJECT.md` §pre (“Spec version: vX.Y.Z”).
-- [ ] Read `framework/CHANGELOG.md` and summarize the delta (BREAKING vs ADDITIVE).
-- [ ] Update the vendored `framework/` package (replace it with the newer version).
-- [ ] Run the Spec Upgrade Agent prompt from the Adoption Roadmap module.
-- [ ] If any `.github/agents/*.agent.md` changed:
-      - record changes in `.github/AGENTS_CHANGELOG.md`
-      - run golden tests if your repo has them configured (see the Prompt Versioning module)
-- [ ] Update `PROJECT.md` to record the new spec version.
-```
+- **Group 2 — Bootstrap agents**: bootstrap orchestrator + bootstrap executors + bootstrap critic.
+  - Minimum executor set: installer, upgrader, remover.
+  - `bootstrap-orchestrator` and `bootstrap-critic` are OPTIONAL but RECOMMENDED (and shipped by default).
+  - Template-default set (shipped): `bootstrap-orchestrator`, `bootstrap-installer`, `bootstrap-upgrader`, `bootstrap-remover`, `bootstrap-critic`.
+  - Purpose: install/upgrade/remove the framework and the agent system scaffolding.
+  - Constraint: Group 2 MUST focus on agent-system and framework integration artifacts (examples: `framework/**` vendoring, `.github/agents/**`, `.github/prompts/**`, `.agents/**`, `PROJECT.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.vscode/**`).
+       Group 2 SHOULD NOT perform unrelated product feature work.
 
-References:
-
-- Upgrade procedure prompt: [06-adoption-roadmap.md](06-adoption-roadmap.md) (“Spec upgrade agent prompt”).
-- Change control for agent prompts: [05-prompt-versioning.md](05-prompt-versioning.md).
+Routing:
+- Any task whose primary goal is **Install**, **Upgrade**, or **Remove** MUST be routed to Group 2.
+- When a project is not yet bootstrapped (Group 2 does not exist), vanilla Copilot (non-agent chat) MAY be used to create Group 2 once, after which all operations MUST use Group 2.
 
 ---
 
-## Remove
+## 7.2 Safety gate for bootstrap operations (dry-run → confirm → apply)
 
-Goal: stop using the framework in a repo.
+For Install/Upgrade/Remove tasks, the acting bootstrap agent MUST follow this deterministic safety protocol:
 
-Safety rules:
+1. **Dry-run**: produce a complete change plan.
+      - MUST enumerate file operations: create/modify/delete and paths.
+      - MUST call out any destructive step.
 
-- Review diffs before deleting files.
-- Prefer committing removals as a single, reviewable change.
-- Only delete files that were introduced solely for this framework (keep anything that your repo has repurposed).
+2. **Confirm**: request explicit user confirmation.
+      - MUST wait for the user to respond with the exact token `APPLY` before writing or deleting files.
 
-### Minimal removal (spec-only)
+3. **Apply**: perform the changes and summarize what happened.
+      - MUST list modified files.
+      - MUST point to any follow-up validations (tests, evals).
 
-Use this mode when you only want to remove the spec package, but you are intentionally keeping existing agent files.
+---
 
-Checklist:
+## 7.3 AWESOME-COPILOT gate (deterministic)
 
-```text
-- [ ] Remove the vendored spec package:
-      - delete `framework/` (or the subset of `framework/` that you introduced).
-- [ ] Remove any repo governance files that were introduced solely to manage the vendored spec (if present).
-      Examples: `.github/SPEC_VERSIONING.md`, `.github/workflows/spec-versioning.yml`.
-- [ ] Audit retained repo artifacts for references to removed `framework/` paths; remove or update those references to avoid broken links.
-      Examples: `.github/copilot-instructions.md`, `.github/agents/**`, `.agents/skills/**`, `PROJECT.md`, `AGENTS.md`, `llms.txt`, `.vscode/**`.
-- [ ] Remove or update any documentation that points to `framework/` paths (README, runbooks).
+This gate makes external-prompt usage auditable and critic-enforceable.
+
+### 7.3.1 Trigger
+
+The gate triggers on **any** change to either path pattern:
+
+- `.github/agents/**/*.agent.md`
+- `.github/prompts/**/*.prompt.md`
+
+### 7.3.2 Required artifact
+
+When the trigger fires, the change set MUST include the gate report:
+
+- `.agents/compliance/awesome-copilot-gate.md`
+
+The report MUST be updated in the same change set as the agent/prompt edits.
+
+### 7.3.3 Required fields (minimum)
+
+The report MUST include the following sections so a critic can verify it deterministically:
+
+```markdown
+# AWESOME-COPILOT Gate Report
+
+## Trigger
+- Changed agent/prompt artifacts: yes
+
+## Changed artifacts (MUST be complete)
+- .github/agents/...
+- .github/prompts/...
+
+## External sources used
+- none
+  OR
+- Source collection: awesome-copilot
+  Upstream material: <url>
+  Immutable reference: <commit SHA or release tag>
+  License: <SPDX> (verified at <path>)
+
+## Actions taken
+- Injection review performed: yes|no
+- Per-artifact Provenance updated: yes|no (Appendix A1.1)
+- Attribution/notice handling: n/a|done
 ```
 
-### Full cleanup (spec + agent system files)
+### 7.3.4 Enforcement mechanism
 
-Use this mode when you want to remove both the spec package and the agent system scaffolding it introduced.
+- Executors MUST follow `framework/spec/03-rubrics/02-executor-rules.md` Rule 4.
+- Critics MUST enforce `framework/spec/03-rubrics/03-critic-rules-and-report-format.md` Rule 8 as a `BLOCKER`.
 
-Checklist:
+Note: this gate complements (and does not replace) the per-artifact provenance rules in Appendix A1.1: [appendices/01-appendix-a1-ai-and-llm-standards.md](appendices/01-appendix-a1-ai-and-llm-standards.md).
 
-```text
-- [ ] Do the “Minimal removal (spec-only)” steps.
+---
 
-- [ ] Remove agent system scaffolding (only if introduced solely for this framework; keep anything your repo repurposed):
-      - Root files:
-         - `PROJECT.md`
-         - `AGENTS.md`
-         - `llms.txt`
-      - `.gitignore`:
-         - remove or update ignore entries related to the agent system (commonly `.agents/session/`; and `.agents/traces/` if you are no longer using it).
-      - `.vscode/` workspace files:
-         - `.vscode/<project>.code-workspace` (remove workspace folder entries / settings that reference removed folders)
-         - `.vscode/settings.json` (remove `chat.agentFilesLocations` entries that point to `.github/agents`)
-         - `.vscode/extensions.json` (if it was introduced solely for the agent workspace)
-         - `.vscode/mcp.json` (if it was introduced solely for agent MCP servers)
-      - `.github/` agent + governance files:
-         - `.github/copilot-instructions.md`
-         - `.github/AGENTS_CHANGELOG.md`
-         - `.github/agents/` (all `*.agent.md`)
-         - `.github/instructions/` (if present)
-         - `.github/prompts/` (if present)
-         - `.github/hooks/` (if present)
-         - `.github/decisions/` (if present)
-         - `.github/pull_request_template.md` (if introduced by the framework)
-      - `.agents/` runtime + skills:
-         - `.agents/skills/`
-         - `.agents/traces/` (only remove if your trace mode does not use committed traces)
-         - `.agents/evals/` (if you adopted golden tests)
-         - `.agents/a2a/` (optional; if adopted)
-      - `domain/` (only if it was introduced solely for this framework)
+## 7.4 Spec version pinning (PROJECT.md header only)
 
-- [ ] Optional local cleanup:
-      - `.agents/session/` is usually gitignored; you MAY delete it locally to remove `TASK_CONTEXT.md` history.
-```
+Projects using this framework MUST record the applied spec version in a single canonical place:
+
+- `PROJECT.md` header line: `> Spec: Multi-Agent Development Specification vX.Y.Z`
+
+Projects MUST NOT use secondary spec-version fields (for example `Spec version: vX.Y.Z`) anywhere in `PROJECT.md`.
+
+During an upgrade, the upgrader MUST update the `> Spec:` header line to the new version.
+
+---
+
+## 7.5 Playbooks (links only)
+
+Detailed procedures and runnable prompts:
+- [06-adoption-roadmap.md](06-adoption-roadmap.md)

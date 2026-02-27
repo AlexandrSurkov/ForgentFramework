@@ -24,3 +24,16 @@ Minimal example:
 ```json
 {"trace_event":{"agent":"backend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```
+
+**Rule 4 — AWESOME-COPILOT gate for agent/prompt changes (deterministic)**
+
+Trigger:
+- Any change to `.github/agents/**/*.agent.md` OR `.github/prompts/**/*.prompt.md`.
+
+Requirements:
+- Executor MUST create or update the gate report artifact at `.agents/compliance/awesome-copilot-gate.md` in the same change set.
+- The report MUST include an explicit list of the changed agent/prompt artifacts so a critic can deterministically verify it.
+- The report MUST include all required sections/fields defined in `framework/spec/07-framework-operations.md` §7.3.3.
+- This gate is additive: it does not replace the per-artifact `## Provenance` requirements in Appendix A1.1.
+
+Details and required fields are defined in: `framework/spec/07-framework-operations.md`.

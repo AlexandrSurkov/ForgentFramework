@@ -10,7 +10,6 @@ Project:
   Artifact language:           English
   User communication language: TODO
   Components (repositories):   TODO
-  Spec version:               vTODO
 
 Tech stack:
   Languages and frameworks:    TODO

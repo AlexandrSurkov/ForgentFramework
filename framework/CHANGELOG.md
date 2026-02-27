@@ -6,6 +6,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.16] - 2026-02-27
+
+### Added
+- Two-tier bootstrap workflow assets (install/upgrade) and related bootstrap templates to make the recommended adoption path copy/pasteable.
+
+### Changed
+- Rewrote the adoption guidance to reflect the two-tier bootstrap workflow and to make the install vs. upgrade responsibilities explicit.
+- Strengthened `awesome-copilot` usage as an explicit gate in the workflow (license verification + provenance requirements are treated as enforceable checks when sourcing external examples).
+
+## [0.21.15] - 2026-02-27
+
+### Fixed
+- Scoped the `## Provenance` MUST requirement to Markdown-based artifacts and defined an adjacent `.provenance.md` file convention for non-Markdown artifacts.
+
+### Changed
+- Clarified provenance placement guidance to explicitly include `.prompt.md`.
+
+## [0.21.14] - 2026-02-27
+
+### Added
+- Appendix A1 policy for using `awesome-copilot` as an external prompt/example source, including per-material license verification and standardized provenance placement.
+- New skill package: `.agents/skills/awesome-copilot-navigator/SKILL.md`.
+
 ## [0.21.13] - 2026-02-27
 
 ### Changed
