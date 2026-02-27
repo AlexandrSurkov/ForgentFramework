@@ -1,7 +1,9 @@
-# AGENTS_CHANGELOG.md (Template)
+# AGENTS_CHANGELOG.md
 
-Track all changes to agent prompts under `.github/agents/`.
+Track all changes to agent prompts under `.github/agents/` (and any core pipeline behaviour tied to them).
 
 ## Unreleased
 
-- TODO: Describe prompt/pipeline changes.
+| Date | Agent | Type | Description | Author |
+|---|---|---|---|---|
+| YYYY-MM-DD | `<agent-name>` | `<behavior|tools|model|knowledge|fix|spec-upgrade>` | Describe the change | `<human|copilot>` |

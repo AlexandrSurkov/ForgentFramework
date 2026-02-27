@@ -87,13 +87,23 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
    > You MUST NEVER use edit tools to modify any project file (spec, docs, agents, etc.).
    > If you find yourself editing anything outside `.agents/`, STOP immediately.
 
+### Executor Efficiency Contract (MANDATORY — include in every executor prompt)
+When invoking any executor subagent, include the following contract in the executor prompt (in addition to the subtask description + acceptance criteria):
+
+- Scope: explicitly list in-scope paths and explicit out-of-scope areas. Do NOT modify any file matching `.github/agents/*critic*.agent.md` unless the subtask explicitly says so.
+- Pre-flight self-check (before editing): confirm you understand (1) acceptance criteria, (2) constraints, (3) scope/out-of-scope, (4) required output format, and (5) the planned verification method.
+- Workflow: do one exploration pass (search-first), one edit pass (small patch), one verification pass (format + acceptance criteria).
+- Iteration 2+: read `<SESSION_FILE>` `## Previous Attempts` first; address each finding 1:1; explicitly confirm each is resolved (or explicitly `ACKNOWLEDGED` if the process allows deferral).
+- Output format: return (a) files changed (exact paths), (b) verification performed, and (c) notes/risks. If the user asks for a strict output format (e.g., “Output ONLY patch text”), comply exactly and omit any extra commentary.
+
    - For each subtask:
      a) Increment `<SPAN_SEQ>`. Append an `execute` span to `<TRACE_FILE>`:
         `{"ts":"<ISO8601>","trace_id":"<TRACE_ID>","span_id":"s<SPAN_SEQ>","parent_span_id":"s01","agent":"<agent-name>","operation":"execute","subtask":"<N>: <title>","iteration":<iter>}`
         Invoke the appropriate executor as a subagent. Do not read or analyze files yourself:
         - Use the forgent-spec-editor agent to perform doc/spec edits. Pass the subtask description and acceptance criteria.
         - Use the forgent-docs-critic agent to perform any read-only analysis, review, or audit. Pass the analysis scope and criteria.
-         After the executor subagent returns, output a concise result summary in chat (1–2 sentences; no chain-of-thought): what changed / what was produced.
+        - **Executor efficiency contract (MANDATORY):** include `### Executor Efficiency Contract` in every executor prompt.
+        After the executor subagent returns, output a concise result summary in chat (1–2 sentences; no chain-of-thought): what changed / what was produced.
      b) **Critic framing (§3.3 Rule 1):** the subagent prompt for the critic MUST include ONLY:
         (1) original task text verbatim, (2) acceptance criteria, (3) executor's final output or
         a precise summary of changed files. Do NOT include full conversation history or executor reasoning.

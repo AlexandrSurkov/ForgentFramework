@@ -6,6 +6,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.23] - 2026-02-27
+
+### Fixed
+- Clarified orchestrator re-entry semantics for executor↔critic iteration loops (avoid ambiguous cap resets).
+- Aligned shipped observability templates with the canonical observability workflow and required trace/report fields.
+
+### Changed
+- Normalized `max_iterations: 5` across spec modules and shipped templates (consistency sweep).
+
 ## [0.21.22] - 2026-02-27
 
 ### Changed

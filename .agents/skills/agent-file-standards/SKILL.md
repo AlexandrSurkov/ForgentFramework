@@ -119,11 +119,13 @@ Proposed | Accepted | Superseded by ADR-YYY
 
 ## OTel Trace Files — Writing Spans
 
-**File naming:** `.agents/traces/<YYYYMMDD>-<slug>.jsonl`
+**File naming (recommended):** `.agents/traces/<YYYYMMDDTHHMMSSZ>-<task-slug>-<rand4>.jsonl`
+
+**File naming (legacy — avoid):** `.agents/traces/<YYYYMMDD>-<slug>.jsonl` (higher collision risk; keep only for back-compat)
 
 **Required span fields:**
 ```jsonl
-{"ts": "<ISO8601>", "trace_id": "<YYYYMMDD>-<slug>", "span_id": "s<NN>", "parent_span_id": "<s<NN>|null>", "agent": "<name>", "operation": "plan|execute|critique|escalate|complete", ...}
+{"ts": "<ISO8601>", "trace_id": "<YYYYMMDDTHHMMSSZ>-<task-slug>-<rand4>", "span_id": "s<NN>", "parent_span_id": "<s<NN>|null>", "agent": "<name>", "operation": "plan|execute|critique|escalate|complete", ...}
 ```
 
 **Checklist:**

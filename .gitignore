@@ -1,7 +1,7 @@
 # Agent temporary sessions (do not commit)
 .agents/session/
-# Trace mode is defined in PROJECT.md. This repo uses Mode 1 (committed sanitized traces).
-# .agents/traces/ — do NOT ignore
+# Traces are not committed in this repo.
+.agents/traces/
 
 # Secrets
 .env

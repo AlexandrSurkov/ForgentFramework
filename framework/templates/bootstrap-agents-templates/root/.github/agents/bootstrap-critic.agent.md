@@ -56,3 +56,15 @@ Return `REQUEST_CHANGES` with a `BLOCKER` if the operation’s steps, checks, or
 ### Findings
 | Severity | Category | Location | Issue | Recommendation |
 |---|---|---|---|---|
+
+## Observability (mandatory)
+
+- You MUST NOT write any files under `.agents/traces/**`.
+- After producing your verdict and findings, you MUST include a `trace_event` object in a `json` code block.
+- The `trace_event` MUST include `agent`, `operation: "critique"`, `subtask`, `iteration` (when applicable), `verdict`, `blockers`, and `warnings`.
+
+Minimal example:
+
+```json
+{"trace_event":{"agent":"bootstrap-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":0,"input_tokens":900,"output_tokens":220,"duration_ms":6000}}
+```

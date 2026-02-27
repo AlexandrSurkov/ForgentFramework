@@ -11,7 +11,7 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 
 | Path | Description |
 |---|---|
-| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.22) |
+| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.23) |
 | `framework/CHANGELOG.md` | Spec release notes shipped with the spec package |
 | `PROJECT.md` | Project parameters: stack, models, rate limits, §pre answers |
 | `AGENTS.md` | This file — pinned into orchestrator context on every run |
@@ -56,8 +56,8 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 | `analysis/audit` | Read-only inspection, no file changes | `docs-critic` (Mode B) + `process-critic` |
 | `docs-only` | Only `.md`/`.txt` changed **and** change is non-normative | `spec-editor` + `docs-critic` |
 | `tooling-only` | Repo tooling / CI scripts / workflows (no `framework/**` changes) | `spec-editor` + `process-critic` |
-| `spec/process-change` | Any normative change under `framework/**` (umbrella spec, spec modules, or templates shipped downstream) | `spec-editor` + `process-critic` |
-| `agent-prompt-change` | Any `.github/agents/*.agent.md` changed (aka “agent prompt update” in the framework canonical enum) | `spec-editor` + `process-critic`; AGENTS_CHANGELOG required |
+| `spec/process-change` | Any normative change under `framework/**` (umbrella spec, spec modules, or templates shipped downstream) | `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy) |
+| `agent-prompt-change` | Any `.github/agents/*.agent.md` changed (aka “agent prompt update” in the framework canonical enum) | `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy); AGENTS_CHANGELOG required |
 
 ## Workflow: maintaining `framework/**`
 
@@ -172,7 +172,7 @@ Executor MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before starting e
 | `analysis/audit` | `docs-critic` (Mode B — read-only, produces findings) | `process-critic` |
 | `docs-only` | `spec-editor` | `docs-critic` |
 | `tooling-only` | `spec-editor` | `process-critic` |
-| `spec/process-change` | `spec-editor` | `process-critic` |
+| `spec/process-change` | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy) |
 | `agent-prompt-change` | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy); AGENTS_CHANGELOG.md must be updated |
 
 ---

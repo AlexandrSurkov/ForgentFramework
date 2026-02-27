@@ -450,11 +450,14 @@ User adds ## Human Input to TASK_CONTEXT.md (template → §2.3):
 
    ## Human Input — [date]
    ### Decision on the blocker: <concrete instruction>
-   ### Permission: [x] Rephrase subtask and restart at iter=0
+   ### Permission:
+      - [x] Re-entry (one additional executor→critic loop after NEEDS_HUMAN)
+      - [ ] Rephrase subtask and restart at iter=0
+      - [ ] Close the subtask as WONT_FIX
 
 Orchestrator reads the entry and then:
    1. If “Rephrase” — resets iter to 0 and updates subtask description in TASK_CONTEXT.md.
-   2. If “Iteration 4” — continues the same subtask with iter=4, routed to the same executor.
+   2. If “Re-entry” — continues the same subtask after Human Input with the same executor, running exactly one additional executor→critic loop.
    3. If “WONT_FIX” — closes the subtask; records the reason in ADR or TASK_CONTEXT.md Decisions; pipeline continues without it.
 
 After re-entry, one executor loop runs: executor → critic → (APPROVE | NEEDS_HUMAN again).

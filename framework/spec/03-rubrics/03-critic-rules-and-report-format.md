@@ -64,7 +64,7 @@ What orchestrator records in `TASK_CONTEXT.md`:
 ```markdown
 ## Blockers / NEEDS_HUMAN
 - ESCALATED: Subtask #N — <disagreement summary>
-   Attempts: iter 1–5 + re-entry iter 1–5 — APPROVE not reached
+   Attempts: iter 1–5 + re-entry (1 loop) — APPROVE not reached
   Expected: product owner / tech lead decision
 ```
 

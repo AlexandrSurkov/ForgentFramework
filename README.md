@@ -81,7 +81,7 @@ Most changes are spec edits, agent prompt edits, or pipeline code changes.
 1. Create a feature branch.
 2. Describe the task to the `forgent-orchestrator` agent in VS Code Copilot Chat.
 3. Review the diff produced by the executor.
-4. Open a PR using `.github/pull_request_template.md`.
+4. Open a PR. (This repository does not include a root PR template; the downstream template lives at `framework/templates/repo-files-templates/root/.github/pull_request_template.md`.)
 
 ## Upgrading
 

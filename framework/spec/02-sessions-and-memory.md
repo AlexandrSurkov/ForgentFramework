@@ -21,9 +21,9 @@ Orchestrator creates this file at the beginning of each session:
 ## Decomposition
 | # | Subtask | Role | Depends on | Iteration | Status |
 |---|---|---|---|---|---|
-| 1 | ... | backend-dev | — | 1/3 | IN_PROGRESS |
-| 2 | ... | backend-dev | — | 0/3 | TODO |
-| 3 | ... | frontend-dev | #2 | 0/3 | BLOCKED |
+| 1 | ... | backend-dev | — | 1/5 | IN_PROGRESS |
+| 2 | ... | backend-dev | — | 0/5 | TODO |
+| 3 | ... | frontend-dev | #2 | 0/5 | BLOCKED |
 
 ## Previous Attempts
 <!-- Filled after each REQUEST_CHANGES (Reflexion pattern). -->
@@ -107,12 +107,13 @@ Current position: Phase 3, Cycle 1 (Refactor)
 - [new criterion]
 
 ### Permission for the next iteration
-- [ ] Start iteration 4 (exception to max=3)
+- [ ] Allow re-entry (one additional executor↔critic loop after NEEDS_HUMAN)
 - [x] Rephrase the subtask and restart at iter=0
 - [ ] Close the subtask as WONT_FIX
 ```
 
 Orchestrator upon receiving Human Input:
 1. Appends `## Human Input` to `TASK_CONTEXT.md`.
-2. Resets the subtask iteration counter to 0 (if “rephrase” was chosen).
-3. Continues the workflow with the updated criteria.
+2. If “rephrase” was chosen, resets the subtask iteration counter to 0.
+3. If “re-entry” was chosen, runs exactly one additional executor→critic loop for the same subtask.
+4. Continues the workflow with the updated criteria.

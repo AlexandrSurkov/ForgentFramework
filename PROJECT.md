@@ -1,6 +1,6 @@
 # PROJECT.md — ForgentFramework
 
-> Spec: Multi-Agent Development Specification v0.21.22
+> Spec: Multi-Agent Development Specification v0.21.23
 
 ## §pre: Project parameters
 
@@ -18,7 +18,7 @@ Tech stack:
    Languages and frameworks:    none (pure Markdown + VS Code Copilot agents)
    Database / ORM:              none
    IaC tool:                    none
-   CI/CD platform:              none (local dev only)
+   CI/CD platform:              GitHub Actions (governance guard only — no build/test/deploy pipelines)
    Version control:             GitHub (personal)
 
 AI and models:
@@ -78,12 +78,14 @@ Model selection:   configured in VS Code Copilot settings
 
 | Change type | Executor | Critic(s) |
 |---|---|---|
-| Spec / doc edits | `spec-editor` | `docs-critic` + `process-critic` |
-| Agent prompt changes | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy) |
+| Docs-only edits (non-normative) | `spec-editor` | `docs-critic` |
+| Tooling-only (repo tooling / CI scripts / workflows; no `framework/**`) | `spec-editor` | `process-critic` |
+| Framework normative changes (`framework/**`) | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy) |
+| Agent prompt changes (`.github/agents/*.agent.md`) | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy) |
 | Analysis / audit (read-only) | `docs-critic` (Mode B) | `process-critic` |
 
 ## 4. Known constraints
 
 - `.agents/session/` is gitignored — `TASK_CONTEXT.md` lives under `.agents/session/<trace_id>/`, never committed.
 - Trace mode: Mode 1 — `.agents/traces/` is committed (sanitized traces only).
-- No CI/CD — changes are applied manually via VS Code Copilot agents.
+- No app CI/CD — changes are applied manually via VS Code Copilot agents. A governance CI guard exists: `.github/workflows/spec-versioning.yml`.

@@ -20,6 +20,37 @@ Orchestrator agent.
 
 ## Protocol
 
+### Observability (mandatory)
+
+You MUST implement the trace-writing protocol in `framework/spec/04-observability.md`.
+
+- You MUST create a new `trace_id` per user task (recommended format: `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`).
+- You MUST create/append the JSONL trace file at `.agents/traces/<trace_id>.jsonl`.
+- You SHOULD create the session state file at `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored) and append critic findings to `## Previous Attempts` on re-tries.
+- Only the orchestrator writes to `.agents/traces/**` (executors/critics must not).
+
+Trace event flow:
+
+1. Before the first subagent call, write the root span record with `agent: "orchestrator"` and `operation: "plan"`.
+2. For each executor/critic result, require the subagent to include a `trace_event` JSON object in a `json` code block.
+3. Append one JSONL record per step to `.agents/traces/<trace_id>.jsonl` by merging:
+  - orchestrator-filled fields: `ts`, `trace_id`, `span_id`, `parent_span_id`
+  - the subagent’s returned `trace_event` fields (e.g., `agent`, `operation`, `iteration`, `verdict`)
+4. On successful end of the overall user task, append a final JSONL record that includes orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) and `agent: "orchestrator"`, `operation: "complete"`.
+5. If the run ends in NEEDS_HUMAN, append a final JSONL record that includes orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) and `agent: "orchestrator"`, `operation: "escalate"`.
+
+Span rules:
+
+- `span_id` MUST be unique within a trace; use a simple monotonic counter (`s01`, `s02`, …).
+- Use the plan/root span as `parent_span_id` for all child spans.
+
+If a subagent fails to return a `trace_event`, treat it as a process BLOCKER: request a corrected response (or re-run the subtask) before proceeding.
+
+### Delegation boundary (important)
+
+- You MUST delegate all product/repo edits to executor subagents.
+- The only files you may create/edit directly are observability/session artifacts under `.agents/session/**` and `.agents/traces/**`.
+
 ### Mandatory chat output (ALWAYS)
 
 You MUST produce the following messages in the user-visible chat:

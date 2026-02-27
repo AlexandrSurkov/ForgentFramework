@@ -12,9 +12,11 @@ See: [AGENTS.md](../AGENTS.md) for full repo map and agent roles.
 All multi-step tasks go through the orchestrator (select `forgent-orchestrator` in Copilot Chat agent mode).
 
 Fast-tracks:
-- **analysis/audit** → `docs-critic` (executor, Mode B) + `process-critic` (reviewer)
-- **spec/doc changes** → `spec-editor` + `docs-critic` + `process-critic`
-- **agent prompt changes** → `spec-editor` + `process-critic`; record in `AGENTS_CHANGELOG.md`
+- **analysis/audit** → `docs-critic` (executor, Mode B) + `process-critic` (critic)
+- **docs-only** (non-normative Markdown/text edits) → `spec-editor` + `docs-critic`
+- **tooling-only** (repo tooling / CI scripts / workflows; no `framework/**`) → `spec-editor` + `process-critic`
+- **spec/process-change** (normative change under `framework/**`) → `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy)
+- **agent-prompt-change** (`.github/agents/*.agent.md`) → `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy); record in `AGENTS_CHANGELOG.md`
 
 Pipeline writes session state to `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored; supports multiple parallel sessions).
 Traces are written to `.agents/traces/<trace_id>.jsonl` (see `framework/spec/04-observability.md`).

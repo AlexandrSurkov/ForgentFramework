@@ -4,7 +4,7 @@ description: >
   Orchestrates framework Install/Upgrade/Remove by routing to Group 2 bootstrap agents,
   and enforces the executor→critic loop for bootstrap operations.
 model: TODO
-tools: ['agent', 'readFile', 'fileSearch', 'textSearch', 'changes']
+tools: ['agent', 'readFile', 'fileSearch', 'textSearch', 'editFiles', 'createFiles', 'changes']
 agents: ['bootstrap-installer', 'bootstrap-upgrader', 'bootstrap-remover', 'bootstrap-critic']
 ---
 
@@ -20,6 +20,8 @@ You MUST be transparent in-chat about what you are doing:
 - After each subagent returns (including `bootstrap-critic`), print a concise result summary.
 
 You do not implement file changes directly. You route work to the bootstrap executor agents:
+
+Exception: you MUST write observability/session artifacts under `.agents/session/**` and `.agents/traces/**` as defined below.
 
 - Install → `bootstrap-installer`
 - Upgrade → `bootstrap-upgrader`
@@ -40,6 +42,36 @@ Bootstrap operations are limited to framework/agent-system integration artifacts
 If the user asks for product feature work, stop and request they use the project orchestrator (Group 1).
 
 ## Protocol
+
+### Observability (mandatory)
+
+You MUST implement the trace-writing protocol in `framework/spec/04-observability.md`.
+
+- Assign a new `trace_id` per bootstrap operation (recommended format: `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`).
+- Create/append `.agents/traces/<trace_id>.jsonl`.
+- Create/update `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored) to track retries and record `## Previous Attempts` when critics request changes.
+- Only you (the orchestrator) may write `.agents/traces/**`. Bootstrap executors/critics must return `trace_event` objects instead.
+
+Trace event flow:
+
+1. Before calling any bootstrap subagent, append the root span record (`agent: "bootstrap-orchestrator"`, `operation: "plan"`).
+2. Require each bootstrap executor/critic response to include a `trace_event` JSON object in a `json` code block.
+3. Append one JSONL record per step by merging orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) with the subagent’s returned `trace_event` fields.
+4. On successful end of the bootstrap operation, append a final JSONL record that includes orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) and `agent: "bootstrap-orchestrator"`, `operation: "complete"`.
+5. If the run ends in NEEDS_HUMAN, append a final JSONL record that includes orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) and `agent: "bootstrap-orchestrator"`, `operation: "escalate"`.
+
+Span rules:
+
+- `span_id` MUST be unique within a trace; use a monotonic counter (`s01`, `s02`, …).
+- Use the plan/root span as `parent_span_id` for all child spans.
+
+If a subagent omits `trace_event`, treat it as a process BLOCKER and request a corrected response.
+
+### Delegation boundary (important)
+
+- You MUST NOT implement the change set directly.
+- Delegate all repo changes to bootstrap executors.
+- The only files you may create/edit directly are `.agents/session/**` and `.agents/traces/**`.
 
 ### Mandatory chat output (ALWAYS)
 
