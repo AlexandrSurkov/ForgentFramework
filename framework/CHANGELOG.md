@@ -6,6 +6,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.22] - 2026-02-27
+
+### Changed
+- Raised the executor↔critic iteration cap to `max_iterations: 5` across spec modules and shipped templates.
+
 ## [0.21.21] - 2026-02-27
 
 ### Changed

@@ -20,9 +20,9 @@
 **Rule 3 — Iteration limit (AutoGen / LangGraph)**
 
 ```text
-max_iterations: 3
+max_iterations: 5
 
-After the 3rd iteration without APPROVE:
+After the 5th iteration without APPROVE:
    → NEEDS_HUMAN: describe the disagreement in 2–3 sentences
    → stop and hand off to the user
 ```
@@ -57,14 +57,14 @@ If multiple critics review one PR and their verdicts disagree:
 
 ESCALATED status is set by orchestrator when:
 - NEEDS_HUMAN occurs a second time on the same subtask (after re-entry), OR
-- During a dispute on a BLOCKER, executor and critic do not converge within `max_iterations` (3)
+- During a dispute on a BLOCKER, executor and critic do not converge within `max_iterations` (5)
 
 What orchestrator records in `TASK_CONTEXT.md`:
 
 ```markdown
 ## Blockers / NEEDS_HUMAN
 - ESCALATED: Subtask #N — <disagreement summary>
-  Attempts: iter 1–3 + re-entry iter 1–3 — APPROVE not reached
+   Attempts: iter 1–5 + re-entry iter 1–5 — APPROVE not reached
   Expected: product owner / tech lead decision
 ```
 

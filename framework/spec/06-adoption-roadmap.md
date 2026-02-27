@@ -626,7 +626,7 @@ Merge → main + tag v1.4.7
 | **APPROVE** | Critic verdict: no BLOCKERs; WARNING allowed |
 | **REQUEST_CHANGES** | Critic verdict: there is a BLOCKER; executor fixes and repeats |
 | **REJECT** | Critic verdict: fundamental constitutional violation; not patch-fixable |
-| **NEEDS_HUMAN** | Reached max_iterations=3 or human input is required |
+| **NEEDS_HUMAN** | Reached max_iterations=5 or human input is required |
 | **BLOCKER** | Severity that blocks moving to the next phase |
 | **WARNING** | Severity that can still allow APPROVE with explicit ACKNOWLEDGED |
 | **SUGGESTION** | Severity that does not block; optional |

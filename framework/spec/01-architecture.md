@@ -11,9 +11,9 @@ User
        ├──► [architect]           ─┐
        ├──► [backend-dev]         ─┤
        ├──► [frontend-dev]        ─┤
-       ├──► [qa-engineer]         ─┤  executor → critic → [iteration, max 3]
+   ├──► [qa-engineer]         ─┤  executor → critic → [iteration, max 5]
        ├──► [devops-engineer]     ─┤       ↑___________________________|
-       ├──► [security]            ─┤  if iter=3 and VERDICT≠APPROVE → NEEDS_HUMAN
+   ├──► [security]            ─┤  if iter=5 and VERDICT≠APPROVE → NEEDS_HUMAN
        └──► [documentation-writer]─┘
                      │
                      ▼
@@ -43,7 +43,7 @@ User
 - Plan-and-Execute — orchestrator builds the full plan before execution
 - ReAct — every executor: Reasoning → Acting → Observation
 - Reflexion — executor reads critique from previous attempts before the next iteration
-- Critic isolation — critic sees only the result, not chain-of-thought; escalate to human if iter=3 without APPROVE
+- Critic isolation — critic sees only the result, not chain-of-thought; escalate to human if iter=5 without APPROVE
 
 ---
 
@@ -293,7 +293,7 @@ if any: ...
 │  User writes/updates domain/specs/*.feature              │
 │  architect reviews: completeness, contradictions         │
 │  architect-critic: APPROVE / REQUEST_CHANGES             │
-│  max iter: 3 → if .feature not agreed → NEEDS_HUMAN      │
+│  max iter: 5 → if .feature not agreed → NEEDS_HUMAN      │
 │    (requirements contradictory or incomplete —           │
 │     user clarifies before Phase 1)                       │
 └─────────────────────────────────────────────────────────┘
@@ -304,8 +304,8 @@ if any: ...
 │  1a. Executor writes tests from .feature (sets Red)      │
 │  1b. Executor writes code (all tests Green)              │
 │  Critic: are all Given/When/Then covered?                │
-│  max iter: 3 per subtask                                 │
-│  If tests not Green after iter=3 → NEEDS_HUMAN            │
+│  max iter: 5 per subtask                                 │
+│  If tests not Green after iter=5 → NEEDS_HUMAN            │
 │    (spec is contradictory or task statement needs edits) │
 └─────────────────────────────────────────────────────────┘
                ↓ APPROVE →
@@ -321,7 +321,7 @@ if any: ...
 │  Cycle 5: Mutation — score ≥70%                          │
 │  If Cycle 1/2/3/4 fails (code issue) → return to Phase 1 │
 │    (code-fix subtask, iter+1)                            │
-│  Mutation < 50% after iter=3 → BLOCKER → NEEDS_HUMAN     │
+│  Mutation < 50% after iter=5 → BLOCKER → NEEDS_HUMAN     │
 │  Mutation 50–70% → WARNING: transition allowed;          │
 │    executor adds coverage in the same PR                 │
 └─────────────────────────────────────────────────────────┘
@@ -382,7 +382,7 @@ if any: ...
 │  WARNING (C4 not updated / .feature outdated):           │
 │    → architect updates docs in Phase 4                   │
 │    → rerun Phase 4 (no return to Phase 1)                │
-│  iter=3 without APPROVE → NEEDS_HUMAN                    │
+│  iter=5 without APPROVE → NEEDS_HUMAN                    │
 └─────────────────────────────────────────────────────────┘
                ↓ APPROVE →
 
@@ -397,7 +397,7 @@ if any: ...
 │  BLOCKER in image/infra (Critical CVE):                  │
 │    → devops-engineer updates image within Phase 5        │
 │    → rerun Phase 5 (no return to Phase 1)                │
-│  iter=3 without APPROVE → NEEDS_HUMAN                    │
+│  iter=5 without APPROVE → NEEDS_HUMAN                    │
 └─────────────────────────────────────────────────────────┘
                ↓ APPROVE →
 
@@ -414,7 +414,7 @@ if any: ...
 
 | Phase | Cycles | Rationale |
 |---|---|---|
-| Development | max 3 iter/subtask | AutoGen rule: after 3 → NEEDS_HUMAN |
+| Development | max 5 iter/subtask | AutoGen rule: after 5 → NEEDS_HUMAN |
 | In-code tests | 5 | unit; edge cases; integration; contracts (CDC); mutation score |
 | Deployed tests | 1 | smoke+E2E+load: system is alive under load |
 | Optimization | 2 | Cycle 1: Refactor; Cycle 2: Performance |
@@ -432,7 +432,7 @@ Position A (normal):
    User receives the result after Phase 6.
 
 Position B (NEEDS_HUMAN):
-   Orchestrator is stuck at iter=3 without APPROVE.
+   Orchestrator is stuck at iter=5 without APPROVE.
    User receives NEEDS_HUMAN with a description of the disagreement.
    User decides and provides Human Input (see template below).
    Pipeline continues from the stuck point.
@@ -472,23 +472,23 @@ If NEEDS_HUMAN occurs a second time on the same subtask — ESCALATED (see §3.3
 
 #### 1.3.6.1 Tests are failing (RED)
 
-| Phase | Situation | Action | After iter=3 |
+| Phase | Situation | Action | After iter=5 |
 |---|---|---|---|
 | **Phase 1** | Tests are not Green (code does not compile or assertions fail) | Executor fixes code → critic → repeat | NEEDS_HUMAN: "tests do not match the spec — `.feature` may be contradictory" |
-| **Phase 2, Cycles 1–4** | Unit / Edge / Integration / Contract failed | Executor fixes code → return to Phase 1 (subtask: code-fix, iter+1) | NEEDS_HUMAN after 3 attempts in Phase 1 |
-| **Phase 2.5** | E2E failed (code issue, not env) | qa traces the failure → orchestrator returns to Phase 1 (code-fix) | NEEDS_HUMAN after iter=3 |
+| **Phase 2, Cycles 1–4** | Unit / Edge / Integration / Contract failed | Executor fixes code → return to Phase 1 (subtask: code-fix, iter+1) | NEEDS_HUMAN after 5 attempts in Phase 1 |
+| **Phase 2.5** | E2E failed (code issue, not env) | qa traces the failure → orchestrator returns to Phase 1 (code-fix) | NEEDS_HUMAN after iter=5 |
 | **Phase 2.5** | Smoke failed (env / deploy issue) | NEEDS_HUMAN immediately to devops-engineer (not to qa) | — |
-| **Phase 3.5** | Unit / Integration failed after refactor | Return to Phase 3 (iter+1) | NEEDS_HUMAN after iter=3 |
+| **Phase 3.5** | Unit / Integration failed after refactor | Return to Phase 3 (iter+1) | NEEDS_HUMAN after iter=5 |
 | **Phase 3.5** | Smoke failed after re-deploy | NEEDS_HUMAN to devops-engineer | — |
 
 #### 1.3.6.2 Insufficient coverage
 
-| Situation | Severity | Action | After iter=3 |
+| Situation | Severity | Action | After iter=5 |
 |---|---|---|---|
 | Mutation score **< 50%** (Phase 2, Cycle 5) | BLOCKER | Executor adds tests → critic → repeat | NEEDS_HUMAN: "coverage is unreachable without refactoring code or extending the test plan" |
 | Mutation score **50–70%** (Phase 2, Cycle 5) | WARNING | Transition to Phase 3 is allowed; executor **must** add coverage in the same PR before merge | If WARNING is not resolved before merge → ACKNOWLEDGED thread in PR |
-| Mutation score **degraded** after refactor (Phase 3.5) | BLOCKER | Return to Phase 3 to restore coverage | NEEDS_HUMAN after iter=3 |
-| Not all `.feature` scenarios have a Unit test (Phase 2, Cycle 1) | BLOCKER | Executor adds missing tests | NEEDS_HUMAN after iter=3 |
+| Mutation score **degraded** after refactor (Phase 3.5) | BLOCKER | Return to Phase 3 to restore coverage | NEEDS_HUMAN after iter=5 |
+| Not all `.feature` scenarios have a Unit test (Phase 2, Cycle 1) | BLOCKER | Executor adds missing tests | NEEDS_HUMAN after iter=5 |
 
 > **Goal of return:** executor must ensure that **all tests pass** (GREEN) before
 > the orchestrator initiates transition to the next phase again. Return means not "take a look",
@@ -507,24 +507,24 @@ If NEEDS_HUMAN occurs a second time on the same subtask — ESCALATED (see §3.3
 | — | Sets `TASK_CONTEXT.md` status to `NEEDS_HUMAN` with the critic's explanation |
 | — | Task is returned to the human: reason for REJECT + what needs to change in the problem statement |
 
-> **Difference from NEEDS_HUMAN due to iter=3:** REJECT does not depend on the number of iterations — it is a qualitative assessment,
+> **Difference from NEEDS_HUMAN due to iter=5:** REJECT does not depend on the number of iterations — it is a qualitative assessment,
 > not an exhausted limit. The task is not resumed without explicit human approval.
 
 ---
 
 #### 1.3.7 Alignment with Reflexion loop
 
-The Pipeline does not replace the internal executor→critic loop (max 3 iter) — it is built **on top of** it.
+The Pipeline does not replace the internal executor→critic loop (max 5 iter) — it is built **on top of** it.
 Each phase consists of one or more subtasks, each going through a Reflexion cycle.
 
 ```text
 [Pipeline]
   └─ Phase 1: Development
-       └─ subtask: write tests       [executor → critic, max 3]
-       └─ subtask: implement handlers [executor → critic, max 3]
+     └─ subtask: write tests       [executor → critic, max 5]
+     └─ subtask: implement handlers [executor → critic, max 5]
   └─ Phase 2: Tests
-       └─ subtask: cycle 1 unit      [executor → critic, max 3]
-       └─ subtask: cycle 2 edge cases [executor → critic, max 3]
+     └─ subtask: cycle 1 unit      [executor → critic, max 5]
+     └─ subtask: cycle 2 edge cases [executor → critic, max 5]
 ```
 
 ---
@@ -566,7 +566,7 @@ The orchestrator MUST set `fast_track` to exactly one of these string values:
 
 ```text
 1. branch: hotfix/<id>-<slug> from main
-2. Phase 1: executor → quick fix (max 3 iter, no full TDD)
+2. Phase 1: executor → quick fix (max 5 iter, no full TDD)
 3. Phase 2: unit tests only — existing tests are not broken, regression test for the bug
 4. CI Gate 1: all tests green
 5. Phase 5: security-critic — no secrets leaked?

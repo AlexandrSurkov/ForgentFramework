@@ -29,7 +29,7 @@ software projects with AI agents. Spec is `framework/00-multi-agent-development-
 
 ## Key concepts
 
-- **Orchestrator**: decomposes task → routes `executor=<name>` → max 3 iterations → `TASK_COMPLETE` or `NEEDS_HUMAN`
+- **Orchestrator**: decomposes task → routes `executor=<name>` → max 5 iterations → `TASK_COMPLETE` or `NEEDS_HUMAN`
 - **Executor**: makes changes; reads `## Previous Attempts` in `TASK_CONTEXT.md` before each iteration (Reflexion)
 - **Critic**: reads only final result (critic isolation); returns `APPROVE` / `REQUEST_CHANGES` / `REJECT`
 - **TASK_CONTEXT.md**: per-session scratch file at `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored); holds task, decomposition, previous attempts

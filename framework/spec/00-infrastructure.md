@@ -579,7 +579,7 @@ Critic replies:
    - Withdraws the finding → closes the thread with ACKNOWLEDGED
    - Insists              → strengthens the argument (iteration +1)
 
-If a BLOCKER/WARNING is not resolved within `max_iterations` (3) → orchestrator escalates: NEEDS_HUMAN
+If a BLOCKER/WARNING is not resolved within `max_iterations` (5) → orchestrator escalates: NEEDS_HUMAN
 SUGGESTION may be rejected by the executor without escalation (ACKNOWLEDGED is sufficient).
 ```
 

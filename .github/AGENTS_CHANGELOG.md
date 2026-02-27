@@ -43,6 +43,7 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-02-26 | `forgent-orchestrator` | behavior | Aligned `REJECT` semantics with canonical spec: `REJECT` escalates immediately to `NEEDS_HUMAN` (no further iterations for that subtask). | copilot |
 | 2026-02-27 | `forgent-orchestrator` | behavior | Require explicit chat plan before first subagent call; require per-call `Subtask <id>:` preamble including `call=<executor|critic>` + subagent job; require concise post-executor and post-critic result summaries. | copilot |
 | 2026-02-27 | `forgent-orchestrator` | behavior | Expand per-call `Subtask <id>:` preamble to also include minimal relevant context (`context=inputs:<...>; constraints:<...>; success:<...>`) for every subagent call, including critic calls. | copilot |
+| 2026-02-27 | `forgent-orchestrator` | behavior | Raised the executor↔critic iteration cap from 3 to 5. | copilot |
 
 ## Change Types
 

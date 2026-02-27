@@ -1,0 +1,2 @@
+{"ts":"2026-02-27T19:10:00Z","trace_id":"20260227T191000Z-reports-abc-iter5-5c2a","span_id":"s01","parent_span_id":null,"agent":"orchestrator","operation":"plan","task":"Restore audit reports A/B/C as session artifacts; change max critic iterations 3->5 across spec/templates/orchestrator with release hygiene."}
+{"ts":"2026-02-27T19:11:00Z","trace_id":"20260227T191000Z-reports-abc-iter5-5c2a","span_id":"s02","parent_span_id":"s01","agent":"forgent-docs-critic","operation":"execute","subtask":"1: Regenerate Report A (Spec audit)","iteration":1}

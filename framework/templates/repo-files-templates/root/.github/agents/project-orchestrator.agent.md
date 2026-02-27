@@ -1,7 +1,7 @@
 ---
 name: <project>-orchestrator
 description: >
-  Orchestrator: decomposes tasks and routes executors + critics (max 3 iterations).
+  Orchestrator: decomposes tasks and routes executors + critics (max 5 iterations).
 model: TODO
 tools:
   - readFile

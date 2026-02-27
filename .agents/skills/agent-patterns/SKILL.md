@@ -29,7 +29,7 @@ description: "Action-oriented checklists for multi-agent pipeline design: Reflex
 | **Self-Refine** | Format for every critic finding (location + root cause + fix) |
 | **LLM-as-Judge** | Justification for critic agent isolation design |
 | **CRITIC** | Critic is allowed only read-only tools — no web calls, no writes |
-| **AutoGen** | Termination rule: `max_iterations: 3` → `NEEDS_HUMAN` |
+| **AutoGen** | Termination rule: `max_iterations: 5` → `NEEDS_HUMAN` |
 | **Self-Consistency** | High-stakes verdict → run critic twice; escalate on disagreement |
 | **Constitutional AI** | BLOCKER/WARNING/SUGGESTION severity definitions |
 
@@ -45,7 +45,7 @@ description: "Action-oriented checklists for multi-agent pipeline design: Reflex
 **Orchestrator checklist:**
 - [ ] Append critic findings verbatim to `## Previous Attempts` (no paraphrase — A1.6)
 - [ ] Pass file path, not inline findings
-- [ ] Counter: if iteration == 3 and no APPROVE → escalate `NEEDS_HUMAN`
+- [ ] Counter: if iteration == 5 and no APPROVE → escalate `NEEDS_HUMAN`
 
 **Red flags:**
 - Executor repeats the same mistake on iter 2 → `## Previous Attempts` missing or skipped
@@ -140,7 +140,7 @@ Every critic finding must have all three:
 3. **Actionable fix** — exactly what to change
 
 ❌ Bad: `WARNING: unclear prose in §3.2`
-✅ Good: `WARNING §3.2 "Iteration rules": "iterate as needed" has no termination condition → specify max_iterations: 3 per AutoGen pattern`
+✅ Good: `WARNING §3.2 "Iteration rules": "iterate as needed" has no termination condition → specify max_iterations: 5 per AutoGen pattern`
 
 ---
 

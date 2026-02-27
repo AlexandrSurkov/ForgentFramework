@@ -1,6 +1,6 @@
 # PROJECT.md — ForgentFramework
 
-> Spec: Multi-Agent Development Specification v0.21.21
+> Spec: Multi-Agent Development Specification v0.21.22
 
 ## §pre: Project parameters
 

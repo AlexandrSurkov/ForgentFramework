@@ -1,5 +1,5 @@
 ---
-description: Decomposes tasks, assigns executor and critic, runs the Executor-Critic loop (max 3 iterations; REJECT escalates immediately), issues TASK_COMPLETE or NEEDS_HUMAN.
+description: Decomposes tasks, assigns executor and critic, runs the Executor-Critic loop (max 5 iterations; REJECT escalates immediately), issues TASK_COMPLETE or NEEDS_HUMAN.
 name: forgent-orchestrator
 tools: ['agent', 'readFile', 'createFiles', 'editFiles', 'fileSearch', 'textSearch']
 agents: ['forgent-spec-editor', 'forgent-docs-critic', 'forgent-process-critic']
@@ -115,8 +115,8 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
        e) If critic verdict is REJECT:
             - Append the critic's findings to `<SESSION_FILE>` under `## Previous Attempts` (§3.1 Rule 4) (verbatim).
             - Escalate immediately to NEEDS_HUMAN with a disagreement summary. Do NOT re-invoke the executor for this subtask.
-       f) Iterate (max 3 iterations) for REQUEST_CHANGES only.
-       g) If verdict is not APPROVE after 3 iterations: escalate to NEEDS_HUMAN with a disagreement summary.
+      f) Iterate (max 5 iterations) for REQUEST_CHANGES only.
+      g) If verdict is not APPROVE after 5 iterations: escalate to NEEDS_HUMAN with a disagreement summary.
 7. Final verification (after critics APPROVE all subtasks):
    - Observability: output exactly one line:
      `Final verification -> scope=<files/areas touched> -> checks=<what was verified>`
@@ -131,7 +131,7 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
 ## Termination
 - Output `TASK_COMPLETE` when all subtasks are approved and final verification passes.
 - Output `NEEDS_HUMAN` with a summary if any subtask is `REJECT`ed.
-- Output `NEEDS_HUMAN` with a summary if any subtask cannot be resolved after 3 iterations.
+- Output `NEEDS_HUMAN` with a summary if any subtask cannot be resolved after 5 iterations.
 
 ## Behavior Rules
 - Follow the principles and rubrics in 00-multi-agent-development-spec.md §3.

@@ -11,7 +11,7 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 
 | Path | Description |
 |---|---|
-| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.21) |
+| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.22) |
 | `framework/CHANGELOG.md` | Spec release notes shipped with the spec package |
 | `PROJECT.md` | Project parameters: stack, models, rate limits, §pre answers |
 | `AGENTS.md` | This file — pinned into orchestrator context on every run |
@@ -128,10 +128,10 @@ Orchestrator  ──── classifies fast-track type
     │                                                            │
     ├─ REQUEST_CHANGES ─► Orchestrator writes findings to        │
     │                      TASK_CONTEXT.md § Previous Attempts   │
-    │                      re-invoke Executor (max 3 iterations) ┘
+    │                      re-invoke Executor (max 5 iterations) ┘
     │
     └─ REJECT ────────────────────────────────► NEEDS_HUMAN
-    └─ 3 iterations without APPROVE ─────────► NEEDS_HUMAN
+    └─ 5 iterations without APPROVE ─────────► NEEDS_HUMAN
 ```
 
 After all subtasks are approved → Orchestrator runs final verification → `TASK_COMPLETE`.
@@ -156,7 +156,7 @@ What is passed to each agent role — these rules are absolute and must never be
 | Critic returns `APPROVE` | Move to next subtask |
 | Critic returns `REQUEST_CHANGES` | Write each BLOCKER/WARNING to `TASK_CONTEXT.md` → re-invoke executor |
 | Critic returns `REJECT` | Escalate immediately: output `NEEDS_HUMAN` with a disagreement summary (no further iterations for this subtask) |
-| 3 iterations without `APPROVE` | Escalate: output `NEEDS_HUMAN` with disagreement summary |
+| 5 iterations without `APPROVE` | Escalate: output `NEEDS_HUMAN` with disagreement summary |
 
 Format for `TASK_CONTEXT.md` entries (used by Reflexion loop):
 ```
@@ -179,7 +179,7 @@ Executor MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before starting e
 
 ## Active constraints
 
-- **Max 3 iterations** per subtask → `NEEDS_HUMAN` if unresolved (if critic returns `REJECT`, escalate immediately).
+- **Max 5 iterations** per subtask → `NEEDS_HUMAN` if unresolved (if critic returns `REJECT`, escalate immediately).
 - **Reflexion**: executors MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before each iteration.
 - **Critic isolation**: critics receive only original task + criteria + result. No chain-of-thought forwarding.
 - **ACKNOWLEDGED**: executor may write `ACKNOWLEDGED: WARNING | <category> | <location> | <reason>` to defer a WARNING; critic must honour it on next review.

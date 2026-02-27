@@ -1,0 +1,2 @@
+{"ts":"2026-02-27T18:45:00Z","trace_id":"20260227T184500Z-regenerate-abc-4c2a","span_id":"s01","parent_span_id":null,"agent":"orchestrator","operation":"plan","task":"Regenerate and persist missing Reports A/B/C (read-only)"}
+{"ts":"2026-02-27T18:46:00Z","trace_id":"20260227T184500Z-regenerate-abc-4c2a","span_id":"s02","parent_span_id":"s01","agent":"forgent-docs-critic","operation":"execute","subtask":"1: Regenerate Report A (spec audit)","iteration":1}

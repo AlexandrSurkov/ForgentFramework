@@ -55,7 +55,7 @@ System prompts are plain Markdown — used directly as VS Code Copilot agent sys
 
 1. Describe the goal and acceptance criteria (in the terminal or to Copilot).
 2. The orchestrator assigns an executor (makes changes) and a critic (reviews).
-3. If the critic returns `REQUEST_CHANGES`, the executor iterates (max 3 times). If still not `APPROVE`, escalates to `NEEDS_HUMAN`.
+3. If the critic returns `REQUEST_CHANGES`, the executor iterates (max 5 times). If still not `APPROVE`, escalates to `NEEDS_HUMAN`.
 4. After all critics `APPROVE`, final verification runs.
 
 **Session artifacts:**
