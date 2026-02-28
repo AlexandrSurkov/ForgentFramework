@@ -53,8 +53,8 @@ For any change:
 PR merge gates (Gate 1–3; see §0.6):
 - [ ] CI: all tests green; build succeeds
 - [ ] Critic agent performed review and left comments
-- [ ] All BLOCKER threads are RESOLVED
-- [ ] All other threads are RESOLVED | ACKNOWLEDGED | DEFERRED (SUGGESTION only)
+- [ ] All BLOCKER and WARNING threads are RESOLVED
+- [ ] All SUGGESTION threads are RESOLVED | ACKNOWLEDGED | DEFERRED (SUGGESTION only)
 - [ ] At least 1 human reviewer → APPROVE
 ```
 

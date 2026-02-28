@@ -9,10 +9,11 @@ Canonical standard:
 
 ## Policy
 
-Trace retention is defined by `PROJECT.md` → **Trace mode**:
+Trace JSONL files (`.agents/traces/*.jsonl`, e.g. `.agents/traces/<trace_id>.jsonl`) are **local-only** (gitignored) and MUST NOT be committed (no exceptions).
 
-- **Mode 1 (committed):** commit **sanitized** traces only.
-- **Mode 2 (external / not committed):** keep traces local only and add `.agents/traces/` to `.gitignore`.
+This file (`.agents/traces/README.md`) may be committed and is intentionally allowlisted.
+
+Ensure your repo ignores `.agents/traces/*.jsonl` in `.gitignore` and allowlists `.agents/traces/README.md` so this policy stays committed.
 
 Security baseline (always):
 

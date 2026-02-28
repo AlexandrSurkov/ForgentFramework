@@ -1,6 +1,6 @@
 # PROJECT.md — ForgentFramework
 
-> Spec: Multi-Agent Development Specification v0.21.23
+> Spec: Multi-Agent Development Specification v0.21.26
 
 ## §pre: Project parameters
 
@@ -40,7 +40,7 @@ Security and secrets:
 
 Observability:
    OTEL backend:                none (JSONL traces only — .agents/traces/)
-   Trace mode:                  Mode 1 (committed sanitized traces)
+   Traces:                      local-only (trace files not committed; `.agents/traces/*.jsonl` is gitignored)
 
 Team:
    Agent interaction model:     single person
@@ -87,5 +87,5 @@ Model selection:   configured in VS Code Copilot settings
 ## 4. Known constraints
 
 - `.agents/session/` is gitignored — `TASK_CONTEXT.md` lives under `.agents/session/<trace_id>/`, never committed.
-- Trace mode: Mode 1 — `.agents/traces/` is committed (sanitized traces only).
+- `.agents/traces/` is gitignored — traces are local-only and not committed.
 - No app CI/CD — changes are applied manually via VS Code Copilot agents. A governance CI guard exists: `.github/workflows/spec-versioning.yml`.

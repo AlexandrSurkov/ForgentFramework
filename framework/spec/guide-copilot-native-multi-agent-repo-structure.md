@@ -117,23 +117,24 @@ This guide assumes:
 - **Traces** live in `.agents/traces/`.
 - **Session state** lives in `.agents/session/` (gitignored).
 
-If you must commit traces, commit only sanitized traces.
+Do not commit trace JSONL files (`.agents/traces/*.jsonl`).
 
 Minimum trace hygiene:
 
 - Required fields aligned with OTel/GenAI conventions (timestamps, trace/span ids, agent name, operation, tool name where applicable)
 - Redaction rules (never record secrets, API keys, full env dumps, or raw tool output that may contain sensitive data)
 - Retention/rotation policy (e.g., keep last N traces or last N days)
-- The chosen trace mode (Mode 1 vs Mode 2), so repos do not drift into a mixed state
+- Export policy (if needed): keep traces local-only or export to an external secure log store
 
-If you must retain traces for compliance, prefer an external secure log store, or commit only sanitized summaries.
+If you must retain traces for compliance, prefer an external secure log store.
 
 ## Suggested `.gitignore` additions
 
 ```gitignore
 # Copilot / agent runtime artifacts
 .agents/session/
-.agents/traces/    # ignore unless you explicitly choose to commit sanitised traces
+.agents/traces/*.jsonl
+!.agents/traces/README.md
 ```
 
 ## References

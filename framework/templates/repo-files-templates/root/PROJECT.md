@@ -30,7 +30,7 @@ Security and secrets:
   Secrets store:               TODO
 
 Observability:
-  Trace mode:                  TODO (Mode 1 committed traces | Mode 2 external)
+  Traces:                      local-only (not committed; `.agents/traces/` is gitignored)
 ```
 
 ## 1. Stack

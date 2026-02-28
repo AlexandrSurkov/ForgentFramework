@@ -81,7 +81,7 @@ reasoning, not just output.
 | Severity | Meaning | Pipeline action |
 |---|---|---|
 | **BLOCKER** | Must be fixed before APPROVE. Spec contradiction, broken logic, security violation, missing required section. | `REQUEST_CHANGES` |
-| **WARNING** | Should be fixed; can be deferred with `ACKNOWLEDGED`. Likely confusion for adopters, weak rules, missing example. | `REQUEST_CHANGES` or `APPROVE` if acknowledged |
+| **WARNING** | Must be fixed before APPROVE. Likely confusion for adopters, weak rules, missing example. | `REQUEST_CHANGES` |
 | **SUGGESTION** | Optional. Style, clarity, minor improvement. | Does not block APPROVE |
 
 **Rubric calibration checklist:**
@@ -90,11 +90,11 @@ reasoning, not just output.
 - [ ] Does the rubric have at least one golden test per BLOCKER category?
 - [ ] After changing a rubric: run golden tests before merging (A1.5, eval-before-merge)
 
-**ACKNOWLEDGED pattern** (executor defers a WARNING):
+**ACKNOWLEDGED pattern** (SUGGESTION-only):
 ```
-ACKNOWLEDGED: WARNING | <category> | <file/section> | <issue> | Deferred: <reason>
+ACKNOWLEDGED: SUGGESTION | <category> | <file/section> | <issue> | Deferred: <reason>
 ```
-Critic must honour this on next review — do not re-raise as REQUEST_CHANGES.
+Critic must honour this on next review — do not re-raise as WARNING/BLOCKER.
 
 ---
 

@@ -37,7 +37,7 @@ tools: ['readFile', ...]   # minimal set — see least-privilege below
 - [ ] Critics have read-only tools only: `['readFile', 'fileSearch', 'textSearch']`
 - [ ] File name matches `name:` field exactly
 - [ ] `AGENTS.md` agent table updated: name, file, mode, role
-- [ ] `AGENTS_CHANGELOG.md` entry added
+- [ ] `.github/AGENTS_CHANGELOG.md` entry added
 - [ ] `llms.txt` updated if agent is externally visible
 
 **Tool reference by role:**
@@ -135,7 +135,8 @@ Proposed | Accepted | Superseded by ADR-YYY
 - [ ] `operation` is one of: `plan` / `execute` / `critique` / `escalate` / `complete`
 - [ ] Execute spans include `iteration`; critique spans include `blockers` + `warnings`
 - [ ] Complete/escalate spans include `total_iterations`
-- [ ] Trace file is committed (`.agents/traces/` is NOT gitignored)
+- [ ] Trace JSONL files are **not committed**: `.gitignore` ignores `.agents/traces/*.jsonl`
+- [ ] `.agents/traces/README.md` is allowlisted so it can be committed
 
 ---
 

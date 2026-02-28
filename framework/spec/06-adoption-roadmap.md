@@ -349,8 +349,7 @@ repos:
 ## 6.6 Phase 6 — Observability
 
 ```text
-- [ ] Trace mode chosen (Mode 1: committed sanitized traces | Mode 2: external / not committed)
-- [ ] .gitignore configured to match Trace mode
+- [ ] .gitignore ignores `.agents/traces/*.jsonl` (trace files are local-only; not committed) and allowlists `.agents/traces/README.md`
 - [ ] .agents/traces/ directory exists (always written locally)
 - [ ] Orchestrator writes a JSONL trace for each session (validate §4 format)
 - [ ] After 10+ sessions: use arize-phoenix or jaeger for visualization
@@ -362,7 +361,7 @@ repos:
 - [ ] .agents/evals/ directory (optional)
 - [ ] Recommended (if you adopt evals): 3 golden tests per critic in JSONL (approve / request_changes / reject)
 - [ ] If you changed a .agent.md and evals exist → run evals: npx promptfoo eval
-- [ ] Maintain AGENTS_CHANGELOG.md after each prompt change
+- [ ] Maintain .github/AGENTS_CHANGELOG.md after each prompt change
 ```
 
 ## 6.8 Phase 8 — Iteration
@@ -372,7 +371,7 @@ repos:
 - [ ] Expand SKILL.md as new conventions appear
 - [ ] If needs_human_rate > 20% → simplify tasks or rubrics
 - [ ] If approve_on_first < 30% → upgrade executor model or refine SKILL.md
-- [ ] Quarterly: review AGENTS_CHANGELOG.md and remove obsolete rules
+- [ ] Quarterly: review .github/AGENTS_CHANGELOG.md and remove obsolete rules
 ```
 
 ---
@@ -552,7 +551,7 @@ After the user replies APPLY, perform the removals and then summarise the result
 ```text
 1. Reads .github/decisions/ — no conflicts
 2. Type: feature/* → full pipeline
-3. Creates .agents/traces/20260223-add-host-desc.jsonl
+3. Creates .agents/traces/<trace_id>.jsonl
 4. Writes TASK_CONTEXT.md decomposition:
    #1 architect: .feature + ADR (if schema change)
    #2 backend-dev: model + migration + tests
@@ -593,13 +592,13 @@ WARNING:  models/host.go:34 — missing godoc for the field
 - models/host.go: add godoc
 ```
 
-backend-critic verdict (iter 2): `APPROVE` — BLOCKERs closed.
+backend-critic verdict (iter 2): `APPROVE` — no open BLOCKERs and no open WARNINGs.
 
 **Step 4 — CI Gate 1 (auto) → Gate 2 (critic) → Gate 3 (human) → merge**
 
 ```text
 Gate 1: tests green, lint pass
-Gate 2: backend-critic reviewed; no open BLOCKERs
+Gate 2: backend-critic reviewed; no open BLOCKERs or WARNINGs
 Gate 3: PM verifies description appears in API response — APPROVED
 Merge → main + tag v1.4.7
 ```
@@ -613,7 +612,7 @@ Merge → main + tag v1.4.7
 {"ts":"2026-02-23T14:32:28Z","trace_id":"20260223T143200Z-add-host-desc-7f3a","span_id":"s04","parent_span_id":"s01","agent":"backend-dev","operation":"execute","subtask":2,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}
 {"ts":"2026-02-23T14:33:10Z","trace_id":"20260223T143200Z-add-host-desc-7f3a","span_id":"s05","parent_span_id":"s01","agent":"backend-critic","operation":"critique","subtask":2,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":1,"input_tokens":980,"output_tokens":310,"duration_ms":9100}
 {"ts":"2026-02-23T14:33:15Z","trace_id":"20260223T143200Z-add-host-desc-7f3a","span_id":"s06","parent_span_id":"s01","agent":"backend-dev","operation":"execute","subtask":2,"iteration":2,"input_tokens":2100,"output_tokens":540,"duration_ms":16200}
-{"ts":"2026-02-23T14:34:05Z","trace_id":"20260223T143200Z-add-host-desc-7f3a","span_id":"s07","parent_span_id":"s01","agent":"backend-critic","operation":"critique","subtask":2,"iteration":2,"verdict":"APPROVE","blockers":0,"warnings":1,"input_tokens":900,"output_tokens":180,"duration_ms":8400}
+{"ts":"2026-02-23T14:34:05Z","trace_id":"20260223T143200Z-add-host-desc-7f3a","span_id":"s07","parent_span_id":"s01","agent":"backend-critic","operation":"critique","subtask":2,"iteration":2,"verdict":"APPROVE","blockers":0,"warnings":0,"input_tokens":900,"output_tokens":180,"duration_ms":8400}
 {"ts":"2026-02-23T14:34:10Z","trace_id":"20260223T143200Z-add-host-desc-7f3a","span_id":"s08","parent_span_id":"s01","agent":"orchestrator","operation":"complete","task":"add-host-description","total_iterations":2,"input_tokens":7940,"output_tokens":2095,"duration_ms":127600}
 ```
 
@@ -623,15 +622,15 @@ Merge → main + tag v1.4.7
 
 | Term | Definition |
 |---|---|
-| **APPROVE** | Critic verdict: no BLOCKERs; WARNING allowed |
-| **REQUEST_CHANGES** | Critic verdict: there is a BLOCKER; executor fixes and repeats |
+| **APPROVE** | Critic verdict: no BLOCKERs and no WARNINGs; SUGGESTION is allowed |
+| **REQUEST_CHANGES** | Critic verdict: there is a BLOCKER or WARNING; executor fixes and repeats |
 | **REJECT** | Critic verdict: fundamental constitutional violation; not patch-fixable |
 | **NEEDS_HUMAN** | Reached max_iterations=5 or human input is required |
 | **BLOCKER** | Severity that blocks moving to the next phase |
-| **WARNING** | Severity that can still allow APPROVE with explicit ACKNOWLEDGED |
+| **WARNING** | Severity that MUST yield REQUEST_CHANGES; it must be fixed before APPROVE |
 | **SUGGESTION** | Severity that does not block; optional |
-| **ACKNOWLEDGED** | A warning is consciously deferred in the PR thread; unblocks APPROVE |
-| **DEFERRED** | Fix is postponed to a future sprint |
+| **ACKNOWLEDGED** | Closes a SUGGESTION thread (executor declines) or records that the critic withdrew the finding; does not unblock WARNING |
+| **DEFERRED** | Fix is postponed to a future sprint (SUGGESTION-only) |
 | **ESCALATED** | Blocker escalated to a higher-level human without waiting for resolution |
 | **TASK_CONTEXT** | File `.agents/session/<trace_id>/TASK_CONTEXT.md`; short-term session memory |
 | **Fast-Track** | Shortened pipeline for hotfix / docs-only / infra |

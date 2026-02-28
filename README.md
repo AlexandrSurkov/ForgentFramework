@@ -22,7 +22,7 @@ It is **not** an application or library. You don’t “run” it; you apply it 
 - `AGENTS.md` / `llms.txt` — agent-readable repository context.
 - `.github/agents/` — system prompts for each agent role (Markdown with YAML frontmatter), used as VS Code Copilot agent definitions.
 - `.agents/session/` — gitignored per-session state (`.agents/session/<trace_id>/TASK_CONTEXT.md`).
-- `.agents/traces/` — JSONL session traces (OTel GenAI format). Retention is defined by `PROJECT.md` → Trace mode.
+- `.agents/traces/` — JSONL session traces (OTel GenAI format). Local-only (gitignored; not committed).
 
 ## Apply to a project
 

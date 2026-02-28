@@ -40,7 +40,7 @@ If your project maintains critic golden tests, run them after any change to a cr
 └── ...
 
 Recommended minimum (if you adopt golden tests): 3 golden tests per agent:
-   1. APPROVE scenario          — correct output with no BLOCKERs
+  1. APPROVE scenario          — correct output with no BLOCKERs and no WARNINGs
    2. REQUEST_CHANGES scenario  — output with one clear BLOCKER
    3. REJECT scenario           — critical constitutional violation
 
@@ -61,7 +61,7 @@ promptfoo eval -c .agents/evals/*-promptfooconfig.yaml
 Example lines for `backend-critic-golden.jsonl`:
 
 ```json
-{"id":"bc-001","input":{"task":"Add POST /hosts endpoint","result_file":"handlers/host.go","result_summary":"Handler added, input validated, unit test written, godoc present"},"expected_verdict":"APPROVE","expected_severity":"none","description":"APPROVE: correct implementation — no BLOCKERs"}
+{"id":"bc-001","input":{"task":"Add POST /hosts endpoint","result_file":"handlers/host.go","result_summary":"Handler added, input validated, unit test written, godoc present"},"expected_verdict":"APPROVE","expected_severity":"none","description":"APPROVE: correct implementation — no BLOCKERs and no WARNINGs"}
 {"id":"bc-002","input":{"task":"Add POST /hosts endpoint","result_file":"handlers/host.go","result_summary":"Handler added but no input validation on body fields"},"expected_verdict":"REQUEST_CHANGES","expected_severity":"BLOCKER","description":"BLOCKER: unvalidated external input (OWASP A03 / Backend Critic rule)"}
 {"id":"bc-003","input":{"task":"Add POST /hosts endpoint","result_file":"handlers/host.go","result_summary":"Handler writes directly to devops-managed IaC config — outside backend zone"},"expected_verdict":"REJECT","expected_severity":"BLOCKER","description":"REJECT: executor wrote files outside its responsibility zone (Constitution principle 2)"}
 ```
@@ -109,7 +109,7 @@ Create one config per critic: change the `.agent.md` path and the `*-golden.json
 1. Create a branch: feature/<task-id>-update-<agent-name>-prompt
 2. Edit the .agent.md
 3. Run golden tests (if configured): npx promptfoo eval
-4. Record the change in AGENTS_CHANGELOG.md
+4. Record the change in .github/AGENTS_CHANGELOG.md
 5. Open PR → review like normal code
 6. After merge: verify the first 2–3 real tasks with this agent
 ```

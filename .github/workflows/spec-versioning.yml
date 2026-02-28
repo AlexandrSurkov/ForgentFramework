@@ -3,14 +3,12 @@ name: Spec versioning guard
 on:
   pull_request:
     branches: ["**"]
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   spec-version-bump:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

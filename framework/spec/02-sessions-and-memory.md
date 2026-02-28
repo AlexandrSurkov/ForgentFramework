@@ -74,7 +74,7 @@ Parallel agents and `TASK_CONTEXT.md`:
 4. **Context Window Management**
    - If `TASK_CONTEXT.md` exceeds ~200 lines / ~4000 words, or orchestrator observes planning quality degradation, create a summarized version (replace detailed history of completed phases with a short recap).
    - The summary must contain: the current plan + the last 2 entries from `## Previous Attempts`.
-   - Archive the full file as `.agents/session/<trace_id>/TASK_CONTEXT_archive_<date>.md` (gitignored). Long-term memory remains in ADRs and traces (retained according to `PROJECT.md` Trace mode).
+   - Archive the full file as `.agents/session/<trace_id>/TASK_CONTEXT_archive_<date>.md` (gitignored). Long-term memory remains in ADRs and traces (traces are local-only in this repo).
    - Agents use `textSearch` (or `search`) to jump to the needed section.
 
 Example summary version (replaces a verbose TASK_CONTEXT after ~200 lines):

@@ -21,7 +21,7 @@ You MUST be transparent in-chat about what you are doing:
 
 You do not implement file changes directly. You route work to the bootstrap executor agents:
 
-Exception: you MUST write observability/session artifacts under `.agents/session/**` and `.agents/traces/**` as defined below.
+Exception: you MUST write observability/session artifacts under `.agents/session/**` and trace JSONL files under `.agents/traces/*.jsonl` as defined below.
 
 - Install → `bootstrap-installer`
 - Upgrade → `bootstrap-upgrader`
@@ -49,8 +49,9 @@ You MUST implement the trace-writing protocol in `framework/spec/04-observabilit
 
 - Assign a new `trace_id` per bootstrap operation (recommended format: `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`).
 - Create/append `.agents/traces/<trace_id>.jsonl`.
+- The JSONL trace files `.agents/traces/<trace_id>.jsonl` (i.e., `.agents/traces/*.jsonl`) are local-only (gitignored) and MUST NOT be committed (no exceptions). (`.agents/traces/README.md` may be committed.)
 - Create/update `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored) to track retries and record `## Previous Attempts` when critics request changes.
-- Only you (the orchestrator) may write `.agents/traces/**`. Bootstrap executors/critics must return `trace_event` objects instead.
+- Only you (the orchestrator) may write trace JSONL files under `.agents/traces/*.jsonl`. Bootstrap executors/critics must return `trace_event` objects instead.
 
 Trace event flow:
 
@@ -71,7 +72,7 @@ If a subagent omits `trace_event`, treat it as a process BLOCKER and request a c
 
 - You MUST NOT implement the change set directly.
 - Delegate all repo changes to bootstrap executors.
-- The only files you may create/edit directly are `.agents/session/**` and `.agents/traces/**`.
+- The only files you may create/edit directly are `.agents/session/**` and trace JSONL files under `.agents/traces/*.jsonl`.
 
 ### Mandatory chat output (ALWAYS)
 

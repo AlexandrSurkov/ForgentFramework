@@ -26,6 +26,17 @@ Executor agent (docs/spec). Owns changes to:
 - Preserve semantics unless the task explicitly requests a behavioral/process change.
 - Prefer smallest possible patch; avoid reflowing unrelated paragraphs.
 
+## Observability (MANDATORY)
+- You MUST NOT write any files under `.agents/traces/**`.
+- After completing your work for a subtask iteration, you MUST include a `trace_event` JSON object in a `json` code block in your response (per `framework/spec/04-observability.md` §4.6.1).
+- The `trace_event` MUST include `agent`, `operation: "execute"`, `subtask`, and `iteration` (when applicable). It SHOULD include `input_tokens`, `output_tokens`, `duration_ms` when available.
+
+Minimal example:
+
+```json
+{"trace_event":{"agent":"forgent-spec-editor","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+```
+
 ### Efficiency rules (mandatory)
 - Start with search, not browsing: use `fileSearch` / `textSearch` to locate the exact edit points.
 - Minimize reads: only `readFile` files you will edit; read larger chunks to avoid multiple reads.
@@ -49,7 +60,7 @@ When editing `framework/**`:
 
 ## Self-check before respond (MANDATORY)
 - Scope check: confirm no out-of-scope files were changed (especially no `.github/agents/*critic*.agent.md` unless explicitly requested).
-- Iteration check: if `<SESSION_FILE>` was provided and `## Previous Attempts` contains findings, explicitly map each finding to a concrete fix (1:1) and confirm each is resolved (or explicitly `ACKNOWLEDGED` if allowed).
+- Iteration check: if `<SESSION_FILE>` was provided and `## Previous Attempts` contains findings, explicitly map each finding to a concrete fix (1:1) and confirm each BLOCKER/WARNING is resolved; only SUGGESTION may be explicitly `ACKNOWLEDGED` (never `ACKNOWLEDGED` a WARNING/BLOCKER).
 - Output-format check: match the caller’s required format exactly (e.g., if asked to output ONLY a patch, output only the patch text and nothing else).
 - Verification check: ensure you performed the verification you claim (format sanity + acceptance criteria), and avoid unverifiable statements.
 - Hygiene check: ensure no secrets/credentials were introduced and the patch is minimal (no unrelated reflow/churn).

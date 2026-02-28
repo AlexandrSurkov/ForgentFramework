@@ -16,7 +16,7 @@ Fast-tracks:
 - **docs-only** (non-normative Markdown/text edits) → `spec-editor` + `docs-critic`
 - **tooling-only** (repo tooling / CI scripts / workflows; no `framework/**`) → `spec-editor` + `process-critic`
 - **spec/process-change** (normative change under `framework/**`) → `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy)
-- **agent-prompt-change** (`.github/agents/*.agent.md`) → `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy); record in `AGENTS_CHANGELOG.md`
+- **agent-prompt-change** (`.github/agents/*.agent.md`) → `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy); record in `.github/AGENTS_CHANGELOG.md`
 
 Pipeline writes session state to `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored; supports multiple parallel sessions).
 Traces are written to `.agents/traces/<trace_id>.jsonl` (see `framework/spec/04-observability.md`).
@@ -25,11 +25,11 @@ Traces are written to `.agents/traces/<trace_id>.jsonl` (see `framework/spec/04-
 
 - **No secrets in committed files.**
 - **TASK_CONTEXT.md** is gitignored (`.agents/session/`). Never commit it.
-- **Traces**: retention is defined by `PROJECT.md` → Trace mode. If committed, commit sanitized traces only.
+- **Traces**: `.agents/traces/**` is gitignored in this repo. Never commit traces.
 - **Critic isolation**: critics receive only original task + criteria + executor result.
   Do not forward full chat history to critics.
 - **Reflexion**: executors MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before each iteration.
-- **AGENTS_CHANGELOG.md** must be updated after every change to `.github/agents/*.agent.md`.
+- **.github/AGENTS_CHANGELOG.md** must be updated after every change to `.github/agents/*.agent.md`.
 - **Spec maintenance (this repo):** any change under `framework/**` must follow `.github/SPEC_VERSIONING.md` and must update `framework/CHANGELOG.md`.
 
 ## Active Decisions

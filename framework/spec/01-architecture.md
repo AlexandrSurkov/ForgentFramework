@@ -37,7 +37,7 @@ User
 
 > Extensibility: the agent set is the spec baseline.
 > PROJECT.md §2 may add roles, remove unused roles, or rename them to match domain terminology.
-> Changes must be recorded in `AGENTS_CHANGELOG.md`.
+> Changes must be recorded in `.github/AGENTS_CHANGELOG.md`.
 
 **Patterns:**
 - Plan-and-Execute — orchestrator builds the full plan before execution
@@ -220,7 +220,7 @@ If the preferred model is unavailable (rate limit, quota, outage):
 |---|---|---|---|
 | Specs (requirements) | User + architect | feature described in words | `.feature` + `glossary.md` |
 | Feature | User formulates | `feature/<id>-desc` | `TASK_CONTEXT.md` |
-| Subtask | Orchestrator during decomposition | a row from TASK_CONTEXT Decomposition | commit + one trace line |
+| Subtask | Orchestrator during decomposition | a row from TASK_CONTEXT Decomposition | commit code/deliverables; append one trace line to a local-only `.agents/traces/<trace_id>.jsonl` file (gitignored; MUST NOT be committed — no exceptions) |
 
 Task statement template:
 
@@ -322,8 +322,8 @@ if any: ...
 │  If Cycle 1/2/3/4 fails (code issue) → return to Phase 1 │
 │    (code-fix subtask, iter+1)                            │
 │  Mutation < 50% after iter=5 → BLOCKER → NEEDS_HUMAN     │
-│  Mutation 50–70% → WARNING: transition allowed;          │
-│    executor adds coverage in the same PR                 │
+│  Mutation 50–70% → SOFT GATE: transition allowed;        │
+│    executor adds coverage in the same PR before merge    │
 └─────────────────────────────────────────────────────────┘
                ↓ APPROVE →
 
@@ -486,12 +486,12 @@ If NEEDS_HUMAN occurs a second time on the same subtask — ESCALATED (see §3.3
 
 #### 1.3.6.2 Insufficient coverage
 
-| Situation | Severity | Action | After iter=5 |
+| Situation | Coverage gate | Action | After iter=5 |
 |---|---|---|---|
-| Mutation score **< 50%** (Phase 2, Cycle 5) | BLOCKER | Executor adds tests → critic → repeat | NEEDS_HUMAN: "coverage is unreachable without refactoring code or extending the test plan" |
-| Mutation score **50–70%** (Phase 2, Cycle 5) | WARNING | Transition to Phase 3 is allowed; executor **must** add coverage in the same PR before merge | If WARNING is not resolved before merge → ACKNOWLEDGED thread in PR |
-| Mutation score **degraded** after refactor (Phase 3.5) | BLOCKER | Return to Phase 3 to restore coverage | NEEDS_HUMAN after iter=5 |
-| Not all `.feature` scenarios have a Unit test (Phase 2, Cycle 1) | BLOCKER | Executor adds missing tests | NEEDS_HUMAN after iter=5 |
+| Mutation score **< 50%** (Phase 2, Cycle 5) | HARD GATE | Executor adds tests → critic → repeat | NEEDS_HUMAN: "coverage is unreachable without refactoring code or extending the test plan" |
+| Mutation score **50–70%** (Phase 2, Cycle 5) | SOFT GATE | Transition to Phase 3 is allowed; executor **must** add coverage in the same PR before merge | If SOFT GATE cannot be resolved before merge → NEEDS_HUMAN (cannot be ACKNOWLEDGED/DEFERRED) |
+| Mutation score **degraded** after refactor (Phase 3.5) | HARD GATE | Return to Phase 3 to restore coverage | NEEDS_HUMAN after iter=5 |
+| Not all `.feature` scenarios have a Unit test (Phase 2, Cycle 1) | HARD GATE | Executor adds missing tests | NEEDS_HUMAN after iter=5 |
 
 > **Goal of return:** executor must ensure that **all tests pass** (GREEN) before
 > the orchestrator initiates transition to the next phase again. Return means not "take a look",

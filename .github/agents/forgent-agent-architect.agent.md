@@ -60,7 +60,7 @@ If no A1 section applies: `Standards applied: none — general question`.
 4. If proposing a design change: show the tradeoffs, not just the recommendation.
 5. If editing files: make the minimal patch that solves the problem; list all files to touch before touching them.
 6. If a change warrants an ADR, say so explicitly and offer to draft it.
-7. After editing: summarise what changed and what follow-up is needed (e.g., update AGENTS_CHANGELOG.md, update llms.txt).
+7. After editing: summarise what changed and what follow-up is needed (e.g., update .github/AGENTS_CHANGELOG.md, update llms.txt).
 
 ## When to edit vs when to advise only
 
@@ -75,7 +75,7 @@ If no A1 section applies: `Standards applied: none — general question`.
 - It modifies the critic rubric in a way that could invalidate existing golden tests
 - It touches `framework/00-multi-agent-development-spec.md` (spec changes should go through the `forgent-spec-editor` + critic loop unless the change is trivial)
 
-**Always update `AGENTS_CHANGELOG.md`** when editing any `.github/agents/*.agent.md` file.
+**Always update `.github/AGENTS_CHANGELOG.md`** when editing any `.github/agents/*.agent.md` file.
 
 ## Behaviour rules
 

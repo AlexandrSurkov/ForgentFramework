@@ -145,21 +145,17 @@ Critic returns a structured response:
 
 **VERDICT:** APPROVE | REQUEST_CHANGES | REJECT
 
-> **APPROVE** — no BLOCKER findings; WARNING/SUGGESTION are allowed.
-> **APPROVE** is also allowed if all remaining WARNING are explicitly marked as ACKNOWLEDGED
->   in `## Previous Attempts` (executor knowingly defers the fix in the PR thread).
->   Without explicit ACKNOWLEDGED — REQUEST_CHANGES.
-> **REQUEST_CHANGES** — there is a BLOCKER; or there is a WARNING without explicit ACKNOWLEDGED: fixable in the next iteration.
+> **APPROVE** — no BLOCKER findings and no WARNING findings. SUGGESTION findings are allowed.
+> **REQUEST_CHANGES** — there is any BLOCKER or WARNING: fixable in the next iteration.
 > **REJECT** — fundamental constitutional violation (ADR violated without new ADR; work performed outside the agent’s responsibility boundary; executor reinterpreted the task without coordination). Not fixable via patch — requires orchestrator rephrasing.
 
-**Example of correct ACKNOWLEDGED** (in `## Previous Attempts` or PR thread):
+**Example of correct ACKNOWLEDGED** (SUGGESTION-only; recorded in `## Previous Attempts` or PR thread):
 
 ```markdown
-ACKNOWLEDGED: WARNING | performance | services/bulk.go:120 | N+1 query | Deferred to task #42 (bulk-optimization)
-ACKNOWLEDGED: WARNING | style       | models/host.go:34   | Missing godoc | Add next sprint — does not block release
+ACKNOWLEDGED: SUGGESTION | conventions | models/host.go:34 | Missing godoc | Not doing in this PR
 ```
 
-> Without an `ACKNOWLEDGED` line, critic must return REQUEST_CHANGES even on repeated review.
+> `ACKNOWLEDGED` is not a verdict override. A WARNING cannot be “accepted” via `ACKNOWLEDGED`/`DEFERRED`.
 
 ### Findings
 

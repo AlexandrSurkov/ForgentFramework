@@ -27,9 +27,10 @@ Documentation executor agent.
 - The `trace_event` MUST be a small JSON object (no nesting beyond the `trace_event` wrapper) and MUST include:
   - `agent`, `operation`, `subtask`, `iteration` (when applicable)
 - The `trace_event` SHOULD include `input_tokens`, `output_tokens`, `duration_ms` (when available).
+- The `trace_event.agent` value SHOULD match this agent’s frontmatter `name`.
 
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"documentation-writer","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+{"trace_event":{"agent":"<project>-documentation-writer","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```

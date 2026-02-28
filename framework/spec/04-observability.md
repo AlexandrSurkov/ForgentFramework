@@ -163,7 +163,7 @@ Minimal example (critic):
 {"ts":"2026-02-23T14:32:05Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s02","parent_span_id":"s01","agent":"backend-dev","operation":"execute","iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}
 {"ts":"2026-02-23T14:33:10Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s03","parent_span_id":"s01","agent":"backend-critic","operation":"critique","iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}
 {"ts":"2026-02-23T14:33:15Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s04","parent_span_id":"s01","agent":"backend-dev","operation":"execute","iteration":2,"input_tokens":2100,"output_tokens":540,"duration_ms":16200}
-{"ts":"2026-02-23T14:34:05Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s05","parent_span_id":"s01","agent":"backend-critic","operation":"critique","iteration":2,"verdict":"APPROVE","blockers":0,"warnings":1,"input_tokens":900,"output_tokens":180,"duration_ms":8400}
+{"ts":"2026-02-23T14:34:05Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s05","parent_span_id":"s01","agent":"backend-critic","operation":"critique","iteration":2,"verdict":"APPROVE","blockers":0,"warnings":0,"input_tokens":900,"output_tokens":180,"duration_ms":8400}
 {"ts":"2026-02-23T14:34:10Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s06","parent_span_id":"s01","agent":"orchestrator","operation":"complete","task":"add-bulk-endpoint","total_iterations":2,"input_tokens":6232,"output_tokens":1739,"duration_ms":127600}
 ```
 

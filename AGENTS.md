@@ -11,14 +11,14 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 
 | Path | Description |
 |---|---|
-| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.23) |
+| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.21.26) |
 | `framework/CHANGELOG.md` | Spec release notes shipped with the spec package |
 | `PROJECT.md` | Project parameters: stack, models, rate limits, §pre answers |
 | `AGENTS.md` | This file — pinned into orchestrator context on every run |
 | `llms.txt` | LLM-friendly repo overview with links (for external context or new chats) |
 | `.github/agents/*.agent.md` | System prompts: YAML frontmatter + Markdown body. VS Code Copilot agent definitions. |
 | `.vscode/settings.json` | Registers agent file location for VS Code Copilot (`chat.agentFilesLocations`) |
-| `.agents/traces/` | JSONL traces — one file per orchestrator run (`.agents/traces/<trace_id>.jsonl`); retention per `PROJECT.md` Trace mode |
+| `.agents/traces/` | JSONL traces — one file per orchestrator run (`.agents/traces/<trace_id>.jsonl`); local-only (gitignored; not committed) |
 | `.agents/session/` | **.gitignored** — session state (`.agents/session/<trace_id>/TASK_CONTEXT.md`) |
 | `.github/copilot-instructions.md` | VS Code always-on Copilot context (~300 words) |
 | `.github/AGENTS_CHANGELOG.md` | History of all agent prompt and pipeline behaviour changes |
@@ -42,7 +42,7 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 |---|---|---|
 | Docs-only edits (non-normative) | `spec-editor` | `docs-critic` |
 | Framework normative changes (`framework/**`) | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy) |
-| Agent prompt changes | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy); update `AGENTS_CHANGELOG.md` |
+| Agent prompt changes | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy); update `.github/AGENTS_CHANGELOG.md` |
 | Analysis / audit (read-only) | `docs-critic` (Mode B) | `process-critic` |
 
 ## Orchestrator fast-track types
@@ -57,7 +57,7 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 | `docs-only` | Only `.md`/`.txt` changed **and** change is non-normative | `spec-editor` + `docs-critic` |
 | `tooling-only` | Repo tooling / CI scripts / workflows (no `framework/**` changes) | `spec-editor` + `process-critic` |
 | `spec/process-change` | Any normative change under `framework/**` (umbrella spec, spec modules, or templates shipped downstream) | `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy) |
-| `agent-prompt-change` | Any `.github/agents/*.agent.md` changed (aka “agent prompt update” in the framework canonical enum) | `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy); AGENTS_CHANGELOG required |
+| `agent-prompt-change` | Any `.github/agents/*.agent.md` changed (aka “agent prompt update” in the framework canonical enum) | `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy); update `.github/AGENTS_CHANGELOG.md` |
 
 ## Workflow: maintaining `framework/**`
 
@@ -173,7 +173,7 @@ Executor MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before starting e
 | `docs-only` | `spec-editor` | `docs-critic` |
 | `tooling-only` | `spec-editor` | `process-critic` |
 | `spec/process-change` | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy) |
-| `agent-prompt-change` | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy); AGENTS_CHANGELOG.md must be updated |
+| `agent-prompt-change` | `spec-editor` | `process-critic` (+ `docs-critic` if Markdown-heavy); .github/AGENTS_CHANGELOG.md must be updated |
 
 ---
 
@@ -182,7 +182,7 @@ Executor MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before starting e
 - **Max 5 iterations** per subtask → `NEEDS_HUMAN` if unresolved (if critic returns `REJECT`, escalate immediately).
 - **Reflexion**: executors MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before each iteration.
 - **Critic isolation**: critics receive only original task + criteria + result. No chain-of-thought forwarding.
-- **ACKNOWLEDGED**: executor may write `ACKNOWLEDGED: WARNING | <category> | <location> | <reason>` to defer a WARNING; critic must honour it on next review.
+- **ACKNOWLEDGED**: executor may write `ACKNOWLEDGED: SUGGESTION | <category> | <location> | <reason>` to defer a SUGGESTION; critic must honour it on next review. It MUST NOT be used to defer a WARNING or BLOCKER.
 - **AGENTS.md explicit read**: orchestrator MUST read this file as its first action on every VS Code Copilot run.
 - **ADR check**: before any durable architectural decision, check `.github/decisions/`.
 - **No secrets** in any committed file.

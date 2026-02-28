@@ -1,18 +1,18 @@
 # .agents/traces/
 
-JSONL traces for multi-agent runs.
+This directory is the conventional location for per-run JSONL traces produced by the orchestrator.
 
-Canonical standard: the Multi-Agent Development Specification modules:
+Canonical standard:
 
 - `framework/spec/04-observability.md` (§4.5–§4.6)
 - `framework/spec/02-sessions-and-memory.md` (§2.1)
 
 ## Policy
 
-Trace retention is defined by `PROJECT.md` → **Trace mode**:
+- Trace files (`.agents/traces/*.jsonl`) are **local-only** and are **never committed**.
+- This README (`.agents/traces/README.md`) **may be committed** to keep the trace policy discoverable.
 
-- **Mode 1 (committed):** commit **sanitized** traces only.
-- **Mode 2 (external / not committed):** keep traces local only and add `.agents/traces/` to `.gitignore`.
+Ensure your repo ignores `.agents/traces/*.jsonl` in `.gitignore` and allowlists `.agents/traces/README.md`.
 
 Security baseline (always):
 
@@ -37,26 +37,3 @@ Example:
 ```text
 .agents/traces/20260226T091530Z-fix-heading-levels-9f2c.jsonl
 ```
-
-## Record schema
-
-Each line is one JSON object (append-only). Required top-level fields:
-
-```jsonc
-{
-	"ts": "<ISO8601>",
-	"trace_id": "YYYYMMDDTHHMMSSZ-task-slug-rand4",
-	"span_id": "s<N>",
-	"parent_span_id": "s<N>" | null,
-	"agent": "<agent-name>",
-	"operation": "plan" | "execute" | "critique" | "escalate" | "complete"
-}
-```
-
-Additional fields depend on `operation` (see spec §4.5–§4.6):
-
-- `plan`: `task`
-- `execute`: `iteration`, optionally `subtask`, `input_tokens`, `output_tokens`, `duration_ms`
-- `critique`: `iteration`, `verdict`, optionally `blockers`, `warnings`, `duration_ms`
-- `escalate`: `reason`
-- `complete`: optionally `total_iterations`, `duration_ms`

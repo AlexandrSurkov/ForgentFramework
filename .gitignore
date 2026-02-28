@@ -1,7 +1,8 @@
 # Agent temporary sessions (do not commit)
 .agents/session/
-# Traces are not committed in this repo.
-.agents/traces/
+# Trace files are not committed in this repo.
+.agents/traces/*.jsonl
+!.agents/traces/README.md
 
 # Secrets
 .env

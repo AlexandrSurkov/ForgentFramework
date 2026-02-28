@@ -19,6 +19,10 @@ Copy/merge the contents of:
 
 …into the target repository root.
 
+Then, in the merged `.github/agents/**/*.agent.md` files:
+
+- Replace every `model: TODO` with an actual model identifier.
+
 ## Included agents
 
 These are intended to be placed under `.github/agents/`:

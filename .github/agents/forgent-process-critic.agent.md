@@ -25,6 +25,17 @@ Does NOT write files.
 
 When the executor result includes changes to Markdown (`*.md`) files, load `.agents/skills/markdown-writer/SKILL.md` and apply its checklist as a baseline for structure/link correctness.
 
+## Observability (MANDATORY)
+- You MUST include a `trace_event` JSON object in a `json` code block in every response (per `framework/spec/04-observability.md` §4.6.1).
+- You MUST NOT write any files under `.agents/traces/**`.
+- The `trace_event` MUST include: `agent`, `operation: "critique"`, `verdict`, `blockers`, `warnings`, and include `subtask` and `iteration` (when applicable).
+
+Minimal example:
+
+```json
+{"trace_event":{"agent":"forgent-process-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"APPROVE","blockers":0,"warnings":0,"input_tokens":900,"output_tokens":180,"duration_ms":8400}}
+```
+
 ## Critique Rubric
 - BLOCKER: contradiction with existing spec rules; ambiguous normative language; untestable/unenforceable requirement.
 - WARNING: likely confusion for adopters; missing definitions/examples; weak transition rules.
@@ -44,18 +55,15 @@ When reviewing `framework/**` normative changes:
 
 ## Output Format
 - Verdict: APPROVE | REQUEST_CHANGES | REJECT
-  - `APPROVE` — no BLOCKERs; WARNINGs and SUGGESTIONs are allowed.
-  - `APPROVE` is also valid when all WARNINGs are explicitly `ACKNOWLEDGED` by the executor
-    in `## Previous Attempts` or a PR thread. Without explicit ACKNOWLEDGED — REQUEST_CHANGES.
-  - `REQUEST_CHANGES` — BLOCKER present, OR unacknowledged WARNING.
+  - `APPROVE` — no BLOCKERs and no WARNINGs. SUGGESTIONs are allowed.
+  - `REQUEST_CHANGES` — any BLOCKER or WARNING is present.
   - `REJECT` — fundamental violation: ADR ignored without new ADR, work outside responsibility
     zone, task reinterpreted without coordination.
-- **ACKNOWLEDGED format** (executor writes this to defer a WARNING):
+- **ACKNOWLEDGED format** (SUGGESTION-only; does not affect the verdict):
   ```
-  ACKNOWLEDGED: WARNING | <category> | <file/section> | <issue> | Deferred: <reason>
+  ACKNOWLEDGED: SUGGESTION | <category> | <file/section> | <issue> | Deferred: <reason>
   ```
-  When you see a valid ACKNOWLEDGED line for a WARNING, accept it as resolved — do NOT
-  issue REQUEST_CHANGES for that WARNING.
+  Never accept `ACKNOWLEDGED` for a WARNING or BLOCKER.
 - Findings:
   - **[BLOCKER|WARNING|SUGGESTION]** `file` (or section name)
     Issue: ...

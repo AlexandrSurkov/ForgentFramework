@@ -6,5 +6,5 @@ This directory contains **runtime and evaluation artifacts** for agent workflows
 
 - `skills/`: Agent Skills (`SKILL.md`)
 - `evals/`: Golden tests for prompts/agents
-- `traces/`: JSONL traces (OTel GenAI conventions)
-- `session/`: Per-run scratch state (gitignored)
+- `traces/`: JSONL traces (local-only; not committed)
+- `session/`: Per-run scratch state (created at runtime; gitignored; not committed)

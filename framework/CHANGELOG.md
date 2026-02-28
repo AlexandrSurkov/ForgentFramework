@@ -6,6 +6,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.26] - 2026-02-28
+
+### Fixed
+- Resolved spec example drift against the current canonical workflow.
+- Resolved shipped template drift against the current canonical workflow.
+
+## [0.21.25] - 2026-02-28
+
+### Changed
+- Canonical trace policy: traces `.agents/traces/*.jsonl` are never committed (local-only); removed "modes".
+- WARNING semantics are strict: any WARNING ⇒ `REQUEST_CHANGES` (no approve-with-warning).
+
+## [0.21.24] - 2026-02-28
+
+### Fixed
+- Canonicalized trace ignore semantics: ignore `.agents/traces/*.jsonl` (local-only; not committed) while allowing `.agents/traces/README.md` to be committed.
+
 ## [0.21.23] - 2026-02-27
 
 ### Fixed

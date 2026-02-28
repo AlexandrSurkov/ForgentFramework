@@ -20,7 +20,7 @@ software projects with AI agents. Spec is `framework/00-multi-agent-development-
 | `.github/agents/` | System prompts: orchestrator, spec-editor, docs-critic, process-critic (`.agent.md` — VS Code Copilot agent definitions) |
 | `.agents/skills/awesome-copilot-navigator/` | Skill package: safely navigate/adapt examples from awesome-copilot (license + provenance + safe-use rules) |
 | `.agents/session/` | Gitignored per-session state: `.agents/session/<trace_id>/TASK_CONTEXT.md` |
-| `.agents/traces/` | JSONL session traces (OTel GenAI format). Retention per `PROJECT.md` → Trace mode (Mode 1 committed in this repo) |
+| `.agents/traces/` | JSONL session traces (OTel GenAI format). Local-only (gitignored; not committed) |
 | `.github/copilot-instructions.md` | VS Code always-on context: workflow, constraints, active ADRs |
 | `.github/AGENTS_CHANGELOG.md` | History of all agent prompt changes |
 | `.github/SPEC_VERSIONING.md` | How this repo versions/releases spec changes (repo governance) |
@@ -34,7 +34,7 @@ software projects with AI agents. Spec is `framework/00-multi-agent-development-
 - **Critic**: reads only final result (critic isolation); returns `APPROVE` / `REQUEST_CHANGES` / `REJECT`
 - **TASK_CONTEXT.md**: per-session scratch file at `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored); holds task, decomposition, previous attempts
 - **trace_id**: collision-resistant session ID (recommended `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`)
-- **Trace**: JSONL line per agent operation appended to `.agents/traces/<trace_id>.jsonl` (retention per `PROJECT.md` → Trace mode)
+- **Trace**: JSONL line per agent operation appended to `.agents/traces/<trace_id>.jsonl` (local-only; not committed)
 
 ## Running
 

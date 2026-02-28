@@ -42,7 +42,7 @@ Each project creates a dedicated agent-configuration repository (`<project>-Agen
 │
 ├── .github/
 │   ├── copilot-instructions.md       ← system instructions for all Copilot chats
-│   ├── AGENTS_CHANGELOG.md           ← history of agent prompt changes
+│   ├── AGENTS_CHANGELOG.md           ← history of agent prompt changes (.github/AGENTS_CHANGELOG.md)
 │   ├── pull_request_template.md      ← PR template (see §0.6)
 │   ├── instructions/                 ← optional, folder-specific conventions
 │   │   ├── backend.instructions.md
@@ -103,32 +103,22 @@ Each project creates a dedicated agent-configuration repository (`<project>-Agen
 
 **`.gitignore` for AgentConfig:**
 
-Traces are always written locally to `.agents/traces/` (see rubrics §3 and observability §4).
-Whether traces are committed is defined by `PROJECT.md` **Trace mode**.
-
-**Mode 1 — committed traces (sanitized):**
+Traces are written locally to `.agents/traces/` (see observability §4).
+Trace files (`.agents/traces/*.jsonl`) are **not committed**.
 
 ```text
 # Agent temporary sessions (do not commit)
 .agents/session/
 
-# Traces are committed in Mode 1. Commit sanitized traces only.
-```
-
-**Mode 2 — external / not committed:**
-
-```text
-# Agent temporary sessions (do not commit)
-.agents/session/
-
-# Traces are NOT committed in Mode 2.
-.agents/traces/
+# Traces (local-only; do not commit)
+.agents/traces/*.jsonl
+!.agents/traces/README.md
 ```
 
 > `CHANGELOG.md` does not live in AgentConfig. It lives in the root of each component repo (Backend, Frontend, Automation, Docs).
 > Format: Keep a Changelog — sections `Added / Changed / Deprecated / Removed / Fixed / Security`.
 > It is created and updated by an agent on every release commit (see DoD §3.11).
-> Prompt changelog (`AGENTS_CHANGELOG.md`) is a separate file in AgentConfig under `.github/` (see §5.1).
+> Prompt changelog (`.github/AGENTS_CHANGELOG.md`) is a separate file in AgentConfig (see §5.1).
 
 ### 0.1.1 `.agent.md` file format
 
@@ -605,8 +595,8 @@ Critic closes the thread:
 | *(open)* | No response or discussion in progress | Yes |
 
 > `DEFERRED` is allowed **only for SUGGESTION**.
-> A thread that contains an **active** BLOCKER finding must be `RESOLVED`.
-> If the critic withdraws the finding (i.e., it is no longer a BLOCKER), `ACKNOWLEDGED` is valid.
+> A thread that contains an **active** BLOCKER or WARNING finding must be `RESOLVED`.
+> If the critic withdraws the finding (i.e., it is no longer an active BLOCKER or WARNING), `ACKNOWLEDGED` is valid.
 
 **Final merge condition:**
 
@@ -614,7 +604,7 @@ Critic closes the thread:
 Gate 1:  CI → all tests green, build successful
 Gate 2:  Critic agent left a review (at least one thread, or explicit "No findings")
 Gate 3:  All threads are RESOLVED | ACKNOWLEDGED | DEFERRED(SUGGESTION-only)
-             All threads with active BLOCKER findings are RESOLVED only
+             All threads with active BLOCKER or WARNING findings are RESOLVED only
              ≥ 1 human reviewer → APPROVE
              → orchestrator issues the final APPROVE to merge
 ```
@@ -626,7 +616,7 @@ Gate 3:  All threads are RESOLVED | ACKNOWLEDGED | DEFERRED(SUGGESTION-only)
 | CI | All tests green; build succeeds | CI system | Yes |
 | Critic review | Structured review present | critic agent | Yes |
 | Thread resolution | All threads closed | executor + critic | Yes |
-| BLOCKER resolved | All BLOCKER → RESOLVED | executor + critic | Yes |
+| BLOCKER/WARNING resolved | All BLOCKER and WARNING → RESOLVED | executor + critic | Yes |
 | Human review | ≥ 1 human APPROVE | human | Yes |
 
 > The critic agent already ran the checklist (BLOCKER/WARNING/SUGGESTION). Human checks what the agent cannot evaluate:
@@ -787,7 +777,7 @@ before spending iterations on a wrong implementation.
 
 <!-- The baseline agent set is defined in 00-multi-agent-development-spec.md §1.
        Record deviations here: added/removed/renamed roles.
-       All changes must also be logged in AGENTS_CHANGELOG.md. -->
+   All changes must also be logged in .github/AGENTS_CHANGELOG.md. -->
 
 | Action | Agent | Rationale |
 |---|---|---|

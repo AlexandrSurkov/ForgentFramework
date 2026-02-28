@@ -27,7 +27,7 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-02-26 | `forgent-agent-architect` | fix | Updated agent prompt + SKILL references to new Appendix A path under `framework/spec/appendices/`. | copilot |
 | 2026-02-26 | `forgent-agent-architect` | knowledge | Removed the root eval SKILL reference; eval guidance relies on A1.5 in the spec. | copilot |
 | 2026-02-26 | `forgent-spec-editor`, `forgent-agent-architect` | behavior | Renamed canonical umbrella spec entrypoint to `framework/00-multi-agent-development-spec.md`; updated modules/templates/agents accordingly; removed the legacy umbrella entrypoint file. | copilot |
-| 2026-02-26 | `forgent-orchestrator` | behavior | Aligned session file naming to the umbrella spec: uses `.agents/session/TASK_CONTEXT.md` (not per-run suffixed filenames) and records `trace_id`/`trace_file` in the header; long-term trace retention deferred to `PROJECT.md` Trace mode. | copilot |
+| 2026-02-26 | `forgent-orchestrator` | behavior | Aligned session file naming to the umbrella spec: uses `.agents/session/TASK_CONTEXT.md` (not per-run suffixed filenames) and records `trace_id`/`trace_file` in the header; long-term trace retention deferred to `PROJECT.md`. | copilot |
 | 2026-02-26 | `forgent-orchestrator` | behavior | Updated sessions for parallel runs: create per-session `.agents/session/<trace_id>/TASK_CONTEXT.md`, and use collision-resistant `trace_id` (recommended `YYYYMMDDTHHMMSSZ-<slug>-<rand4>`); TASK_CONTEXT header now includes `task_context_file`. | copilot |
 | 2026-02-26 | `forgent-spec-editor` | behavior | Updated Reflexion rule to read `TASK_CONTEXT.md` from the orchestrator-provided session file path (typically `.agents/session/<trace_id>/TASK_CONTEXT.md`) rather than a fixed `.agents/session/TASK_CONTEXT.md`. | copilot |
 | 2026-02-26 | `forgent-agent-architect` | knowledge | Added `forgent-framework-spec` SKILL: fast lookup index for `framework/00-multi-agent-development-spec.md` and `framework/spec/*` modules; wired into activation triggers for spec location questions. | copilot |
@@ -47,6 +47,18 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-02-27 | `forgent-spec-editor` | behavior | Added mandatory executor efficiency rules (search-first, minimize reads, batch explore/edit/verify, 1:1 resolution of critic findings on iter 2+). | copilot |
 | 2026-02-27 | `forgent-orchestrator` | behavior | Added mandatory executor efficiency contract for every executor prompt (scope/out-of-scope, verification method, 3-pass workflow, iter 2+ findings handling). | copilot |
 | 2026-02-27 | `forgent-orchestrator`, `forgent-spec-editor` | behavior | Tightened executor efficiency contract: added required output format + pre-flight self-check; spec-editor now runs a mandatory self-check (scope, findings 1:1, output format, verification) before responding to reduce critic iteration churn. | copilot |
+| 2026-02-28 | `forgent-orchestrator` | fix | Removed trace-retention mode terminology from trace retention wording; traces are described as local-only and not committed. | copilot |
+| 2026-02-28 | `forgent-orchestrator` | behavior | Restricted `ACKNOWLEDGED` to SUGGESTION-only; explicitly forbids `ACKNOWLEDGED` for WARNING/BLOCKER. | copilot |
+| 2026-02-28 | `forgent-process-critic` | behavior | Enforced strict verdict semantics: WARNING always yields REQUEST_CHANGES; removed `ACKNOWLEDGED: WARNING` deferral pattern. | copilot |
+| 2026-02-28 | `forgent-docs-critic` | tools | Added `editFiles` for Mode B only; restricted writes to `.agents/session/**`. | copilot |
+| 2026-02-28 | `forgent-docs-critic` | behavior | Enforced strict verdict semantics: WARNING always yields REQUEST_CHANGES; removed `ACKNOWLEDGED: WARNING` deferral pattern. | copilot |
+| 2026-02-28 | `forgent-spec-editor` | behavior | Restricted `ACKNOWLEDGED` to SUGGESTION-only; explicitly forbids `ACKNOWLEDGED` for WARNING/BLOCKER. | copilot |
+| 2026-02-28 | `forgent-orchestrator` | behavior | Aligned `TASK_CONTEXT.md` creation template with canonical spec (verbatim user task, canonical `fast_track`, `## Decomposition`, `## Previous Attempts`); moved ADR check to occur before decomposition/session creation. | copilot |
+| 2026-02-28 | `forgent-orchestrator` | fix | Replaced the embedded `TASK_CONTEXT.md` template block with the canonical §2.1 version from `framework/spec/02-sessions-and-memory.md` (verbatim, including `fast_track` comment and Markdown line breaks). | copilot |
+| 2026-02-28 | `forgent-orchestrator` | behavior | Aligned observability to canonical protocol: orchestrator now requires executor/critic `trace_event` objects and merges them into JSONL spans (subagents never write `.agents/traces/**`). | copilot |
+| 2026-02-28 | `forgent-spec-editor` | behavior | Require executor responses to include a `trace_event` JSON object (OTel-style) and forbid writing `.agents/traces/**`. | copilot |
+| 2026-02-28 | `forgent-docs-critic` | behavior | Require `trace_event` JSON object in both Mode A (critique) and Mode B (audit executor) outputs; forbid writing `.agents/traces/**`. | copilot |
+| 2026-02-28 | `forgent-process-critic` | behavior | Require critic outputs to include a `trace_event` JSON object; forbid writing `.agents/traces/**`. | copilot |
 
 ## Change Types
 

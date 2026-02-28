@@ -1,5 +1,4 @@
 {
-  "TODO": "MCP configuration schema depends on your editor/runtime. Consult the VS Code Copilot MCP documentation for the exact schema.",
   "servers": {
     "example-server": {
       "transport": "stdio",

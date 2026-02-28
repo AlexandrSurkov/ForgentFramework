@@ -38,7 +38,7 @@ Do NOT use this skill as a substitute for reading: use it to jump to the right f
 | Sessions, memory rules, `TASK_CONTEXT.md`, Reflexion loop mechanics | `framework/spec/02-sessions-and-memory.md` |
 | Rubrics: constitutional principles + critic report format + specific critic checklists | `framework/spec/03-rubrics/` |
 | Tracing / spans / `trace_id`, trace retention, OTel-GenAI-ish JSONL format | `framework/spec/04-observability.md` |
-| Prompt versioning, `AGENTS_CHANGELOG.md`, change control | `framework/spec/05-prompt-versioning.md` |
+| Prompt versioning, `.github/AGENTS_CHANGELOG.md`, change control | `framework/spec/05-prompt-versioning.md` |
 | Adoption steps, setup interview, glossary, upgrade guidance | `framework/spec/06-adoption-roadmap.md` |
 | “Ideal Copilot-native repo layout” guidance (non-normative) | `framework/spec/guide-copilot-native-multi-agent-repo-structure.md` |
 
@@ -71,7 +71,7 @@ Use this as a fast “jump table”. After jumping, always open the exact sectio
 | “What must the orchestrator do (no paraphrase, trace first, previous attempts)?” | `framework/spec/03-rubrics/01-orchestrator-rules.md` |
 | “What is the trace format / fields / where files live?” | `framework/spec/04-observability.md` → §4.5 |
 | “Who writes traces and when? trace_id format?” | `framework/spec/04-observability.md` → §4.6 (especially §4.6.1–§4.6.2) |
-| “Trace retention / committed vs not committed?” | `framework/spec/00-infrastructure.md` (Trace mode in `.gitignore` guidance); plus `framework/spec/06-adoption-roadmap.md` (trace mode checklist) |
+| “Trace retention / committed vs not committed?” | `framework/spec/00-infrastructure.md` (`.gitignore` guidance); plus `framework/spec/06-adoption-roadmap.md` (observability checklist) |
 | “How do we version agent prompts / where to log changes?” | `framework/spec/05-prompt-versioning.md` → §5.1 |
 | “Do we need golden tests after changing a critic prompt?” | `framework/spec/05-prompt-versioning.md` → §5.2 |
 | “What’s the procedure for changing an agent prompt?” | `framework/spec/05-prompt-versioning.md` → §5.3 |
