@@ -60,6 +60,9 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-02-28 | `forgent-docs-critic` | behavior | Require `trace_event` JSON object in both Mode A (critique) and Mode B (audit executor) outputs; forbid writing `.agents/traces/**`. | copilot |
 | 2026-02-28 | `forgent-process-critic` | behavior | Require critic outputs to include a `trace_event` JSON object; forbid writing `.agents/traces/**`. | copilot |
 | 2026-02-28 | `forgent-orchestrator` | fix | Fix chat plan formatting: require stable Markdown numbered list with real newlines; forbid printing literal `\\n` outside code blocks (only allowed when quoting raw text). | copilot |
+| 2026-02-28 | project templates | structure | Added project repo context bootstrap executor+critic agents (multi-repo scan; create missing `AGENTS.md` + `llms.txt` only) and wired routing guidance into the project orchestrator template. | copilot |
+| 2026-02-28 | project templates | fix | Fixed the project orchestrator template tail (removed accidental duplicated frontmatter/prompt block; ensured clean end-of-file) and hardened repo-root detection to ignore `.git/modules/**` and `.git/worktrees/**` (never write under `.git/**`). | copilot |
+| 2026-02-28 | bootstrap templates | structure | Moved the repo context bootstrap executor+critic from the project agent group into Group 2 bootstrap templates (renamed to `bootstrap-repo-context-bootstrap` + `bootstrap-repo-context-bootstrap-critic`) and wired them into the bootstrap orchestrator allowlist. | copilot |
 
 ## Change Types
 

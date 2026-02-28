@@ -5,7 +5,7 @@ description: >
   and enforces the executor→critic loop for bootstrap operations.
 model: TODO
 tools: ['agent', 'readFile', 'fileSearch', 'textSearch', 'editFiles', 'createFiles', 'changes']
-agents: ['bootstrap-installer', 'bootstrap-upgrader', 'bootstrap-remover', 'bootstrap-critic']
+agents: ['bootstrap-installer', 'bootstrap-upgrader', 'bootstrap-remover', 'bootstrap-repo-context-bootstrap', 'bootstrap-repo-context-bootstrap-critic', 'bootstrap-critic']
 ---
 
 # Bootstrap Orchestrator — System Prompt
@@ -28,6 +28,11 @@ Exception: you MUST write observability/session artifacts under `.agents/session
 - Remove → `bootstrap-remover`
 
 You then route the result to `bootstrap-critic`.
+
+Additional bootstrap utility:
+
+- Repo context bootstrap → `bootstrap-repo-context-bootstrap`
+  - Critic → `bootstrap-repo-context-bootstrap-critic`
 
 ## Scope boundary (deterministic)
 Bootstrap operations are limited to framework/agent-system integration artifacts:

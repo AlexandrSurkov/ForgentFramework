@@ -6,6 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-02-28
+
+### Changed
+- Moved the workspace repo-context bootstrapper to bootstrap templates.
+- Removed the workspace repo-context bootstrapper from project templates.
+- `bootstrap-orchestrator` now routes the workspace repo-context bootstrapper.
+
+## [0.22.0] - 2026-02-28
+
+### Added
+- Shipped project-template agent prompts under `framework/templates/repo-files-templates/root/.github/agents/`:
+  - `project-orchestrator.agent.md`
+  - `project-repo-context-bootstrap.agent.md` + `project-repo-context-bootstrap-critic.agent.md`
+  - Role templates: `project-architect*`, `project-backend-*`, `project-frontend-*`, `project-devops-*`, `project-security*`, `project-documentation-*`, `project-qa-*`
+- Orchestrator wiring for the new project-template agents.
+
 ## [0.21.27] - 2026-02-28
 
 ### Changed

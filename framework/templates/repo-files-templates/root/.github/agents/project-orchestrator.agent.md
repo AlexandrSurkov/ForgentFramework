@@ -11,6 +11,21 @@ tools:
   - createFiles
   - changes
   - agent
+agents:
+  - <project>-architect
+  - <project>-architect-critic
+  - <project>-backend-dev
+  - <project>-backend-critic
+  - <project>-frontend-dev
+  - <project>-frontend-critic
+  - <project>-qa-engineer
+  - <project>-qa-critic
+  - <project>-security
+  - <project>-security-critic
+  - <project>-devops-engineer
+  - <project>-devops-critic
+  - <project>-documentation-writer
+  - <project>-documentation-critic
 ---
 
 # System Prompt
@@ -73,3 +88,4 @@ You MUST produce the following messages in the user-visible chat:
   - If the subagent is a critic: include the verdict and the top finding(s) that drive next actions.
 
 Do not skip these messages even when the task is simple.
+
