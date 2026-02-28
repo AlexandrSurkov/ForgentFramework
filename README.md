@@ -96,6 +96,4 @@ If you evolve the spec:
 - Update the spec version and “Updated” date in the header.
 - Prefer small, reviewable commits (Conventional Commits are referenced by the spec).
 
-## License
-
-No license file is included in this repository snapshot. If you plan to share it publicly, add an explicit `LICENSE` file and align it with your intended usage.
+License: MIT. See [LICENSE](LICENSE).
