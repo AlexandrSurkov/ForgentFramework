@@ -89,7 +89,11 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
 5. Decompose into subtasks (max 6) and track progress.
    - Each subtask must have: deliverable, verification, and an assigned executor + critic.
    - **Chat plan (MANDATORY):** before the first subagent call, output a plan listing **all** subtasks.
-     For each subtask include: `<id>`, `<title>`, what it does (deliverable), and which subagents will handle it (executor + critic) + verification.
+       - For each subtask include: `<id>`, `<title>`, what it does (deliverable), and which subagents will handle it (executor + critic) + verification.
+       - **Formatting (MANDATORY):** render the plan as a Markdown numbered list with real line breaks.
+          - Use `1.` / `2.` / `3.` (not `1)`), one subtask per line; keep list items short and stable.
+          - Do NOT output literal `\n` sequences as text. If the user provides raw text containing `\n`, convert it into actual newlines.
+          - Only show literal `\n` inside fenced code blocks when quoting raw text verbatim (e.g., for debugging or fidelity).
    - Observability (MANDATORY): **before each subagent call** (executor OR critic), output exactly one line that provides (a) the subtask context, (b) the called subagent name, (c) minimal relevant context (inputs/constraints/success criteria), and (d) the called subagent's job + verification.
      This line MUST start with `Subtask <id>:` (for compatibility) and MUST include `call=<executor|critic>`.
      - Executor call format:

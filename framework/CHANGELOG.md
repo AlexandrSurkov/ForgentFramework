@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.21.27] - 2026-02-28
+
+### Changed
+- Added a canonical plan-output formatting rule.
+
+### Fixed
+- Aligned shipped templates with the canonical plan-output formatting rule.
+
 ## [0.21.26] - 2026-02-28
 
 ### Fixed

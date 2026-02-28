@@ -21,6 +21,9 @@
 > Group 1 orchestrators MUST always produce the following **in the user-facing chat** for the task:
 >
 > 1. **Before starting execution** (before invoking the first subagent), publish a plan that lists **all** tasks/subtasks.
+>    - **Plan output format (normative):** the plan MUST be printed as a stable Markdown numbered list using `1.` / `2.` / `3.` with real line breaks (one list item per line).
+>    - The orchestrator MUST NOT output literal `\\n` (or `\n`) sequences as text in the plan (or any other user-visible list/progress formatting).
+>      - Exception: literal `\\n` (or `\n`) is allowed only inside fenced code blocks when quoting raw text verbatim (debugging/fidelity).
 >    - Each task/subtask entry MUST include: (a) the goal, and (b) which subagent(s) will handle it.
 > 2. **Before each subagent invocation** (executor or critic), announce:
 >    - The called subagent name,

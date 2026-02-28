@@ -59,6 +59,7 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-02-28 | `forgent-spec-editor` | behavior | Require executor responses to include a `trace_event` JSON object (OTel-style) and forbid writing `.agents/traces/**`. | copilot |
 | 2026-02-28 | `forgent-docs-critic` | behavior | Require `trace_event` JSON object in both Mode A (critique) and Mode B (audit executor) outputs; forbid writing `.agents/traces/**`. | copilot |
 | 2026-02-28 | `forgent-process-critic` | behavior | Require critic outputs to include a `trace_event` JSON object; forbid writing `.agents/traces/**`. | copilot |
+| 2026-02-28 | `forgent-orchestrator` | fix | Fix chat plan formatting: require stable Markdown numbered list with real newlines; forbid printing literal `\\n` outside code blocks (only allowed when quoting raw text). | copilot |
 
 ## Change Types
 

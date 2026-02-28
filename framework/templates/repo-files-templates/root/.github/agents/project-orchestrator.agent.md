@@ -59,6 +59,7 @@ You MUST produce the following messages in the user-visible chat:
 1) **Plan (before any subagent call)**
   - List *all* subtasks you will run.
   - For each subtask: the goal and which subagent(s) will handle it (executor + critic).
+  - Format the plan as a stable Markdown numbered list (`1.` / `2.` / `3.`), one item per line, with real line breaks (do not print literal `\\n` sequences as text). Literal `\\n` is allowed only inside fenced code blocks when quoting raw text verbatim.
 
 2) **Pre-invocation (immediately before every subagent call, executor or critic)**
   - State the current subtask name.

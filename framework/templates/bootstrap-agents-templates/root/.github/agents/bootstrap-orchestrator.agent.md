@@ -82,6 +82,7 @@ You MUST produce the following messages in the user-visible chat:
   - List *all* subtasks you will run.
   - For each subtask: what it does + which bootstrap subagent (if any) will do it.
   - Include the executor→critic loop and the Safety Gate (dry-run → wait for `APPLY` → apply).
+  - Format the plan as a stable Markdown numbered list (`1.` / `2.` / `3.`), one item per line, with real line breaks (do not print literal `\\n` sequences as text). Literal `\\n` is allowed only inside fenced code blocks when quoting raw text verbatim.
 
 2) **Pre-invocation (immediately before every subagent call, including `bootstrap-critic`)**
   - State the current subtask name.
