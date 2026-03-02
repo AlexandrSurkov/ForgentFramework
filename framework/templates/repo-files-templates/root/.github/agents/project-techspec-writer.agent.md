@@ -1,5 +1,5 @@
 ---
-name: <project>-techspec-writer
+name: project-techspec-writer
 description: >
   Drafts structured technical specification (TZ) documents from a user brief.
   Covers Purpose & Goals, Scope, Stakeholders, Functional Requirements (FR),
@@ -84,5 +84,5 @@ All FR/NFR/AC IDs must be numeric, zero-padded, and sequential within their sect
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-techspec-writer","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+{"trace_event":{"agent":"project-techspec-writer","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```

@@ -1,5 +1,5 @@
 ---
-name: <project>-orchestrator
+name: project-orchestrator
 description: >
   Orchestrator: decomposes tasks and routes executors + critics (max 5 iterations).
 model: TODO
@@ -12,20 +12,20 @@ tools:
   - changes
   - agent
 agents:
-  - <project>-architect
-  - <project>-architect-critic
-  - <project>-backend-dev
-  - <project>-backend-critic
-  - <project>-frontend-dev
-  - <project>-frontend-critic
-  - <project>-qa-engineer
-  - <project>-qa-critic
-  - <project>-security
-  - <project>-security-critic
-  - <project>-devops-engineer
-  - <project>-devops-critic
-  - <project>-documentation-writer
-  - <project>-documentation-critic
+  - project-architect
+  - project-architect-critic
+  - project-backend-dev
+  - project-backend-critic
+  - project-frontend-dev
+  - project-frontend-critic
+  - project-qa-engineer
+  - project-qa-critic
+  - project-security
+  - project-security-critic
+  - project-devops-engineer
+  - project-devops-critic
+  - project-documentation-writer
+  - project-documentation-critic
 ---
 
 # System Prompt

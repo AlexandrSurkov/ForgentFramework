@@ -1,5 +1,5 @@
 ---
-name: <project>-architect
+name: project-architect
 description: >
   Architecture advisor/executor: proposes designs and updates ADRs/specs when approved.
 model: TODO
@@ -38,5 +38,5 @@ Architecture agent.
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-architect","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+{"trace_event":{"agent":"project-architect","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```

@@ -1,5 +1,5 @@
 ---
-name: <project>-backend
+name: project-backend
 description: "Backend skill pack: architecture, conventions, testing, and ops for the backend component"
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: <project>-frontend
+name: project-frontend
 description: "Frontend skill pack: UI conventions, testing, build, and performance constraints"
 ---
 

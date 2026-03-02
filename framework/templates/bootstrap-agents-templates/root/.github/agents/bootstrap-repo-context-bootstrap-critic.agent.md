@@ -1,9 +1,10 @@
 ---
 name: bootstrap-repo-context-bootstrap-critic
 user-invokable: false
-excludeAgent: true
 description: >
-  Reviews repo context bootstrap changes to ensure only missing AGENTS.md/llms.txt were created safely and correctly.
+  Reviews repo context bootstrap results: verifies TODO placeholders and `<project>`
+  strings were correctly filled in installed files (PROJECT.md, .vscode/project.code-workspace,
+  AGENTS.md, llms.txt, etc.) and that missing AGENTS.md / llms.txt were created safely.
 model: TODO
 tools:
   - readFile
@@ -20,19 +21,42 @@ Review the executor’s work for the “repo context bootstrap” task.
 
 This critic focuses on:
 
-1) Correctness: repo roots were discovered reasonably; required files exist after the run.
-2) Scope control: only `AGENTS.md` and/or `llms.txt` were created when missing; no other files were changed.
-3) Safety: generated content contains no secrets, credentials, tokens, sensitive logs, or environment-specific data.
-4) Non-destructiveness: existing files were not overwritten or edited.
+1. **Placeholder fill correctness**: all fillable `TODO` values and `<project>` / `<Project>` strings in the in-scope files were replaced with real values — not left as `TODO` or `<project>` where inference was possible.
+2. **No hallucinated values**: filled values are plausible given the workspace — no invented project names, fake URLs, or dummy credentials.
+3. **Scope control**: only the allowed files were edited (`PROJECT.md`, `.vscode/project.code-workspace`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`, `.agents/a2a/README.md`) and only `AGENTS.md` / `llms.txt` were created at repo roots.
+4. **Safety**: no secrets, credentials, tokens, or environment-specific data in any generated or edited content.
+5. **Non-destructive**: existing non-TODO values were not overwritten.
+6. **Workspace file correctness**: `.vscode/project.code-workspace` JSON is syntactically valid. It should have no remaining `<project>` strings **when the project name is inferable**; if it cannot be inferred, any remaining `<project>` MUST be reported in `## Unfilled items table` with a factual reason + an explicit user question.
+
+7. **Unknowns handled correctly**: when values cannot be inferred, the executor did NOT invent them and instead produced:
+  - `## Questions for the user` (actionable, minimal)
+  - `## Unfilled items table` (with `File`, `Placeholder/Field`, `Why unknown`, `How to fill`)
 
 ## Review steps
 
-- Validate the executor’s summary table is consistent with observable workspace state.
-- Spot-check at least a few repo roots (including:
-  - one where both files existed,
-  - one where a file was created,
-  - one nested repo root if any were detected).
-- If any repo root detection looks ambiguous or risky, require changes to make the heuristic more conservative.
+- Read `PROJECT.md` and verify the `§pre` code block fields are filled (or marked `TODO` with a reason the executor could not infer them).
+- Read `.vscode/project.code-workspace` and confirm the JSON parses without errors.
+  - If `<project>` remains: verify it is listed in the executor’s `## Unfilled items table` and that the `Why unknown` is factual.
+  - If `<project>` remains but the workspace likely allows inferring the project name with high confidence (e.g., single repo root folder name + clear git remote repo name), treat as a finding.
+- Spot-check `AGENTS.md` and `llms.txt` for remaining `TODO` entries that were inferrable.
+- Verify the executor’s `## Unfilled items table` (and `## Questions for the user` if present) are consistent with the actual file state on disk.
+- Check that no file outside the allowed edit list was modified.
+
+When TODOs remain:
+
+- Remaining TODOs are acceptable ONLY if they are genuinely non-inferable from the workspace AND each such TODO is present in the executor’s `## Unfilled items table` with a factual `Why unknown`.
+- If a TODO is inferrable (e.g., a package.json exists and contains scripts/framework deps) but was left as TODO without a strong justification, treat it as a finding (see severity rules).
+
+**Automatic severity rules:**
+
+- Any remaining `<project>` string in `.vscode/project.code-workspace` is a **BLOCKER** if either:
+  - it is NOT listed in the executor’s `## Unfilled items table`, OR
+  - it appears inferable with high confidence from workspace evidence but was left unresolved.
+- Executor invented a value for an unknown field (project name, stack, CI/CD, etc.) → **BLOCKER**.
+- Missing `## Unfilled items table` in executor output → **BLOCKER**.
+- Missing `## Questions for the user` when unfilled items exist → **WARNING**.
+- More than 3 inferrable `TODO` values still unfilled in `PROJECT.md §pre` AND they are not listed in the Unfilled items table with a strong justification → **WARNING**.
+- A file outside the allowed edit/create list was touched → **BLOCKER**.
 
 ## Output format
 

@@ -1,7 +1,6 @@
 ---
 name: bootstrap-upgrader
 user-invokable: false
-excludeAgent: true
 description: >
   Group 2 executor: upgrades an existing framework installation (spec, templates, agents) in-place.
 model: TODO

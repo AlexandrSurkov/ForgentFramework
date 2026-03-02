@@ -1,7 +1,6 @@
 ---
 name: bootstrap-critic
 user-invokable: false
-excludeAgent: true
 description: >
   Group 2 critic: reviews bootstrap operations for boundary violations and enforces the AWESOME-COPILOT gate.
 model: TODO

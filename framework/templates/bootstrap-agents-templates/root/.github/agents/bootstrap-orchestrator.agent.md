@@ -29,10 +29,25 @@ Exception: you MUST write observability/session artifacts under `.agents/session
 
 You then route the result to `bootstrap-critic`.
 
-Additional bootstrap utility:
+Mandatory post-install/upgrade phase (runs automatically after apply is APPROVED — do NOT skip):
 
-- Repo context bootstrap → `bootstrap-repo-context-bootstrap`
-  - Critic → `bootstrap-repo-context-bootstrap-critic`
+- **Step 8** — Collect project context from the user (project name, workspace repo names, stack details).
+- **Step 9** — Fill all TODO placeholders and `<project>` strings in installed files → `bootstrap-repo-context-bootstrap`
+- **Step 10** — Critic review of the context fill → `bootstrap-repo-context-bootstrap-critic`
+
+Deterministic clarification loop (mandatory):
+
+- If Step 9 returns any unfilled items (it MUST include `## Questions for the user` + `## Unfilled items table`), you MUST:
+  1) Ask the user those questions verbatim (once).
+  2) Wait for exactly one user reply.
+  3) If the user replies with answers (or `UNKNOWN` per question), re-run Step 9 once with an updated Context block.
+  4) If the user does not reply, you MUST still continue:
+     - Present the executor’s `## Unfilled items table` verbatim (including the `How to fill` column that points to the exact file/section to edit), so the user can fill it manually later.
+     - Proceed to Step 10 with the current state.
+
+Do NOT keep retrying; do NOT ask multiple rounds.
+
+> **Rule**: After every successful `bootstrap-critic` APPROVE on an install or upgrade apply, you MUST run steps 8–10 unless a post-install context fill was already completed in this session and no TODO or `<project>` placeholders remain in the installed files (verify before skipping).
 
 ## Scope boundary (deterministic)
 Bootstrap operations are limited to framework/agent-system integration artifacts:
@@ -103,10 +118,20 @@ If a subagent omits `trace_event`, returns invalid JSON, or returns a `trace_eve
 You MUST produce the following messages in the user-visible chat:
 
 1) **Plan (before any subagent call)**
-  - List *all* subtasks you will run.
-  - For each subtask: what it does + which bootstrap subagent (if any) will do it.
-  - Include the executor→critic loop and the Safety Gate (dry-run → wait for `APPLY` → apply).
-  - Format the plan as a stable Markdown numbered list (`1.` / `2.` / `3.`), one item per line, with real line breaks (do not print literal `\\n` sequences as text). Literal `\\n` is allowed only inside fenced code blocks when quoting raw text verbatim.
+  - Output this plan FIRST — before invoking any subagent, including any discovery step.
+  - List *all* phases you will run as separate numbered items. The plan MUST include these phases explicitly:
+    1. Repo-state discovery & ADR check
+    2. Observability setup (session + trace files)
+    3. Dry-run via bootstrap executor (change plan only, no files written)
+    4. **Critic review of the dry-run** (`bootstrap-critic`) — blocks APPLY if issues found
+    5. Wait for explicit `APPLY` confirmation from the user
+    6. Apply via bootstrap executor
+    7. **Critic review of the applied result** (`bootstrap-critic`)
+    8. **Collect project context** — ask the user for project name, workspace repo names, known stack; supplement with workspace-inferred values
+    9. **Fill TODO placeholders** (`bootstrap-repo-context-bootstrap`) — replace all TODO and `<project>` strings in installed files; create missing AGENTS.md / llms.txt
+    10. **Critic review of context fill** (`bootstrap-repo-context-bootstrap-critic`)
+  - For each phase: state what it does + which bootstrap subagent (if any) will do it.
+  - Format as a stable Markdown numbered list (`1.` / `2.` / `3.`), one item per line, with real line breaks (do not print literal `\\n` sequences as text). Literal `\\n` is allowed only inside fenced code blocks when quoting raw text verbatim.
 
 2) **Pre-invocation (immediately before every subagent call, including `bootstrap-critic`)**
   - State the current subtask name.
@@ -122,11 +147,39 @@ You MUST produce the following messages in the user-visible chat:
 Do not skip these messages even when the operation is simple.
 
 1. Identify which operation is requested: **install**, **upgrade**, or **remove**.
-2. Delegate to the corresponding bootstrap executor.
-3. Ensure the executor follows the **Safety Gate** (dry-run → wait for `APPLY` → apply).
-4. After the executor completes the apply step (or provides a final summary), invoke `bootstrap-critic` to review:
+2. Delegate to the corresponding bootstrap executor for the **dry-run phase** (change plan only; no files written yet).
+3. After the executor produces the dry-run plan, immediately invoke `bootstrap-critic` to review:
    - scope boundary compliance
    - AWESOME-COPILOT gate compliance when relevant
+   If the critic returns `REQUEST_CHANGES` or `REJECT`, do NOT proceed to `APPLY`; address all findings first (up to 5 iterations). Only proceed once the critic returns `APPROVE`.
+4. Present the approved dry-run summary to the user and **wait for the explicit `APPLY` confirmation** before continuing.
+5. Re-invoke the bootstrap executor to apply the confirmed change set.
+6. After apply, invoke `bootstrap-critic` again to verify the applied change set (scope + gate compliance).
+7. Once `bootstrap-critic` APPROVE on the apply step — **immediately start the repo context fill phase without waiting for another user confirmation**:
+   a. Output this prompt to the user in chat:
+      > **Project context needed for repo context fill.**
+      > Please answer the following (or type `SKIP` to fill only what can be inferred from the workspace):
+      > 1. **Project / product name** (e.g. `Acme`, `MyApp`)
+      > 2. **Workspace repo names** (e.g. `Acme-Backend`, `Acme-Frontend`, `Acme-Automation`, `Acme-Docs`)
+      > 3. **Primary languages / frameworks** (e.g. `TypeScript, React, Node.js`)
+      > 4. **Database / ORM** (e.g. `PostgreSQL + Prisma`)
+      > 5. **AI model tier** (e.g. `gpt-4.1` for orchestrators, `gpt-4.1-mini` for executors)
+      > 6. **CI/CD platform** (e.g. `GitHub Actions`)
+    >
+    > If you are not sure about an answer, reply `UNKNOWN` for that item.
+    b. Wait for exactly one user reply.
+      - If the user replies `SKIP`, treat all items as `UNKNOWN` and proceed.
+      - If the user replies but omits some items or answers irrelevantly, treat the missing items as `UNKNOWN` and proceed (do not re-ask Step 8).
+      - If the user does not reply at all (user goes silent), proceed as if they replied `SKIP` (all `UNKNOWN`) — do NOT stall Step 9.
+    c. Delegate to `bootstrap-repo-context-bootstrap`, passing the user's answers (or the inferred `UNKNOWN` values when missing) as a **Context block** verbatim at the top of the executor prompt. The executor will auto-infer any unanswered fields from the workspace.
+  d. If the executor output contains `## Unfilled items table` with any real rows (not `None`):
+    - Ask the executor's `## Questions for the user` verbatim.
+    - Wait for exactly one user reply.
+    - If the user replies: re-run `bootstrap-repo-context-bootstrap` once, prepending the updated Context block (include both the original answers and the follow-up answers).
+    - If the user does not reply: present the executor’s `## Unfilled items table` verbatim and do not re-run; continue.
+  e. Invoke `bootstrap-repo-context-bootstrap-critic`.
+  f. Apply Reflexion loop (max 5 iterations) on `REQUEST_CHANGES`; escalate on `REJECT` or 5th iteration without APPROVE.
+8. After `bootstrap-repo-context-bootstrap-critic` APPROVE — the bootstrap operation is complete. Output `TASK_COMPLETE` and a final summary.
 
 Playbooks (must-follow by executors):
 - Install: `framework/spec/06-adoption-roadmap.md` (`## 6.install` + `## 6.agent`)

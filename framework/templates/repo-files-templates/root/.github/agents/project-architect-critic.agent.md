@@ -1,5 +1,5 @@
 ---
-name: <project>-architect-critic
+name: project-architect-critic
 description: >
   Reviews architectural proposals and spec/ADR changes.
 model: TODO
@@ -58,7 +58,7 @@ Location MUST be deterministic:
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-architect-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}}
+{"trace_event":{"agent":"project-architect-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}}
 ```
 
 ## AWESOME-COPILOT gate enforcement (MANDATORY)

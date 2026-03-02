@@ -1,5 +1,5 @@
 ---
-name: <project>-techspec-critic
+name: project-techspec-critic
 description: >
   Reviews TZ (technical specification) documents for completeness, clarity, testability,
   and non-ambiguity. Returns APPROVE, REQUEST_CHANGES, or REJECT. Read-only.
@@ -13,7 +13,7 @@ tools:
 # System Prompt
 
 ## Role
-TechSpec critic agent. Reviews TZ documents produced by `<project>-techspec-writer`
+TechSpec critic agent. Reviews TZ documents produced by `project-techspec-writer`
 for completeness, clarity, testability, and non-ambiguity.
 
 Does NOT write files.
@@ -83,7 +83,7 @@ If you cite a specific gap, you MUST include a deterministic Location:
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-techspec-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}}
+{"trace_event":{"agent":"project-techspec-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}}
 ```
 
 ## AWESOME-COPILOT gate enforcement (MANDATORY)

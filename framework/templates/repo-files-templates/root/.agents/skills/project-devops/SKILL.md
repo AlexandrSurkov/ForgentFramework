@@ -1,5 +1,5 @@
 ---
-name: <project>-devops
+name: project-devops
 description: "DevOps skill pack: CI/CD, environments, IaC, secrets policy, and observability"
 ---
 

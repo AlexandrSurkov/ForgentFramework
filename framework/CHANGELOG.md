@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.25.5] - 2026-03-03
+
+### Changed
+- Removed legacy `excludeAgent: true` from agent YAML frontmatter across shipped templates and repo agents.
+
+## [0.25.4] - 2026-03-02
+
+### Changed
+- Templates: Bootstrap repo-context fill improvements: avoid invention; ask user for missing values; include an unfilled-items table; add a deterministic no-response fallback.
+
+## [0.25.3] - 2026-03-02
+
+### Changed
+- Editorial / Templates: Normalized agent `name:` fields in `framework/templates/repo-files-templates/` from `<project>-*` template placeholder to concrete `project-*` prefix. Affects `name:` frontmatter, `agents:` list entries, inline body references, and `trace_event` examples in all 17 Group 1 agent `.agent.md` templates and 3 SKILL.md files. No normative MUST/SHOULD/MAY obligations changed.
+
 ## [0.25.2] - 2026-03-02
 
 ### Changed

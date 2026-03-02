@@ -1,5 +1,5 @@
 ---
-name: <project>-documentation-writer
+name: project-documentation-writer
 description: >
   Writes and updates documentation (README, guides, ADRs) in English.
 model: TODO
@@ -36,5 +36,5 @@ Documentation executor agent.
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-documentation-writer","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+{"trace_event":{"agent":"project-documentation-writer","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```

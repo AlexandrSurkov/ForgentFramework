@@ -1,5 +1,5 @@
 ---
-name: <project>-backend-dev
+name: project-backend-dev
 description: >
   Implements backend changes; runs relevant tests; updates docs if needed.
 model: TODO
@@ -38,5 +38,5 @@ Backend executor agent.
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-backend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+{"trace_event":{"agent":"project-backend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```

@@ -1,5 +1,5 @@
 ---
-name: <project>-security
+name: project-security
 description: >
   Performs security reviews and threat modeling; proposes mitigations.
 model: TODO
@@ -33,5 +33,5 @@ Security advisor agent.
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-security","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+{"trace_event":{"agent":"project-security","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```

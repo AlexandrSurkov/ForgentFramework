@@ -1,5 +1,5 @@
 ---
-name: <project>-frontend-dev
+name: project-frontend-dev
 description: >
   Implements frontend changes; runs relevant tests; updates docs if needed.
 model: TODO
@@ -38,5 +38,5 @@ Frontend executor agent.
 Minimal example:
 
 ```json
-{"trace_event":{"agent":"<project>-frontend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
+{"trace_event":{"agent":"project-frontend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}}
 ```
