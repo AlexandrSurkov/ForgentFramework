@@ -132,12 +132,13 @@ description: >
    [One sentence: what this agent does and when to invoke it]
 model: <model-name>          # see PROJECT.md §2 + tiers in 00-multi-agent-development-spec.md §1
 tools:
+   # Canonical tool IDs: see ./04-observability.md#48-canonical-capability-to-tool-mapping-tool-ids
    # --- all agents: navigation (read-only) ---
    - readFile
    - fileSearch
    - textSearch
    # --- executor agents add: ---
-   # - codebase            ← optional: workspace-wide navigation (if available)
+   # - <optional workspace-wide navigation tool>  ← platform-dependent (if available)
    # - editFiles
    # - createFiles
    # - runTerminal
@@ -174,19 +175,15 @@ tools:
 ## Trace Recording
 Do NOT write trace files.
 
-After each iteration, return a `trace_event` JSON object in your response so the orchestrator can append one JSONL line to `.agents/traces/<trace_id>.jsonl`.
-`trace_id` comes from the TASK_CONTEXT.md header (provided by orchestrator).
+Trace-writing protocol and `trace_event` required keys are defined in [04-observability.md](04-observability.md) §4.5–§4.6.
 
-Executor (operation: "execute"):
-   {"trace_event":{"agent":"<name>","operation":"execute","subtask":<N>,"iteration":<N>,
-    "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}}
+After each operation, include a `trace_event` JSON object in your response as specified there.
 
-Critic (operation: "critique") — include verdict / blockers / warnings:
-   {"trace_event":{"agent":"<name>-critic","operation":"critique","subtask":<N>,"iteration":<N>,
-    "verdict":"APPROVE|REQUEST_CHANGES|REJECT","blockers":<N>,"warnings":<N>,
-    "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}}
+Example (non-normative):
 
-Full format — see [04-observability.md](04-observability.md) §4.5–§4.6.
+```json
+{"trace_event":{"agent":"<name>","operation":"execute","subtask":1,"iteration":1}}
+```
 
 ```
 
@@ -255,6 +252,7 @@ Does NOT write code. Does NOT read executor's chain-of-thought — only the fina
 ## Constitutional Constraints
 - Follow 00-multi-agent-development-spec.md §3.0 and §3.3 (all critic rules).
 - Only read-only tools (readFile, fileSearch, textSearch) — no write operations.
+- Canonical tool IDs: see ./04-observability.md#48-canonical-capability-to-tool-mapping-tool-ids
 - Findings without file:line reference are not valid — do not include them.
 - 0 findings is valid only if the implementation is genuinely correct;
    if you suspect sycophancy, re-read the rubric and check one more time.
@@ -272,10 +270,7 @@ Does NOT write code. Does NOT read executor's chain-of-thought — only the fina
 | SUGGESTION | conventions | models/host.go:33 | No godoc | Add comment |
 
 ### Trace Recording
-After issuing the verdict, return a `trace_event` object:
-{"trace_event":{"agent":"<project>-backend-critic","operation":"critique","subtask":<N>,"iteration":<N>,
- "verdict":"<APPROVE|REQUEST_CHANGES|REJECT>","blockers":<N>,"warnings":<N>,
- "input_tokens":<N>,"output_tokens":<N>,"duration_ms":<N>}}
+After issuing the verdict, return a `trace_event` object as specified by [04-observability.md](04-observability.md) §4.5–§4.6.
 ````
 
 ---
@@ -511,7 +506,7 @@ Format for each critic comment in the PR:
    Recommendation: a concrete fix
 
 Critic does NOT press "Approve" — it leaves thread comments.
-Final APPROVE is done by the orchestrator after all threads are resolved.
+After all threads are resolved, the orchestrator may mark the PR as merge-ready (Gate 3 still requires a human approval).
 
 How the critic is invoked (webhook, manual Copilot Chat, CI job) is defined in PROJECT.md §3.x.
 Without a working mechanism, Gate 2 does not function.
@@ -557,19 +552,35 @@ PR opened event → MCP server → automatically runs the `.agent.md` critic.
 The executor who created the PR must reply to every open critic thread.
 Silence is not a response — an unresolved thread blocks merging.
 
+**Dispute-summary artifact (canonical):**
+
+When a BLOCKER/WARNING is disputed or escalated, the orchestrator MUST maintain a dispute-summary artifact.
+This artifact exists to keep escalation and decision-making **critic-isolation safe**: a critic (or a human) can evaluate the disagreement without requiring PR thread history or chat history.
+
+- **Location:** `.agents/session/<trace_id>/DISPUTE_SUMMARY.md` (gitignored; local-only)
+- **SCM visibility:** because `.agents/session/**` is local-only, when escalation happens in a PR the orchestrator/executor MUST paste (or otherwise attach) the relevant dispute-summary entry content into the `NEEDS_HUMAN` thread so the human reviewer can decide.
+- **Minimal required content (per disputed finding):**
+  - `finding_id` (stable identifier)
+  - `severity` (`BLOCKER` or `WARNING`)
+  - `critic_finding` (original finding text, including `file:line`)
+  - `executor_position` (why the executor disagrees)
+  - `evidence` (links/quotes to spec, ADRs, tests, benchmarks)
+  - `decision_needed` (what a human must decide, if escalation is required)
+  - `status` (`OPEN|WITHDRAWN|RESOLVED|NEEDS_HUMAN`) and `iterations`
+
 **Option A — Executor disagrees with critic:**
 
 ```text
 Executor replies in the thread:
-   DISPUTE: <argument>
-   - Link to a standard / ADR / test that proves the point
-   - If needed — a quote from the spec or documentation
+   DISPUTE: <one-paragraph summary>
+   Evidence: <1–3 key links>
+   Dispute summary: .agents/session/<trace_id>/DISPUTE_SUMMARY.md#<finding_id>
 
 Critic replies:
    - Withdraws the finding → closes the thread with ACKNOWLEDGED
-   - Insists              → strengthens the argument (iteration +1)
+   - Insists              → strengthens the argument (iteration +1); the orchestrator records/updates the dispute-summary entry after the critic reply
 
-If a BLOCKER/WARNING is not resolved within `max_iterations` (5) → orchestrator escalates: NEEDS_HUMAN
+If a BLOCKER/WARNING is not resolved within `max_iterations` (5) → orchestrator escalates: NEEDS_HUMAN, pasting/attaching the relevant dispute-summary entry (not thread history)
 SUGGESTION may be rejected by the executor without escalation (ACKNOWLEDGED is sufficient).
 ```
 
@@ -591,7 +602,7 @@ Critic closes the thread:
 | `RESOLVED` | Fix applied, critic agrees | No |
 | `ACKNOWLEDGED` | Executor proved the point, critic withdrew | No |
 | `DEFERRED` | Tech debt; issue created — **SUGGESTION-only** | No |
-| `ESCALATED` | Disagreement on BLOCKER/WARNING → NEEDS_HUMAN | Yes |
+| `NEEDS_HUMAN` | Disagreement on BLOCKER/WARNING requires human decision | Yes |
 | *(open)* | No response or discussion in progress | Yes |
 
 > `DEFERRED` is allowed **only for SUGGESTION**.
@@ -605,8 +616,8 @@ Gate 1:  CI → all tests green, build successful
 Gate 2:  Critic agent left a review (at least one thread, or explicit "No findings")
 Gate 3:  All threads are RESOLVED | ACKNOWLEDGED | DEFERRED(SUGGESTION-only)
              All threads with active BLOCKER or WARNING findings are RESOLVED only
-             ≥ 1 human reviewer → APPROVE
-             → orchestrator issues the final APPROVE to merge
+             ≥ 1 human reviewer → approved (human review)
+             → orchestrator marks merge-ready
 ```
 
 **Gate summary table:**
@@ -617,7 +628,7 @@ Gate 3:  All threads are RESOLVED | ACKNOWLEDGED | DEFERRED(SUGGESTION-only)
 | Critic review | Structured review present | critic agent | Yes |
 | Thread resolution | All threads closed | executor + critic | Yes |
 | BLOCKER/WARNING resolved | All BLOCKER and WARNING → RESOLVED | executor + critic | Yes |
-| Human review | ≥ 1 human APPROVE | human | Yes |
+| Human review | ≥ 1 approved human review | human | Yes |
 
 > The critic agent already ran the checklist (BLOCKER/WARNING/SUGGESTION). Human checks what the agent cannot evaluate:
 > - Business logic matches stakeholder intent (not only the spec)

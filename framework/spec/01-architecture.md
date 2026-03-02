@@ -554,6 +554,53 @@ The orchestrator MUST set `fast_track` to exactly one of these string values:
 | `security-patch` | Dependency update due to CVE with no intentional logic change. |
 | `agent-prompt-update` | Update to agent prompts / prompt procedures (see §5 procedure). |
 
+---
+
+<a id="pipeline-vocabulary"></a>
+
+#### 1.3.9 Canonical pipeline vocabulary (normative)
+
+This spec uses **three** distinct concepts that must not be mixed:
+
+- **Critic verdict** — returned by critics in a Critique Report (`verdict`).
+- **Subtask status** — written by the orchestrator into `TASK_CONTEXT.md` (`Status` column).
+- **Human approval** — a human PR review outcome (plain English “approved”); it is **not** a critic verdict.
+
+Any module/template/prompt that defines or references these meanings MUST treat this section as canonical.
+
+<a id="verdict-enum"></a>
+
+##### Canonical critic verdict enum
+
+```text
+verdict := APPROVE | REQUEST_CHANGES | REJECT
+```
+
+- `APPROVE` — no open BLOCKER findings and no open WARNING findings. SUGGESTION findings are allowed.
+- `REQUEST_CHANGES` — there is any BLOCKER or WARNING; executor must fix and repeat.
+- `REJECT` — fundamental constitutional violation; not patch-fixable. Orchestrator stops the current loop and routes to human input.
+
+<a id="subtask-status-enum"></a>
+
+##### Canonical subtask Status enum (TASK_CONTEXT.md)
+
+```text
+Status := TODO | IN_PROGRESS | BLOCKED | DONE | WONT_FIX | NEEDS_HUMAN | ESCALATED
+```
+
+- `TODO` — not started.
+- `IN_PROGRESS` — currently being worked.
+- `BLOCKED` — waiting on another subtask/phase (dependency), not on a human decision.
+- `DONE` — completed successfully (do not use `APPROVED`).
+- `WONT_FIX` — intentionally closed without completing the requirement.
+- `NEEDS_HUMAN` — blocked awaiting a human decision/clarification (e.g., max iterations exhausted, a `REJECT` verdict, or an immediate human dependency).
+- `ESCALATED` — higher-severity human escalation: `NEEDS_HUMAN` recurred on the same subtask after re-entry. Requires tech lead / owner attention.
+
+Terminology rule:
+- Use `APPROVE` / `REQUEST_CHANGES` / `REJECT` only for **critic verdicts**.
+- Use `DONE` / `NEEDS_HUMAN` / `ESCALATED` only for **subtask status**.
+- Use plain-English “approved” for **human PR approvals**.
+
 | Change type | Branch | Active phases | Skip |
 |---|---|---|---|
 | **Feature** (default) (`fast_track: feature`) | `feature/*` | 0 → 1 → 2 → 2.5 → 3 → 3.5 → 4 → 5 → 6 | — |

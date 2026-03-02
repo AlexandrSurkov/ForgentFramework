@@ -27,6 +27,8 @@ After the 5th iteration without APPROVE:
    → stop and hand off to the user
 ```
 
+Canonical terminology: verdicts and subtask statuses are defined in [01-architecture.md](../01-architecture.md#pipeline-vocabulary).
+
 Healthy-critic signal:
 - 1–2 BLOCKER findings for a medium task
 - 0 findings → critic is too soft (sycophancy)
@@ -40,6 +42,8 @@ Exception: devops-critic is additionally allowed syntax validators
    (e.g., terraform validate, docker compose config --quiet)
 Without tools, critics hallucinate syntax checks.
 ```
+
+Canonical tool IDs: see ../04-observability.md#48-canonical-capability-to-tool-mapping-tool-ids.
 
 **Rule 5 — Conflicts between multiple critics on one PR**
 
@@ -56,8 +60,11 @@ If multiple critics review one PR and their verdicts disagree:
 **Rule 6 — ESCALATED: repeated NEEDS_HUMAN on the same subtask**
 
 ESCALATED status is set by orchestrator when:
-- NEEDS_HUMAN occurs a second time on the same subtask (after re-entry), OR
-- During a dispute on a BLOCKER, executor and critic do not converge within `max_iterations` (5)
+- NEEDS_HUMAN occurs a second time on the same subtask (after re-entry).
+
+Determinism rule:
+- The first non-convergence within `max_iterations` (5) is always `NEEDS_HUMAN` (Rule 3).
+- `ESCALATED` is only used if the orchestrator runs re-entry and the same subtask still ends in `NEEDS_HUMAN`.
 
 What orchestrator records in `TASK_CONTEXT.md`:
 
@@ -109,17 +116,16 @@ What happens after ESCALATED:
 After recording, the pipeline resumes per the chosen option. If ESCALATED repeats for the same subtask, pause the task until an out-of-band architecture review.
 
 **Rule 7 — Trace reporting (critic)**
-> Critics MUST NOT write to `.agents/traces/**`.
-> After each verdict, include a `trace_event` JSON object in the response so the orchestrator can append a JSONL record to `.agents/traces/<trace_id>.jsonl`.
-> `trace_id` comes from `TASK_CONTEXT.md` (provided by orchestrator).
+> Trace-writing protocol and `trace_event` required keys are defined in [04-observability.md](../04-observability.md) §4.5–§4.6.
+> Critics MUST comply with those requirements.
 
-Minimal example (`operation: "critique"`):
+Example (non-normative; `operation: "critique"`):
 
 ```json
 {"trace_event":{"agent":"backend-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}}
 ```
 
-Full JSONL format (written by orchestrator): [04-observability.md](../04-observability.md) §4.5–4.6.
+Full JSONL format (written by orchestrator): [04-observability.md](../04-observability.md) §4.5–§4.6.
 
 **Rule 8 — AWESOME-COPILOT gate enforcement (deterministic BLOCKER)**
 
@@ -145,6 +151,8 @@ Critic returns a structured response:
 
 **VERDICT:** APPROVE | REQUEST_CHANGES | REJECT
 
+> Canonical meanings: [01-architecture.md](../01-architecture.md#verdict-enum).
+>
 > **APPROVE** — no BLOCKER findings and no WARNING findings. SUGGESTION findings are allowed.
 > **REQUEST_CHANGES** — there is any BLOCKER or WARNING: fixable in the next iteration.
 > **REJECT** — fundamental constitutional violation (ADR violated without new ADR; work performed outside the agent’s responsibility boundary; executor reinterpreted the task without coordination). Not fixable via patch — requires orchestrator rephrasing.

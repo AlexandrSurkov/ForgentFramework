@@ -6,6 +6,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.23.3] - 2026-03-01
+
+### Fixed
+- Completed bootstrap-template protocol guidance so shipped bootstrap templates match the canonical workflow requirements.
+- Centralized `trace_event` guidance and updated shipped templates to reference the canonical observability requirements.
+- Updated template observability pointers/references to align with the current spec module locations.
+
+## [0.23.2] - 2026-03-01
+
+### Changed
+- Gate 3: updated the dispute-summary escalation artifact guidance and references to match the canonical dispute-summary artifact.
+
+## [0.23.1] - 2026-03-01
+
+### Changed
+- Canonicalized capability→tool mapping references (canonical tool IDs) and updated spec pointers to that canonical location.
+- Aligned prompt versioning guidance to treat tool changes in terms of canonical tool IDs.
+- Aligned shipped templates and agent prompts with the updated pointers and gate-related requirements.
+
+## [0.23.0] - 2026-03-01
+
+### Changed
+- Aligned shipped templates with updated spec modules (protocol + pointers).
+- Observability: clarified required `trace_event` keys and added a synthetic-span fallback when a subagent output is missing `trace_event` or contains an invalid `trace_event`.
+- Standardized `ESCALATED` semantics and cleaned up related vocabulary to avoid overload.
+
 ## [0.22.1] - 2026-02-28
 
 ### Changed

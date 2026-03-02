@@ -48,6 +48,18 @@ If the user asks for product feature work, stop and request they use the project
 
 ## Protocol
 
+**Rule 0 — Pass the task without paraphrasing**
+> You MUST pass bootstrap executors the original user task text verbatim, not a retelling.
+> Paraphrasing distorts acceptance criteria and creates drift between spec and implementation.
+
+**Rule 1 — Check ADRs before decomposition**
+> Before creating `TASK_CONTEXT.md`, you MUST read `.github/decisions/` and check for conflicts.
+> If there is a conflict — NEEDS_HUMAN before any work starts.
+
+**Rule 2 — Choose the fast-track before starting the pipeline**
+> You MUST choose a single `fast_track` value from the canonical enum in `framework/spec/01-architecture.md` and record it explicitly in `TASK_CONTEXT.md`.
+> For bootstrap operations, `fast_track` SHOULD usually be `tooling-only`.
+
 ### Observability (mandatory)
 
 You MUST implement the trace-writing protocol in `framework/spec/04-observability.md`.
@@ -55,7 +67,8 @@ You MUST implement the trace-writing protocol in `framework/spec/04-observabilit
 - Assign a new `trace_id` per bootstrap operation (recommended format: `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`).
 - Create/append `.agents/traces/<trace_id>.jsonl`.
 - The JSONL trace files `.agents/traces/<trace_id>.jsonl` (i.e., `.agents/traces/*.jsonl`) are local-only (gitignored) and MUST NOT be committed (no exceptions). (`.agents/traces/README.md` may be committed.)
-- Create/update `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored) to track retries and record `## Previous Attempts` when critics request changes.
+- Create/update `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored) to track retries.
+- After each critic verdict `REQUEST_CHANGES`, you MUST copy the critic findings into `## Previous Attempts` in `.agents/session/<trace_id>/TASK_CONTEXT.md` (Reflexion).
 - Only you (the orchestrator) may write trace JSONL files under `.agents/traces/*.jsonl`. Bootstrap executors/critics must return `trace_event` objects instead.
 
 Trace event flow:
@@ -71,7 +84,13 @@ Span rules:
 - `span_id` MUST be unique within a trace; use a monotonic counter (`s01`, `s02`, …).
 - Use the plan/root span as `parent_span_id` for all child spans.
 
-If a subagent omits `trace_event`, treat it as a process BLOCKER and request a corrected response.
+If a subagent omits `trace_event`, returns invalid JSON, or returns a `trace_event` missing required keys:
+
+1. You MUST append a **synthetic** JSONL trace record for that step (so the trace remains structurally complete).
+  - The record MUST include `"synthetic": true` and MUST include the expected `agent` and `operation` for that step.
+  - For `operation: "execute"` and `operation: "critique"`, the record MUST include the expected `subtask` and `iteration` for that step.
+2. You MUST record a **WARNING** in `.agents/session/<trace_id>/TASK_CONTEXT.md` under `## Previous Attempts` noting the missing `trace_event` and that a synthetic trace record was written.
+3. You MAY additionally treat it as a process BLOCKER and request a corrected response.
 
 ### Delegation boundary (important)
 

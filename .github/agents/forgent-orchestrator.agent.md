@@ -81,6 +81,11 @@ Owns task decomposition, sequencing, and final approval after critics' threads a
       - **Trace event flow (MANDATORY):** implement `framework/spec/04-observability.md` §4.6.
          - Only you (the orchestrator) write `.agents/traces/**`.
          - Every executor and critic response MUST include a `trace_event` JSON object in a `json` code block.
+         - **Synthetic-span fallback (MANDATORY; §4.6.3):** if a subagent omits `trace_event`, returns invalid JSON, or returns a `trace_event` missing required keys:
+            1) You MUST append a **synthetic** JSONL record for that step with `"synthetic": true` and a short `"note"`.
+            2) You MUST fill required keys deterministically from the expected step context (e.g., `agent`, `operation`, `subtask`, `iteration`, and for critics: `verdict`, `blockers`, `warnings` if inferable; otherwise use safe defaults like `"verdict":"UNKNOWN"`, `0`, `0`).
+            3) You MUST write a **WARNING** entry into `<SESSION_FILE>` under `## Previous Attempts` noting the missing/invalid `trace_event` and that a synthetic record was written.
+            4) You MAY request a corrected response containing a valid `trace_event`, but you MUST NOT block trace continuity on that correction.
          - For each executor/critic step, append exactly one JSONL record by merging orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) with the subagent’s returned `trace_event` fields.
 4. Determine the repo-maintenance routing label for this run (used for subagent selection in this repo): analysis/audit | docs-only | tooling-only | spec/process-change | agent-prompt-change.
    - **analysis/audit**: read-only task — inspecting, reviewing, or reporting on existing files without making changes.
@@ -139,7 +144,7 @@ When invoking any executor subagent, include the following contract in the execu
         - Use the forgent-docs-critic agent to perform any read-only analysis, review, or audit. Pass the analysis scope and criteria.
         - **Executor efficiency contract (MANDATORY):** include `### Executor Efficiency Contract` in every executor prompt.
         After the executor subagent returns, output a concise result summary in chat (1–2 sentences; no chain-of-thought): what changed / what was produced.
-        **Observability:** require the executor response to include a `trace_event` JSON object in a `json` code block. If missing, treat it as a process BLOCKER and request a corrected response before proceeding.
+      - **Observability:** require the executor response to include a `trace_event` JSON object in a `json` code block. If missing/invalid, write a synthetic JSONL record + `<SESSION_FILE>` WARNING per the synthetic-span fallback (§4.6.3); you MAY request a corrected `trace_event`, but MUST continue.
         Append exactly one JSONL record to `<TRACE_FILE>` by merging orchestrator-filled fields:
         `{"ts":"<ISO8601>","trace_id":"<TRACE_ID>","span_id":"s<SPAN_SEQ>","parent_span_id":"s01"}`
         with the subagent’s returned `trace_event` fields.
@@ -152,7 +157,7 @@ When invoking any executor subagent, include the following contract in the execu
         - For analysis/audit tasks: use the forgent-process-critic agent to review docs-critic's findings.
       Increment `<SPAN_SEQ>` and reserve `span_id: "s<SPAN_SEQ>"` for the critic step.
       After the critic subagent returns, output a concise result summary in chat (1–2 sentences; no chain-of-thought): verdict + counts, and what happens next (approve / reinvoke / escalate).
-        **Observability:** require the critic response to include a `trace_event` JSON object in a `json` code block. If missing, treat it as a process BLOCKER and request a corrected response before proceeding.
+      - **Observability:** require the critic response to include a `trace_event` JSON object in a `json` code block. If missing/invalid, write a synthetic JSONL record + `<SESSION_FILE>` WARNING per the synthetic-span fallback (§4.6.3); you MAY request a corrected `trace_event`, but MUST continue.
         Append exactly one JSONL record to `<TRACE_FILE>` by merging orchestrator-filled fields:
         `{"ts":"<ISO8601>","trace_id":"<TRACE_ID>","span_id":"s<SPAN_SEQ>","parent_span_id":"s01"}`
         with the subagent’s returned `trace_event` fields.

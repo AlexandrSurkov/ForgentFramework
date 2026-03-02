@@ -599,7 +599,7 @@ backend-critic verdict (iter 2): `APPROVE` — no open BLOCKERs and no open WARN
 ```text
 Gate 1: tests green, lint pass
 Gate 2: backend-critic reviewed; no open BLOCKERs or WARNINGs
-Gate 3: PM verifies description appears in API response — APPROVED
+Gate 3: PM verifies description appears in API response — approved (human)
 Merge → main + tag v1.4.7
 ```
 
@@ -622,16 +622,16 @@ Merge → main + tag v1.4.7
 
 | Term | Definition |
 |---|---|
-| **APPROVE** | Critic verdict: no BLOCKERs and no WARNINGs; SUGGESTION is allowed |
-| **REQUEST_CHANGES** | Critic verdict: there is a BLOCKER or WARNING; executor fixes and repeats |
-| **REJECT** | Critic verdict: fundamental constitutional violation; not patch-fixable |
-| **NEEDS_HUMAN** | Reached max_iterations=5 or human input is required |
+| **APPROVE** | Critic verdict (canonical): see §1.3.9 in [01-architecture.md](01-architecture.md#verdict-enum) |
+| **REQUEST_CHANGES** | Critic verdict (canonical): see §1.3.9 in [01-architecture.md](01-architecture.md#verdict-enum) |
+| **REJECT** | Critic verdict (canonical): see §1.3.9 in [01-architecture.md](01-architecture.md#verdict-enum) |
+| **NEEDS_HUMAN** | Subtask status (canonical): see §1.3.9 in [01-architecture.md](01-architecture.md#subtask-status-enum) |
 | **BLOCKER** | Severity that blocks moving to the next phase |
 | **WARNING** | Severity that MUST yield REQUEST_CHANGES; it must be fixed before APPROVE |
 | **SUGGESTION** | Severity that does not block; optional |
 | **ACKNOWLEDGED** | Closes a SUGGESTION thread (executor declines) or records that the critic withdrew the finding; does not unblock WARNING |
 | **DEFERRED** | Fix is postponed to a future sprint (SUGGESTION-only) |
-| **ESCALATED** | Blocker escalated to a higher-level human without waiting for resolution |
+| **ESCALATED** | Subtask status (canonical): see §1.3.9 in [01-architecture.md](01-architecture.md#subtask-status-enum) |
 | **TASK_CONTEXT** | File `.agents/session/<trace_id>/TASK_CONTEXT.md`; short-term session memory |
 | **Fast-Track** | Shortened pipeline for hotfix / docs-only / infra |
 | **Critique Report** | Critic’s structured response (verdict + findings) |

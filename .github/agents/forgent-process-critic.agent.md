@@ -43,6 +43,38 @@ Minimal example:
 
 When relevant, anchor findings to the governing spec section (e.g., "conflicts with 00-multi-agent-development-spec.md §3.1").
 
+## AWESOME-COPILOT gate enforcement (MANDATORY)
+If the produced result includes any changes to `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md`, the AWESOME-COPILOT gate is triggered.
+
+When triggered, the executor MUST update the canonical gate report artifact at:
+- `.agents/compliance/awesome-copilot-gate.md`
+
+`.agents/compliance/awesome-copilot-gate.md` is the ONLY allowed gate report location.
+
+If the gate is triggered, the following are explicit failure conditions and you MUST return `REQUEST_CHANGES` with a **[BLOCKER]**:
+- Missing canonical gate report file: `.agents/compliance/awesome-copilot-gate.md`
+- Canonical gate report not included/updated in the produced result alongside the agent/prompt edits
+- Canonical gate report incomplete per the checklist below
+
+### Gate report completeness (deterministic)
+
+Treat the gate report as **COMPLETE** only if ALL of the following are true (aligns with `framework/spec/03-rubrics/03-critic-rules-and-report-format.md` Rule 8 and Operations §7.3.3):
+
+1) The produced result includes `.agents/compliance/awesome-copilot-gate.md` (file present and updated alongside the agent/prompt edits).
+2) The report lists **all** changed agent/prompt artifacts under `## Changed artifacts (MUST be complete)` (stale/missing entries are a BLOCKER).
+3) The report contains the required sections (exact headings):
+  - `# AWESOME-COPILOT Gate Report`
+  - `## Trigger`
+  - `## Changed artifacts (MUST be complete)`
+  - `## Awesome-copilot consultation (MUST when trigger fires)`
+  - `## External material incorporated (optional)`
+  - `## Actions taken`
+4) The **Awesome-copilot consultation** evidence is valid:
+  - `Consultation performed:` is either `yes` or `unable`.
+  - If `yes`, the consultation block includes: `Consulted material`, `Immutable reference`, and `License` with verification location.
+  - If `unable`, the block includes an explicit `Reason` and a concrete `Fallback`.
+5) The report does not use the deprecated pattern `## External sources used` → `- none` as a substitute for consultation.
+
 Additional checks:
 - Spec edits: version/updated-date hygiene; consistent terminology; gate semantics (APPROVE / REQUEST_CHANGES / NEEDS_HUMAN).
 - Agent prompt edits: `.github/AGENTS_CHANGELOG.md` updated; no role-mixing introduced; iteration/verification rules preserved.
@@ -66,5 +98,12 @@ When reviewing `framework/**` normative changes:
   Never accept `ACKNOWLEDGED` for a WARNING or BLOCKER.
 - Findings:
   - **[BLOCKER|WARNING|SUGGESTION]** `file` (or section name)
+    Location: <path>#Lx-Ly OR <path> — heading: "<exact heading text>"
     Issue: ...
     Recommendation: ...
+
+## Deterministic locations (MANDATORY)
+Every finding MUST include a precise, deterministic location:
+- Prefer: `Location: <path>#Lx-Ly` when line numbers are available.
+- Otherwise: `Location: <path> — heading: "<exact heading text>"`.
+- Vague locations (e.g., “around …”, “near …”) are forbidden unless accompanied by an exact heading and a short quoted snippet that uniquely identifies the location.

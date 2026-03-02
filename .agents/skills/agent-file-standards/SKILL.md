@@ -44,10 +44,10 @@ tools: ['readFile', ...]   # minimal set — see least-privilege below
 
 | Role | Allowed tools |
 |---|---|
-| Orchestrator | `readFile`, `editFiles` (traces only) |
+| Orchestrator | `agent`, `readFile`, `createFiles`, `editFiles` (sessions/traces only), `fileSearch`, `textSearch` |
 | Executor (editor) | `readFile`, `editFiles`, `createFiles`, `fileSearch`, `textSearch` |
 | Critic | `readFile`, `fileSearch`, `textSearch` |
-| Architect / advisor | `readFile`, `editFiles`, `createFiles`, `fileSearch`, `textSearch` |
+| Architect / advisor (read-only in this repo) | `readFile`, `fileSearch`, `textSearch`, `fetch`, `webSearch`, `githubRepo` |
 
 ---
 

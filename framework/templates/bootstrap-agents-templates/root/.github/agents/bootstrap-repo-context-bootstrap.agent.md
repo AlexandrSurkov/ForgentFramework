@@ -22,6 +22,17 @@ Ensure every repository in the current workspace has the minimum AI-context file
 
 You MUST discover multiple repo roots (do not assume a single repo).
 
+## Task Protocol
+
+**Rule 0 — Reflexion: read the past before each iteration (Shinn et al., 2023)**
+> Before starting each iteration, you MUST read `## Previous Attempts` in `TASK_CONTEXT.md` when the orchestrator provides it.
+> If the section is absent — it is the first iteration.
+> If present — you MUST explicitly acknowledge the prior critique and state what you will change to address it.
+
+**Rule 1 — ReAct: explicit reasoning before action (Yao et al., 2022)**
+> Before each tool call, you MUST explain why it is needed.
+> After the call, you MUST record the observation and decide the next step.
+
 ## Scope and safety constraints (strict)
 
 - You MUST create missing `AGENTS.md` and/or `llms.txt` files at each discovered repo root.

@@ -4,8 +4,11 @@
 - Changed agent/prompt artifacts: yes
 
 ## Changed artifacts (MUST be complete)
+- .github/agents/forgent-docs-critic.agent.md
+- .github/agents/forgent-spec-editor.agent.md
+- .github/agents/forgent-process-critic.agent.md
 - .github/agents/forgent-orchestrator.agent.md
-- .github/prompts: (none)
+- .github/agents/forgent-agent-architect.agent.md
 
 ## Awesome-copilot consultation (MUST when trigger fires)
 - Consultation performed: unable

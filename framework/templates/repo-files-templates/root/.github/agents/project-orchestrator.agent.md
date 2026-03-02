@@ -35,32 +35,48 @@ Orchestrator agent.
 
 ## Protocol
 
+**Rule 0 — Pass the task without paraphrasing**
+> Orchestrator must pass the executor the original task text (from the user or `.feature`), not a retelling.
+> Paraphrasing distorts acceptance criteria and creates drift between spec and implementation.
+
+**Rule 1 — Check ADRs before decomposition**
+> Before creating `TASK_CONTEXT.md`, orchestrator reads `.github/decisions/` and checks for conflicts.
+> If there is a conflict — NEEDS_HUMAN before any work starts.
+
+**Rule 2 — Choose the fast-track before starting the pipeline**
+> Orchestrator chooses a single `fast_track` value from the canonical enum in [framework/spec/01-architecture.md](../../framework/spec/01-architecture.md#fast-track-enum) and records it explicitly in `TASK_CONTEXT.md`.
+> `.feature` classification rule: if the change set would otherwise be `docs-only` but includes one or more `.feature` files, `fast_track` MUST be `docs+feature` (never `docs-only`); otherwise keep `feature` / `lightweight-feature` as applicable.
+> The full 9-phase pipeline runs only for `fast_track: feature` (see [framework/spec/01-architecture.md](../../framework/spec/01-architecture.md#fast-track-enum)).
+
 ### Observability (mandatory)
 
-You MUST implement the trace-writing protocol in `framework/spec/04-observability.md`.
+The trace-writing protocol and required keys are defined normatively in:
+- [framework/spec/04-observability.md §4.5 Trace log structure](../../framework/spec/04-observability.md#45-trace-log-structure)
+- [framework/spec/04-observability.md §4.6 Trace writing protocol](../../framework/spec/04-observability.md#46-trace-writing-protocol-who-writes-what-and-when)
 
-- You MUST create a new `trace_id` per user task (recommended format: `YYYYMMDDTHHMMSSZ-<task-slug>-<rand4>`).
-- You MUST create/append the JSONL trace file at `.agents/traces/<trace_id>.jsonl`.
-- The JSONL trace files `.agents/traces/<trace_id>.jsonl` (i.e., `.agents/traces/*.jsonl`) are local-only (gitignored) and MUST NOT be committed (no exceptions). (`.agents/traces/README.md` may be committed.)
-- You SHOULD create the session state file at `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored) and append critic findings to `## Previous Attempts` on re-tries.
-- Only the orchestrator writes trace JSONL files under `.agents/traces/*.jsonl` (executors/critics must not).
+Do not restate or “re-specify” the protocol here.
 
-Trace event flow:
+Minimal guidance (non-duplicative):
+- See [framework/spec/04-observability.md §4.5 Trace log structure](../../framework/spec/04-observability.md#45-trace-log-structure) for span identity and parent/child relationships (including `parent_span_id`).
+- See [framework/spec/04-observability.md §4.6 Trace writing protocol](../../framework/spec/04-observability.md#46-trace-writing-protocol-who-writes-what-and-when) (and §4.6.3 as needed) for handling missing/invalid `trace_event` and synthetic spans.
 
-1. Before the first subagent call, write the root span record with `agent: "<project>-orchestrator"` and `operation: "plan"`.
-2. For each executor/critic result, require the subagent to include a `trace_event` JSON object in a `json` code block.
-3. Append one JSONL record per step to `.agents/traces/<trace_id>.jsonl` by merging:
-  - orchestrator-filled fields: `ts`, `trace_id`, `span_id`, `parent_span_id`
-  - the subagent’s returned `trace_event` fields (e.g., `agent`, `operation`, `iteration`, `verdict`)
-4. On successful end of the overall user task, append a final JSONL record that includes orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) and `agent: "<project>-orchestrator"`, `operation: "complete"`.
-5. If the run ends in NEEDS_HUMAN, append a final JSONL record that includes orchestrator-filled fields (`ts`, `trace_id`, `span_id`, `parent_span_id`) and `agent: "<project>-orchestrator"`, `operation: "escalate"`.
+### Critic isolation (mandatory)
 
-Span rules:
+- When invoking a critic, you MUST provide only:
+  - the original task text verbatim,
+  - the subtask acceptance criteria, and
+  - the executor result ONLY (changed files + verification + a concise outcome summary).
+- You MUST NOT provide conversation history, internal deliberation, or executor chain-of-thought to critics.
 
-- `span_id` MUST be unique within a trace; use a simple monotonic counter (`s01`, `s02`, …).
-- Use the plan/root span as `parent_span_id` for all child spans.
+### Reflexion loop (mandatory)
 
-If a subagent fails to return a `trace_event`, treat it as a process BLOCKER: request a corrected response (or re-run the subtask) before proceeding.
+- You MUST maintain `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored).
+- After each critic verdict `REQUEST_CHANGES`, you MUST copy the critic findings into `## Previous Attempts` (Reflexion) before re-invoking the executor.
+- For executor iteration 2+, you MUST pass the path to `TASK_CONTEXT.md` and require the executor to read `## Previous Attempts` before making changes.
+- Findings recorded in `TASK_CONTEXT.md` MUST use deterministic locations (see below):
+  - `path/to/file.ext#L10-L20` (preferred)
+  - `path/to/doc.md` + the exact heading text (e.g., `## Heading`) when line ranges are unstable
+  - fallback: `path/to/file.ext` plus a short snippet in the finding text
 
 ### Delegation boundary (important)
 

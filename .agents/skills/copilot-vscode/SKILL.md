@@ -29,7 +29,7 @@ description: "VS Code Copilot platform reference: .agent.md all frontmatter fiel
 ```yaml
 ---
 description: <string>          # shown as placeholder in Chat input; one-sentence role summary
-name: <string>                 # display name; if omitted, file name is used
+name: <string>                 # agent id; VS Code may infer from file name if omitted, but this repo sets it explicitly
 tools: [<tool-name>, ...]      # allowed tools — see Built-in Tool Names below
 agents: [<agent-name>, ...]    # allowed subagents; '*' = all, [] = none
 model: <string | string[]>     # model name or priority list; if omitted = user's current picker
@@ -47,15 +47,18 @@ target: vscode | github-copilot  # deployment target (default: vscode)
 ```
 
 **Key rules:**
-- `name` must match the file name for reliable detection by VS Code
-- VS Code detects any `.agent.md` in `.github/agents/` automatically (no registration needed)
+- **Repo convention (A1.1)**: set `name:` and keep it identical to the file base name (kebab-case) to avoid drift.
+- Agent discovery depends on VS Code settings (commonly `chat.agentFilesLocations` includes `.github/agents`). If agents don't show up, verify discovery/diagnostics.
 - `user-invokable: false` hides from dropdown but still allows subagent invocation
 - `disable-model-invocation: true` blocks subagent invocation but keeps it in dropdown
 - These two fields replace the deprecated `infer:` field
 
 ---
 
-## Built-in Tool Names for `tools:` List
+## Tool Names for `tools:` List (Framework-Aligned)
+
+This framework standardizes on the tool names used in the canonical spec (e.g. `readFile`, `fileSearch`, `textSearch`).
+VS Code/Copilot may expose additional tools depending on version/extension; when in doubt, consult the official “Agent tools reference”.
 
 ### File & code tools
 | Tool name | What it does |
@@ -65,9 +68,8 @@ target: vscode | github-copilot  # deployment target (default: vscode)
 | `createFiles` | Create new files |
 | `fileSearch` | Search files by name/glob |
 | `textSearch` | Full-text search across workspace |
-| `codebase` | Semantic workspace search (`#codebase`) |
-| `usages` | Find symbol usages and references |
-| `search` | Combined search tool |
+| `codebase` | Optional: semantic workspace search (often invoked via `#codebase`) |
+| `usages` | Optional: find symbol usages and references (if available) |
 
 ### Execution tools
 | Tool name | What it does |
@@ -81,14 +83,13 @@ target: vscode | github-copilot  # deployment target (default: vscode)
 |---|---|
 | `fetch` | Fetch URL content |
 | `webSearch` | Web search |
-| `githubRepo` | Search a GitHub repository |
 
 ### Agent tools
 | Tool name | What it does |
 |---|---|
 | `agent` | Required when using `agents:` field (spawn subagents) |
 
-**Tool sets** (reference a group as one name): `#edit`, `#search` (predefined); custom tool sets defined in `toolsets.jsonc`.
+**Tool sets**: some Copilot versions support referencing predefined groups (e.g. `#edit`, `#search`). If unsupported, list tools explicitly.
 
 **MCP tools**: reference as `<server-name>/<tool-name>` or `<server-name>/*` for all tools of a server.
 
@@ -113,7 +114,7 @@ mis-scoped agent permissions.
 
 ---
 
-## Tool Sets (`toolsets.jsonc`)
+## Tool Sets (illustrative: `toolsets.jsonc`)
 
 Tool sets let you reference a **named bundle of tools** instead of listing each tool repeatedly.
 This helps keep `.agent.md` files short and makes least-privilege reviews easier.
@@ -123,8 +124,10 @@ This helps keep `.agent.md` files short and makes least-privilege reviews easier
 - Review tool sets like an API surface: changes can silently widen agent permissions.
 - Prefer multiple small tool sets over one broad “kitchen sink” set.
 
-> Note: the exact `toolsets.jsonc` format and lookup rules are VS Code-specific. Use `#fetch` on the
-> official docs index at the bottom of this skill when you need the precise schema.
+> Note: some VS Code setups support a `toolsets.jsonc` (or equivalent) config for named tool bundles.
+> This ForgentFramework repo does **not** ship a `toolsets.jsonc`; treat this section as conceptual
+> guidance. Use `#fetch` on the official docs index at the bottom of this skill when you need the
+> precise schema and lookup rules.
 
 ---
 
@@ -272,7 +275,7 @@ VS Code searches for skills in:
 - `.claude/skills/<name>/SKILL.md`
 - User profile: `~/.copilot/skills/<name>/SKILL.md`
 
-To add more locations: `setting(chat.agentSkillsLocations)` in VS Code settings.
+To add more locations: configure `chat.agentSkillsLocations` in VS Code settings.
 
 ---
 
@@ -500,7 +503,7 @@ Hooks execute shell commands at lifecycle points and can block/ask/allow tool us
 `SubagentStart`, `SubagentStop`, `Stop`
 
 ### Hook config locations
-- Workspace shared: `.github/hooks/*.json`
+- Workspace shared: `.github/hooks/*.hook.jsonc`
 - Claude-compatible: `.claude/settings.json`, `.claude/settings.local.json`
 - User: `~/.claude/settings.json`
 

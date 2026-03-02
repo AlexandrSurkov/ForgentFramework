@@ -23,7 +23,7 @@ Change types:
 |---|---|
 | `behavior` | System prompt/rubric/rule changed — agent behavior changes |
 | `model` | Agent model changed |
-| `tools` | A tool was added/removed (`readFile`, `runTerminal`, etc.) |
+| `tools` | A tool was added/removed (`readFile`, `runTerminal`, etc.; canonical tool IDs: see ./04-observability.md#48-canonical-capability-to-tool-mapping-tool-ids) |
 | `fix` | Typos/clarifications without behavior change |
 
 ## 5.2 Golden tests after a Critic change

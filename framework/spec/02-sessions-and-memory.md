@@ -14,6 +14,7 @@ Orchestrator creates this file at the beginning of each session:
 **task_context_file:** .agents/session/YYYYMMDDTHHMMSSZ-task-slug-rand4/TASK_CONTEXT.md
 **fast_track:** feature | lightweight-feature | hotfix | docs-only | docs+feature | infra | security-patch | agent-prompt-update
 <!-- Canonical meanings: 01-architecture.md#fast-track-enum -->
+<!-- Canonical Status enum: 01-architecture.md#subtask-status-enum -->
 
 ## Task
 [Full description from the user — ORIGINAL text, not a paraphrase]
@@ -36,7 +37,7 @@ Orchestrator creates this file at the beginning of each session:
 - ...
 
 ## Decisions made in this session
-- [critic, iter 2]: description (APPROVED)
+- [critic, iter 2]: description (verdict: APPROVE)
 
 ## Blockers / NEEDS_HUMAN
 - none
@@ -75,7 +76,7 @@ Parallel agents and `TASK_CONTEXT.md`:
    - If `TASK_CONTEXT.md` exceeds ~200 lines / ~4000 words, or orchestrator observes planning quality degradation, create a summarized version (replace detailed history of completed phases with a short recap).
    - The summary must contain: the current plan + the last 2 entries from `## Previous Attempts`.
    - Archive the full file as `.agents/session/<trace_id>/TASK_CONTEXT_archive_<date>.md` (gitignored). Long-term memory remains in ADRs and traces (traces are local-only in this repo).
-   - Agents use `textSearch` (or `search`) to jump to the needed section.
+   - Agents use `textSearch` to jump to the needed section (canonical tool IDs: see ./04-observability.md#48-canonical-capability-to-tool-mapping-tool-ids).
 
 Example summary version (replaces a verbose TASK_CONTEXT after ~200 lines):
 

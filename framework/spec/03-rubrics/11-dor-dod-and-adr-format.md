@@ -46,7 +46,7 @@ For documentation (documentation-writer):
 For any change:
 - [ ] Commit follows Conventional Commits
 - [ ] Pre-commit hooks passed: fmt, lint, validate (before commit)
-- [ ] TASK_CONTEXT.md updated with APPROVED status
+- [ ] TASK_CONTEXT.md updated: completed subtasks set to `DONE` (see `Status` enum: §1.3.9)
 - [ ] CHANGELOG.md updated if a release commit exists
 - [ ] Orchestrator appended the trace record `operation: "complete"` to .agents/traces/<trace_id>.jsonl
 
@@ -55,7 +55,7 @@ PR merge gates (Gate 1–3; see §0.6):
 - [ ] Critic agent performed review and left comments
 - [ ] All BLOCKER and WARNING threads are RESOLVED
 - [ ] All SUGGESTION threads are RESOLVED | ACKNOWLEDGED | DEFERRED (SUGGESTION only)
-- [ ] At least 1 human reviewer → APPROVE
+- [ ] At least 1 human reviewer → approved (human review)
 ```
 
 ## 3.11.1 When to create an ADR

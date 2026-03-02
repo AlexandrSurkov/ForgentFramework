@@ -78,6 +78,13 @@ Projects with these practices show higher delivery speed, code quality, develope
 
 ## 4.5 Trace log structure
 
+Normative note: §4.5–§4.6 is the **single normative source** for:
+- JSONL trace record required keys,
+- Subagent-returned `trace_event` required keys, and
+- The trace writing protocol (including synthetic spans).
+
+Other spec modules MUST reference these sections rather than restating the requirements.
+
 ```text
 .agents/
 ├── session/     ← gitignored: per-session TASK_CONTEXT
@@ -96,14 +103,35 @@ Single-record format examples:
  "input_tokens":412,"output_tokens":89,"duration_ms":3200}
 
 {"ts":"2026-02-23T14:32:05Z","trace_id":"abc123","span_id":"s02","parent_span_id":"s01",
- "agent":"backend-dev","operation":"execute","iteration":1,
+ "agent":"backend-dev","operation":"execute","subtask":1,"iteration":1,
  "input_tokens":1840,"output_tokens":620,"duration_ms":18400}
 
 {"ts":"2026-02-23T14:33:10Z","trace_id":"abc123","span_id":"s03","parent_span_id":"s01",
- "agent":"backend-critic","operation":"critique","iteration":1,
+ "agent":"backend-critic","operation":"critique","subtask":1,"iteration":1,
  "verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,
  "input_tokens":980,"output_tokens":310,"duration_ms":9100}
 ```
+
+Required keys (enforceable):
+
+**JSONL trace record required keys** (written by the orchestrator):
+
+- Every JSONL trace record MUST include: `ts`, `trace_id`, `span_id`, `parent_span_id`, `agent`, `operation`.
+- For `operation: "execute"` and `operation: "critique"`, the JSONL trace record MUST include: `subtask`, `iteration`.
+- For `operation: "critique"`, non-synthetic records MUST additionally include: `verdict`, `blockers`, `warnings`.
+- For `operation: "plan"`, `"complete"`, and `"escalate"`, `task` SHOULD be included.
+
+**Subagent-returned `trace_event` required keys** (enforceable; used as input to JSONL records):
+
+- Every `trace_event` MUST include: `agent`, `operation`.
+- For `operation: "execute"`, `trace_event` MUST include: `subtask`, `iteration`.
+- For `operation: "critique"`, `trace_event` MUST include: `subtask`, `iteration`, `verdict`, `blockers`, `warnings`.
+- `input_tokens`, `output_tokens`, and `duration_ms` SHOULD be included when available.
+
+Notes:
+
+- The per-agent returned `trace_event` does not include span identity fields (`ts`, `trace_id`, `span_id`, `parent_span_id`); the orchestrator fills those.
+- When a record is synthetic (`"synthetic": true`), the orchestrator MUST still include the required keys above, and SHOULD include any other fields it can infer deterministically.
 
 **Span identity and ordering rules:**
 
@@ -131,8 +159,9 @@ To enforce least-privilege (critics are read-only), only the **orchestrator** wr
 
 **Each executor and critic** (after completing its operation):
 1. Returns a `trace_event` object in a `json` code block (no file writes)
-2. Includes `agent`, `operation`, `subtask`, `iteration` (when applicable)
-3. Critics additionally include `verdict`, `blockers`, `warnings`
+2. `trace_event` MUST be a small JSON object (no nesting beyond the `trace_event` wrapper)
+3. Includes `agent`, `operation`, `subtask`, `iteration` (when applicable)
+4. Critics additionally include `verdict`, `blockers`, `warnings`
 
 Minimal example (executor):
 
@@ -156,18 +185,30 @@ Minimal example (critic):
 | Orchestrator reached NEEDS_HUMAN | orchestrator | `"escalate"` |
 | Orchestrator closed the task | orchestrator | `"complete"` |
 
-### 4.6.3 Example: complete trace for one task
+### 4.6.3 Synthetic spans (missing/invalid `trace_event`)
+
+If a subagent omits `trace_event`, returns invalid JSON, or returns a `trace_event` that is missing required keys:
+
+- For required keys, see **Subagent-returned `trace_event` required keys** in §4.5.
+
+1. Orchestrator MUST append a **synthetic** JSONL trace record for that step with `"synthetic": true`.
+2. Orchestrator MUST fill the record’s required keys using the expected step context (e.g., `agent`, `operation`, `subtask`, `iteration`).
+3. Orchestrator MUST record a **WARNING** in `.agents/session/<trace_id>/TASK_CONTEXT.md` under `## Previous Attempts` noting the missing/invalid `trace_event` and that a synthetic record was written.
+
+This keeps the trace structurally complete even when per-step metadata is incomplete.
+
+### 4.6.4 Example: complete trace for one task
 
 ```json
 {"ts":"2026-02-23T14:32:00Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s01","parent_span_id":null,"agent":"orchestrator","operation":"plan","task":"add-bulk-endpoint","input_tokens":412,"output_tokens":89,"duration_ms":3200}
-{"ts":"2026-02-23T14:32:05Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s02","parent_span_id":"s01","agent":"backend-dev","operation":"execute","iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}
-{"ts":"2026-02-23T14:33:10Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s03","parent_span_id":"s01","agent":"backend-critic","operation":"critique","iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}
-{"ts":"2026-02-23T14:33:15Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s04","parent_span_id":"s01","agent":"backend-dev","operation":"execute","iteration":2,"input_tokens":2100,"output_tokens":540,"duration_ms":16200}
-{"ts":"2026-02-23T14:34:05Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s05","parent_span_id":"s01","agent":"backend-critic","operation":"critique","iteration":2,"verdict":"APPROVE","blockers":0,"warnings":0,"input_tokens":900,"output_tokens":180,"duration_ms":8400}
+{"ts":"2026-02-23T14:32:05Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s02","parent_span_id":"s01","agent":"backend-dev","operation":"execute","subtask":1,"iteration":1,"input_tokens":1840,"output_tokens":620,"duration_ms":18400}
+{"ts":"2026-02-23T14:33:10Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s03","parent_span_id":"s01","agent":"backend-critic","operation":"critique","subtask":1,"iteration":1,"verdict":"REQUEST_CHANGES","blockers":1,"warnings":2,"input_tokens":980,"output_tokens":310,"duration_ms":9100}
+{"ts":"2026-02-23T14:33:15Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s04","parent_span_id":"s01","agent":"backend-dev","operation":"execute","subtask":1,"iteration":2,"input_tokens":2100,"output_tokens":540,"duration_ms":16200}
+{"ts":"2026-02-23T14:34:05Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s05","parent_span_id":"s01","agent":"backend-critic","operation":"critique","subtask":1,"iteration":2,"verdict":"APPROVE","blockers":0,"warnings":0,"input_tokens":900,"output_tokens":180,"duration_ms":8400}
 {"ts":"2026-02-23T14:34:10Z","trace_id":"20260223T143200Z-bulk-endpoint-9f2c","span_id":"s06","parent_span_id":"s01","agent":"orchestrator","operation":"complete","task":"add-bulk-endpoint","total_iterations":2,"input_tokens":6232,"output_tokens":1739,"duration_ms":127600}
 ```
 
-### 4.6.4 Analysis with jq (no extra instrumentation)
+### 4.6.5 Analysis with jq (no extra instrumentation)
 
 ```powershell
 # How many iterations did each task take?
@@ -196,3 +237,21 @@ Run on demand — no always-on server required.
 | **promptfoo** | `npx promptfoo eval` | Prompt regressions between versions |
 
 Recommended start: JSONL + jq only → add Phoenix after collecting 10+ traces.
+
+## 4.8 Canonical capability-to-tool mapping (tool IDs)
+
+Tool IDs are the **exact** strings used in agent frontmatter `tools:` lists.
+Use this section as the canonical reference; do not invent new tool IDs.
+
+- **Subagent routing / delegation** → `agent`
+- **Read repository files** → `readFile`
+- **Search filenames/paths** → `fileSearch`
+- **Search within files** → `textSearch`
+- **Edit existing files** → `editFiles`
+- **Create new files** → `createFiles`
+- **Run CLI commands** → `runTerminal`
+- **Read editor diagnostics** → `problems`
+- **Inspect working tree / diffs** → `changes`
+- **Fetch a URL** → `fetch`
+- **Web search** → `webSearch`
+- **Query GitHub repo metadata/content** → `githubRepo`

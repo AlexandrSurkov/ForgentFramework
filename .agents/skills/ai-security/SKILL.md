@@ -62,11 +62,11 @@ For every agent in `.github/agents/*.agent.md`:
 
 | Agent | Expected tools |
 |---|---|
-| orchestrator | `readFile`, `editFiles` (for traces) |
+| orchestrator | `agent`, `readFile`, `createFiles`, `editFiles` (sessions/traces only), `fileSearch`, `textSearch` |
 | spec-editor | `readFile`, `editFiles`, `createFiles`, `fileSearch`, `textSearch` |
 | docs-critic | `readFile`, `fileSearch`, `textSearch` (read-only) |
 | process-critic | `readFile`, `fileSearch`, `textSearch` (read-only) |
-| agent-architect | `readFile`, `editFiles`, `createFiles`, `fileSearch`, `textSearch` |
+| agent-architect (read-only in this repo) | `readFile`, `fileSearch`, `textSearch`, `fetch`, `webSearch`, `githubRepo` |
 
 ---
 

@@ -45,7 +45,9 @@ Use `awesome-copilot` as a curated directory to discover patterns and formats, w
 
 ### Enforceable Definitions
 
-- **Verbatim copy (non-trivial/substantial)** = any contiguous sequence of **>= 200 characters** taken verbatim from upstream (code or prose). Whitespace-only changes do not avoid this threshold.
+- **Verbatim copy (framework heuristic)** = any contiguous sequence of **>= 200 characters** taken verbatim from upstream (code or prose). Whitespace-only changes do not avoid this threshold.
+  - This is an internal *review/operational* threshold to flag potentially substantial verbatim copying.
+  - It is **not** a legal “safe harbor”: copying < 200 characters can still be problematic, and any verbatim copying may still require license compliance and/or attribution.
 - **License verification evidence** = ALL of the following captured in `## Provenance` (or `<artifact>.provenance.md`):
   - A link to the **exact upstream material** (repo URL + file path, or stable page URL)
   - An **immutable reference** if available (commit SHA / tag / release permalink). If not available, record “no immutable ref available”
@@ -59,9 +61,9 @@ Use `awesome-copilot` as a curated directory to discover patterns and formats, w
   - Check for per-directory or per-file license headers/overrides.
 - Do **not** assume the `awesome-copilot` repo license applies to linked content.
 - **Fallback (license not reachable / not a VCS source)**: treat the material as **unverified**.
-  - Do **not** verbatim-copy >= 200 characters.
+  - Do **not** verbatim-copy >= 200 characters (framework heuristic; not a safe harbor).
   - Use **link-only + re-express** (rewrite in your own words/structure), OR require the user to provide license confirmation/evidence.
-- If you cannot meet the **license verification evidence** checklist, do **link-only** (no verbatim copying >= 200 characters).
+- If you cannot meet the **license verification evidence** checklist, do **link-only** (no verbatim copying >= 200 characters; framework heuristic).
 - If you verbatim-copy >= 200 characters from MIT-licensed material, preserve required attribution and notices by placing the **full MIT license text** and the upstream **copyright line(s)** in the provenance record (see “MIT Notice Preservation” below).
 - For non-MIT upstream licenses, comply with the license terms; if incompatible or unclear, do not copy.
 
@@ -98,7 +100,7 @@ When the upstream license is MIT **and** you verbatim-copy >= 200 characters:
 - Upstream license: <SPDX/name> (verified at <path/URL to LICENSE>)
 - License evidence: <why this license applies to this file/page (header / directory notice / repo-wide with no overrides)>
 - Retrieved: <YYYY-MM-DD>
-- Verbatim copied: <0 chars | N chars> (non-trivial if >= 200 contiguous chars)
+- Verbatim copied: <0 chars | N chars> (flag as non-trivial if >= 200 contiguous chars; framework heuristic)
 - Adaptation notes: <what changed and why; include any removed unsafe instructions>
 
 ### Third-Party License Notice (if required)

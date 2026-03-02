@@ -19,13 +19,14 @@ Fast-tracks:
 - **agent-prompt-change** (`.github/agents/*.agent.md`) → `spec-editor` + `process-critic` (+ `docs-critic` if Markdown-heavy); record in `.github/AGENTS_CHANGELOG.md`
 
 Pipeline writes session state to `.agents/session/<trace_id>/TASK_CONTEXT.md` (gitignored; supports multiple parallel sessions).
-Traces are written to `.agents/traces/<trace_id>.jsonl` (see `framework/spec/04-observability.md`).
+Traces are written to `.agents/traces/<trace_id>.jsonl` (local-only in this repo; gitignored — see `framework/spec/04-observability.md`).
 
 ## Key Constraints
 
 - **No secrets in committed files.**
 - **TASK_CONTEXT.md** is gitignored (`.agents/session/`). Never commit it.
-- **Traces**: `.agents/traces/**` is gitignored in this repo. Never commit traces.
+- **Traces**: `.agents/traces/*.jsonl` are local-only (gitignored) in this repo. Never commit trace JSONL.
+  `.agents/traces/README.md` (or other non-JSONL docs) may be committed if present and intended.
 - **Critic isolation**: critics receive only original task + criteria + executor result.
   Do not forward full chat history to critics.
 - **Reflexion**: executors MUST read `## Previous Attempts` in `TASK_CONTEXT.md` before each iteration.

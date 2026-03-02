@@ -19,6 +19,17 @@ tools:
 ## Role
 You install the multi-agent development framework into this repository.
 
+## Task Protocol
+
+**Rule 0 — Reflexion: read the past before each iteration (Shinn et al., 2023)**
+> Before starting each iteration, you MUST read `## Previous Attempts` in `TASK_CONTEXT.md` when the orchestrator provides it.
+> If the section is absent — it is the first iteration.
+> If present — you MUST explicitly acknowledge the prior critique and state what you will change to address it.
+
+**Rule 1 — ReAct: explicit reasoning before action (Yao et al., 2022)**
+> Before each tool call, you MUST explain why it is needed.
+> After the call, you MUST record the observation and decide the next step.
+
 You MUST follow the Install playbook in `framework/spec/06-adoption-roadmap.md` (`## 6.install`) and the shipped Bootstrap Installer prompt (`## 6.agent`).
 
 ## Hard boundaries
@@ -78,7 +89,7 @@ Stop after finishing with:
 
 - You MUST NOT write any files under `.agents/traces/**`.
 - After completing your work for a step (dry-run or apply), you MUST include a `trace_event` object in a `json` code block.
-- The `trace_event` MUST be a small JSON object (no nesting beyond the `trace_event` wrapper) and should include:
+- The `trace_event` MUST be a small JSON object (no nesting beyond the `trace_event` wrapper) and MUST include:
   - `agent`, `operation`, `subtask`, `iteration` (when applicable)
   - `input_tokens`, `output_tokens`, `duration_ms` (when available)
 

@@ -37,12 +37,12 @@
 > Enforceability constraint: the plan published in chat MUST be consistent with the decomposition recorded in `TASK_CONTEXT.md` (names and intended owners). If the plan changes, the orchestrator MUST update both and explicitly note the change in chat.
 
 **Rule 3 — Create the trace first**
-> Create `.agents/traces/<trace_id>.jsonl` and write the root span (`operation: "plan"`) before assigning the first subtask.
+> Trace creation and the root span requirements are defined in [04-observability.md](../04-observability.md) §4.6.
+> Orchestrator MUST comply with those requirements.
 
 **Rule 3.1 — Trace writing (least-privilege)**
-> Orchestrator is the only agent that writes to `.agents/traces/**`.
-> After each executor or critic step, orchestrator appends one JSONL record using the `trace_event` metadata returned by that agent.
-> If an agent fails to return a `trace_event`, orchestrator appends a synthetic record (`"synthetic": true`) and records a warning in `TASK_CONTEXT.md`.
+> Trace-writing protocol, `trace_event` handling, and synthetic spans are defined in [04-observability.md](../04-observability.md) §4.5–§4.6.
+> Orchestrator MUST comply with those requirements.
 
 **Rule 4 — Fill `## Previous Attempts` before returning**
 > After each REQUEST_CHANGES, orchestrator must copy findings from the Critique Report into `## Previous Attempts` in `TASK_CONTEXT.md` for the next iteration.
@@ -56,11 +56,11 @@
 > 2. Record the reason in `## Decisions made in this session`
 > 3. If the subtask blocked others — revise the decomposition plan
 > 4. Continue the pipeline with remaining subtasks
->
-> Do not bump iteration counters and do not create an ADR (unless an architectural decision is involved).
-> WONT_FIX for a BLOCKER subtask related to security or ADR requires explicit user confirmation in `TASK_CONTEXT.md`.
+
+Canonical meanings for `Status` values: [01-architecture.md](../01-architecture.md#subtask-status-enum).
+
+Do not bump iteration counters and do not create an ADR (unless an architectural decision is involved).
+WONT_FIX for a BLOCKER subtask related to security or ADR requires explicit user confirmation in `TASK_CONTEXT.md`.
 
 **Rule 6 — Close the task with a complete trace**
-> Before writing `operation: "complete"`, orchestrator verifies that `.agents/traces/<trace_id>.jsonl` contains one record for each executor/critic step it ran.
-> If any expected step is missing, orchestrator adds a synthetic span (`"synthetic": true`) and records a warning in `TASK_CONTEXT.md`.
-> The task is not DoD-complete without the final trace entry `operation: "complete"`.
+> Before closing the task, orchestrator MUST ensure the trace is structurally complete per [04-observability.md](../04-observability.md) §4.6.

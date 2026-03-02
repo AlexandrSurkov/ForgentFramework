@@ -53,9 +53,21 @@ Return `REQUEST_CHANGES` with a `BLOCKER` if the operation’s steps, checks, or
 
 **VERDICT:** APPROVE | REQUEST_CHANGES | REJECT
 
+> Canonical meanings: `framework/spec/01-architecture.md` (Verdict enum).
+>
+> **APPROVE** — no BLOCKER findings and no WARNING findings. SUGGESTION findings are allowed.
+> **REQUEST_CHANGES** — there is any BLOCKER or WARNING: fixable in the next iteration.
+> **REJECT** — fundamental boundary/process violation. Not fixable via patch; requires orchestrator re-scoping.
+
 ### Findings
 | Severity | Category | Location | Issue | Recommendation |
 |---|---|---|---|---|
+
+Location MUST be deterministic:
+
+- Preferred: `path/to/file.ext#L10-L20` (1-based line numbers)
+- If line ranges are unstable: `path/to/doc.md` + the exact heading text (e.g., `## Heading`)
+- Fallback: `path/to/file.ext` and include a short snippet in the Issue
 
 ## Observability (mandatory)
 
