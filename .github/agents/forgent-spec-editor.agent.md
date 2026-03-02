@@ -2,6 +2,7 @@
 description: Executor agent that edits framework/00-multi-agent-development-spec.md, README.md, AGENTS.md, llms.txt, and .github/ documentation.
 name: forgent-spec-editor
 user-invokable: false
+excludeAgent: true
 tools: ['readFile', 'editFiles', 'createFiles', 'fileSearch', 'textSearch']
 ---
 

@@ -103,15 +103,27 @@ copy_if_missing \
   "${REPO_ROOT}/.agents/compliance/awesome-copilot-gate.md"
 
 # ---------------------------------------------------------------------------
+# Step 5 - Set model: gpt-4.1 in all agent files
+# ---------------------------------------------------------------------------
+echo ""
+echo "--- Step 5: Set model in agent files"
+if compgen -G "${REPO_ROOT}/.github/agents/*.agent.md" > /dev/null 2>&1; then
+  for agent_file in "${REPO_ROOT}"/.github/agents/*.agent.md; do
+    if grep -q 'model: TODO' "$agent_file"; then
+      sed -i 's/model: TODO/model: gpt-4.1/g' "$agent_file"
+      echo "  [MODEL SET] $(basename "$agent_file")"
+    fi
+  done
+fi
+
+# ---------------------------------------------------------------------------
 # Next steps
 # ---------------------------------------------------------------------------
 echo ""
 echo "==> Bootstrap complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Edit PROJECT.md — fill in project name, stack, models, and §pre answers."
-echo "  2. In .github/agents/*.agent.md, replace every 'model: TODO' with your chosen model"
-echo "     (e.g. 'model: gpt-4o' or 'model: claude-3-7-sonnet')."
-echo "  3. Open the repo in VS Code — agents will be auto-discovered via .vscode/settings.json."
-echo "  4. In Copilot Chat, switch to agent mode and select 'forgent-orchestrator' to start."
+echo "  1. Open the repo in VS Code -- agents will be auto-discovered via .vscode/settings.json."
+echo "  2. In Copilot Chat, switch to agent mode and select bootstrap-orchestrator."
+echo "  3. The bootstrap-orchestrator will scan the repo, auto-fill PROJECT.md, and guide you through Install."
 echo ""

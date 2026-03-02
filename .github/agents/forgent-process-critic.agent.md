@@ -2,6 +2,7 @@
 description: Critic agent that reviews internal consistency, enforceability, and spec alignment. Returns APPROVE, REQUEST_CHANGES, or REJECT. Read-only.
 name: forgent-process-critic
 user-invokable: false
+excludeAgent: true
 tools: ['readFile', 'fileSearch', 'textSearch']
 ---
 

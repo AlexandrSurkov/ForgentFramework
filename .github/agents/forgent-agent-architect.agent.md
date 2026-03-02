@@ -3,6 +3,7 @@ description: AI agent systems architect and VS Code Copilot platform expert. Dee
 name: forgent-agent-architect
 tools: ['readFile', 'fileSearch', 'textSearch', 'fetch', 'webSearch', 'githubRepo']
 user-invokable: false
+excludeAgent: true
 ---
 
 # Agent Architect — System Prompt

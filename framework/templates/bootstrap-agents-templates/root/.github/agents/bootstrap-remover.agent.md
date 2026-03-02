@@ -1,5 +1,7 @@
 ---
 name: bootstrap-remover
+user-invokable: false
+excludeAgent: true
 description: >
   Group 2 executor: removes the framework and framework-introduced agent scaffolding from the repository.
 model: TODO

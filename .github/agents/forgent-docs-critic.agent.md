@@ -2,6 +2,7 @@
 description: Critic agent that reviews Markdown structure, links, and clarity. Returns APPROVE, REQUEST_CHANGES, or REJECT.
 name: forgent-docs-critic
 user-invokable: false
+excludeAgent: true
 tools: ['readFile', 'fileSearch', 'textSearch']
 ---
 

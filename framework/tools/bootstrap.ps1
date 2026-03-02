@@ -107,15 +107,28 @@ Copy-IfMissing `
     -ForceOverwrite $Force.IsPresent
 
 # ---------------------------------------------------------------------------
+# Step 5 — Set model: gpt-4.1 in all agent files
+# ---------------------------------------------------------------------------
+Write-Host ""
+Write-Host "--- Step 5: Set model in agent files" -ForegroundColor Cyan
+$agentFiles = Get-ChildItem -Path (Join-Path $repoRoot '.github\agents') -Filter '*.agent.md' -ErrorAction SilentlyContinue
+foreach ($file in $agentFiles) {
+    $content = Get-Content $file.FullName -Raw -Encoding UTF8
+    if ($content -match 'model: TODO') {
+        $content = $content -replace 'model: TODO', 'model: gpt-4.1'
+        Set-Content -Path $file.FullName -Value $content -Encoding UTF8 -NoNewline
+        Write-Host "  [MODEL SET] $($file.Name)" -ForegroundColor Green
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Next steps
 # ---------------------------------------------------------------------------
 Write-Host ""
 Write-Host "==> Bootstrap complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "  1. Edit PROJECT.md — fill in project name, stack, models, and §pre answers."
-Write-Host "  2. In .github/agents/*.agent.md, replace every 'model: TODO' with your chosen model"
-Write-Host "     (e.g. 'model: gpt-4o' or 'model: claude-3-7-sonnet')."
-Write-Host "  3. Open the repo in VS Code — agents will be auto-discovered via .vscode/settings.json."
-Write-Host "  4. In Copilot Chat, switch to agent mode and select 'forgent-orchestrator' to start."
+Write-Host "  1. Open the repo in VS Code -- agents will be auto-discovered via .vscode/settings.json."
+Write-Host "  2. In Copilot Chat, switch to agent mode and select bootstrap-orchestrator."
+Write-Host "  3. The bootstrap-orchestrator will scan the repo, auto-fill PROJECT.md, and guide you through Install."
 Write-Host ""

@@ -1,5 +1,7 @@
 ---
 name: bootstrap-repo-context-bootstrap
+user-invokable: false
+excludeAgent: true
 description: >
   Scans all repositories in the current workspace and creates missing AGENTS.md and llms.txt files (without overwriting).
 model: TODO

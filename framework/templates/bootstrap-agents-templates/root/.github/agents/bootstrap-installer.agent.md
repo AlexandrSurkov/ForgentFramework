@@ -1,5 +1,7 @@
 ---
 name: bootstrap-installer
+user-invokable: false
+excludeAgent: true
 description: >
   Group 2 executor: installs the framework and agent-system scaffolding into the repository.
 model: TODO

@@ -6,6 +6,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.25.2] - 2026-03-02
+
+### Changed
+- `framework/tools/bootstrap.ps1` and `framework/tools/bootstrap.sh`: added Step 5 that automatically replaces `model: TODO` with `model: gpt-4.1` in all copied `.github/agents/*.agent.md` files after bootstrapping. Removed the corresponding manual instruction from the "Next steps" block.
+
+## [0.25.1] - 2026-03-02
+
+### Fixed
+- Added `user-invokable: false` to all non-orchestrator bootstrap agent templates (`bootstrap-installer`, `bootstrap-critic`, `bootstrap-remover`, `bootstrap-upgrader`, `bootstrap-repo-context-bootstrap`, `bootstrap-repo-context-bootstrap-critic`) so that only `bootstrap-orchestrator` appears in the VS Code agent picker.
+
 ## [0.25.0] - 2026-03-02
 
 ### Changed

@@ -1,5 +1,7 @@
 ---
 name: bootstrap-repo-context-bootstrap-critic
+user-invokable: false
+excludeAgent: true
 description: >
   Reviews repo context bootstrap changes to ensure only missing AGENTS.md/llms.txt were created safely and correctly.
 model: TODO

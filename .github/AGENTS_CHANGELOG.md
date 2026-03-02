@@ -75,6 +75,7 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-03-02 | `forgent-agent-architect` | fix | Added `user-invokable: false` to YAML frontmatter to enforce platform-level hard gate preventing direct user invocation. | copilot |
 | 2026-03-02 | all agents (compliance) | fix | Updated `.agents/compliance/awesome-copilot-gate.md` to enumerate all five changed agent files: forgent-docs-critic, forgent-spec-editor, forgent-process-critic, forgent-orchestrator, forgent-agent-architect. | copilot |
 | 2026-03-02 | bootstrap-installer | behavior | Added auto-discovery: installer now scans the target repo (README, package.json, go.mod, CI configs, etc.) to auto-fill PROJECT.md §pre fields; asks user only for fields it cannot detect | copilot |
+| 2026-03-02 | bootstrap-installer, bootstrap-critic, bootstrap-remover, bootstrap-upgrader, bootstrap-repo-context-bootstrap, bootstrap-repo-context-bootstrap-critic | fix | Added `user-invokable: false` to hide non-orchestrator bootstrap agents from VS Code agent picker; only `bootstrap-orchestrator` remains visible to the user | copilot |
 
 ## Change Types
 
