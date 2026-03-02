@@ -9,6 +9,7 @@
 - .github/agents/forgent-process-critic.agent.md
 - .github/agents/forgent-orchestrator.agent.md
 - .github/agents/forgent-agent-architect.agent.md
+- framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md
 
 ## Awesome-copilot consultation (MUST when trigger fires)
 - Consultation performed: unable

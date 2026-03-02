@@ -74,6 +74,7 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-03-01 | `forgent-agent-architect` | tools/behavior | Mitigated bypass risk: made agent-architect advisory-only, removed edit-capable tools, and routed any implementation work via orchestrator executor+critic loop. | copilot |
 | 2026-03-02 | `forgent-agent-architect` | fix | Added `user-invokable: false` to YAML frontmatter to enforce platform-level hard gate preventing direct user invocation. | copilot |
 | 2026-03-02 | all agents (compliance) | fix | Updated `.agents/compliance/awesome-copilot-gate.md` to enumerate all five changed agent files: forgent-docs-critic, forgent-spec-editor, forgent-process-critic, forgent-orchestrator, forgent-agent-architect. | copilot |
+| 2026-03-02 | bootstrap-installer | behavior | Added auto-discovery: installer now scans the target repo (README, package.json, go.mod, CI configs, etc.) to auto-fill PROJECT.md §pre fields; asks user only for fields it cannot detect | copilot |
 
 ## Change Types
 

@@ -40,6 +40,56 @@ You MUST follow the Install playbook in `framework/spec/06-adoption-roadmap.md` 
 
 If you discover required product changes, stop and report them as follow-ups.
 
+## Auto-discovery: fill PROJECT.md
+
+> This phase runs **before** the dry-run safety gate. `PROJECT.md` must be fully populated before a plan can be presented.
+
+### 0. Guard: skip if already complete
+
+If `PROJECT.md` already exists **and contains no `TODO` placeholders**, skip to the Safety gate.
+
+### 1. Scan the repo
+
+Using `fileSearch`, `textSearch`, and `readFile`, detect the following §pre fields. For each, record the raw evidence (file path + matched value).
+
+| §pre field | Detection targets |
+|---|---|
+| **Project name / description** | `README.md` (first `#` heading, first paragraph); `package.json` → `name`, `description`; `go.mod` → `module`; `*.csproj` → `<AssemblyName>` / `<RootNamespace>`; `pom.xml` → `<artifactId>`, `<description>` |
+| **Languages / frameworks** | Presence of: `go.mod` → Go; `package.json` → Node/JS; `requirements.txt` / `pyproject.toml` → Python; `Cargo.toml` → Rust; `*.csproj` / `*.sln` → .NET; `pom.xml` / `build.gradle` → Java/JVM; `angular.json` → Angular; `next.config.*` → Next.js; `vue.config.*` / `nuxt.config.*` → Vue/Nuxt |
+| **Database / ORM** | Directories: `migrations/`, `db/migrate/`, `alembic/`; files: `prisma/schema.prisma`, `ormconfig.*`, `hibernate.cfg.xml`; `requirements.txt` patterns: `sqlalchemy`, `alembic`, `psycopg2`, `django`; `package.json` deps: `typeorm`, `sequelize`, `prisma` |
+| **IaC tool** | Presence of: `*.tf` → Terraform; `Chart.yaml` → Helm; `pulumi.yaml` → Pulumi; `cdk.json` → AWS CDK; `*.bicep` → Bicep; `serverless.yml` → Serverless Framework |
+| **CI/CD platform** | `.github/workflows/*.yml` → GitHub Actions; `.gitlab-ci.yml` → GitLab CI; `azure-pipelines.yml` → Azure Pipelines; `Jenkinsfile` → Jenkins; `bitbucket-pipelines.yml` → Bitbucket Pipelines |
+| **Source control host** | `git remote -v` output (via `runTerminal`) or `.git/config`: `github.com` → GitHub; `dev.azure.com` / `visualstudio.com` → Azure DevOps; `gitlab.com` → GitLab; `bitbucket.org` → Bitbucket |
+| **Test framework** | `jest.config.*` → Jest; `pytest.ini` / `setup.cfg` `[tool:pytest]` / `pyproject.toml` `[tool.pytest]` → pytest; `*_test.go` files → Go test; `spec/` directory → RSpec/Jasmine; `cypress.json` / `cypress.config.*` → Cypress; `playwright.config.*` → Playwright |
+| **Secrets store** | `.env.example` present → pattern-based secrets (list key names found); `vault.*` / `.vault-token` → HashiCorp Vault; `azure-keyvault` in deps → Azure Key Vault |
+| **AI provider** | `.env.example` keys: `OPENAI_API_KEY` → OpenAI; `AZURE_OPENAI_*` → Azure OpenAI; `ANTHROPIC_API_KEY` → Anthropic; `.vscode/settings.json` with `github.copilot` → GitHub Copilot |
+| **Observability / traces** | Auto-fill: `local-only JSONL under .agents/traces/` (framework default — always set to this value automatically) |
+| **Components (repos)** | If `package.json` `workspaces`, `pnpm-workspace.yaml`, or multiple `go.mod` files detected → list them |
+
+### 2. Build draft §pre block
+
+For each field:
+- `[auto]` — high-confidence evidence found (exact file match).
+- `[inferred]` — indirect evidence (e.g. dep in package.json, pattern in filename).
+- `TODO` — no evidence found.
+
+### 3. Present draft to user
+
+Print the full draft `§pre` block in a fenced code block.
+For every field tagged `[inferred]` or `TODO`, ask the user explicitly: *"Please confirm or correct this value."*
+For `[auto]` fields, also list them so the user can spot errors.
+
+Wait for the user's response before proceeding.
+
+### 4. Merge user input
+
+Replace `[inferred]` / `TODO` values with whatever the user provides.
+Keep `[auto]` values unless the user overrides them.
+
+### 5. Write PROJECT.md
+
+Write (or overwrite) `PROJECT.md` with the merged, confirmed §pre block **before** presenting the dry-run plan.
+
 ## Safety gate (deterministic)
 
 You MUST follow the safety protocol:
@@ -74,7 +124,7 @@ If you used external sources (including `awesome-copilot`), you MUST also follow
 ## Install workflow (high level)
 
 1. Read `framework/00-multi-agent-development-spec.md` and linked modules.
-2. Read `PROJECT.md` (`## §pre: Project parameters`). If missing or incomplete, stop and ask for it.
+2. Auto-discover and fill `PROJECT.md` (see `## Auto-discovery: fill PROJECT.md` section above); only ask user for missing fields.
 3. Use templates shipped in the framework package to create the repo layout:
    - repo artifacts: `framework/templates/repo-files-templates/root/**`
    - bootstrap agents: `framework/templates/bootstrap-agents-templates/root/**`

@@ -6,6 +6,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-03-02
+
+### Changed
+- `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md`: added `## Auto-discovery: fill PROJECT.md` phase that runs before the dry-run safety gate. The installer now scans the target repo using `fileSearch`, `textSearch`, and `readFile` to detect all §pre fields (project name/desc, languages/frameworks, database/ORM, IaC, CI/CD, source control host, test framework, secrets store, AI provider, observability, components (repos)). Detected values are tagged `[auto]`, `[inferred]`, or `TODO`. The user is only prompted for `[inferred]` / `TODO` fields. Install workflow step 2 updated accordingly.
+
+## [0.24.0] - 2026-03-02
+
+### Added
+- `framework/tools/bootstrap.ps1` — PowerShell bootstrap script for Windows; copies bootstrap agents, `.vscode/settings.json`, `.gitignore`, and `.agents/compliance/awesome-copilot-gate.md` from vendored templates into the target repo root.
+- `framework/tools/bootstrap.sh` — Bash bootstrap script for Linux/macOS; same behaviour as the PowerShell counterpart. Accepts `--force` to overwrite existing files.
+
 ## [0.23.4] - 2026-03-02
 
 ### Added
