@@ -4,6 +4,9 @@
 .agents/traces/*.jsonl
 !.agents/traces/README.md
 
+# Tests
+test/
+
 # Secrets
 .env
 

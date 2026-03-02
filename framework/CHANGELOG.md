@@ -6,6 +6,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.23.4] - 2026-03-02
+
+### Added
+- Added `project-techspec-writer` and `project-techspec-critic` to the shipped `repo-files-templates` agent group.
+  - Writer drafts structured TZ documents (Purpose & Goals, Scope, Stakeholders, FR, NFR, Constraints, Acceptance Criteria, Open Questions).
+  - Critic reviews for completeness, testability, and non-ambiguity; returns APPROVE / REQUEST_CHANGES / REJECT with deterministic findings.
+
 ## [0.23.3] - 2026-03-01
 
 ### Fixed
