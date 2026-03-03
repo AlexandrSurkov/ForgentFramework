@@ -6,6 +6,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.25.7] - 2026-03-03
+
+### Fixed
+- Remove/uninstall: keep `.agents/compliance/awesome-copilot-gate.md` until the final cleanup step; delete it only after all other uninstall removals/edits.
+
 ## [0.25.6] - 2026-03-03
 
 ### Fixed

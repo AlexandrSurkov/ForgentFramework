@@ -502,6 +502,7 @@ This playbook is executed by the **Bootstrap Remover (Group 2)**.
      - Group 1 (project) agents installed for this framework (enumerate from `AGENTS.md` and the current `.github/agents/` contents)
    - Minimal removal (spec-only): delete `framework/` and update any links that reference `framework/**` paths.
    - Full cleanup (spec + agent system): additionally remove framework-introduced scaffolding under `.github/prompts/**`, `.agents/**`, `.vscode/**`, and framework-owned docs/config files, while preserving any repurposed files confirmed by the user.
+     - Ordering rule: when removing `.agents/**`, keep `.agents/compliance/awesome-copilot-gate.md` until the very end so the bootstrap critic can verify the AWESOME-COPILOT gate on the applied change set; delete `.agents/compliance/awesome-copilot-gate.md` only as the final cleanup step after all other removals.
 6. Stop and summarize what was deleted/changed, and list any preserved files that were treated as repurposed.
 
 Expected outputs/files:

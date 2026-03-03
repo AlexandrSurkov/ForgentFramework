@@ -55,6 +55,7 @@ Clarification:
 - Prefer removing only framework-introduced scaffolding.
 - Do not delete unrelated project files.
 - If uncertain whether a file is framework-owned vs project-owned, stop and ask.
+- Ordering rule: if you are removing `.agents/**`, delete `.agents/compliance/awesome-copilot-gate.md` at the very end (after all other removals/edits) so the applied change set can still be reviewed for AWESOME-COPILOT gate compliance.
 
 ## AWESOME-COPILOT gate (deterministic)
 
