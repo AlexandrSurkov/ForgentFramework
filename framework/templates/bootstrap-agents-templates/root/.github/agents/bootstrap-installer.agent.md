@@ -43,7 +43,8 @@ If you discover required product changes, stop and report them as follow-ups.
 
 ## Auto-discovery: fill PROJECT.md
 
-> This phase runs **before** the dry-run safety gate. `PROJECT.md` must be fully populated before a plan can be presented.
+> This phase runs before the safety gate, but is **read-only**.
+> You MAY scan the repo and draft the intended `PROJECT.md` contents, but you MUST NOT write or overwrite `PROJECT.md` until **Apply** (after the user confirms with the exact token `APPLY`).
 
 ### 0. Guard: skip if already complete
 
@@ -89,7 +90,10 @@ Keep `[auto]` values unless the user overrides them.
 
 ### 5. Write PROJECT.md
 
-Write (or overwrite) `PROJECT.md` with the merged, confirmed §pre block **before** presenting the dry-run plan.
+Stage-aware rule:
+
+- During **Dry-run**, you MUST include `PROJECT.md` in the plan (create/modify + exact intended contents), but you MUST NOT write it.
+- During **Apply**, you MUST write (or overwrite) `PROJECT.md` with the merged, confirmed §pre block.
 
 ## Safety gate (deterministic)
 
@@ -104,6 +108,48 @@ Clarification:
 - During **Dry-run**, you MUST NOT write repo files (do not call `editFiles` / `createFiles`).
 - During **Apply**, you MAY write repo files within the hard boundaries.
 - You MUST NOT write `.agents/session/**` or `.agents/traces/**` in any stage (orchestrator-only).
+
+## Deterministic output scope + merge rules (mandatory)
+
+### In-scope output allowlist (ONLY paths you may create)
+
+You MUST constrain all created artifacts to this allowlist:
+
+- `framework/**`
+- `.github/agents/**`
+- `.github/prompts/**`
+- `.vscode/**`
+- `.agents/**` (EXCEPT `.agents/session/**` and `.agents/traces/**`, which are always forbidden)
+- `PROJECT.md`
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+
+You MUST NOT apply broad template globs like `root/**` in a way that could create files outside the allowlist.
+
+### Collision policy (deterministic)
+
+Default rule: **SKIP-on-exists** for every artifact you would create.
+
+- If a destination path already exists, you MUST NOT overwrite it.
+- You MUST record the skip in the dry-run plan and in the apply summary.
+
+Exception: you MAY modify an existing file ONLY if it is in this explicit allowlist:
+
+- `PROJECT.md`
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+- `.vscode/settings.json`
+- `.agents/compliance/awesome-copilot-gate.md` (ONLY when the AWESOME-COPILOT gate is triggered)
+
+If an existing file is NOT in that list, you MUST treat it as immutable for this agent (SKIP and report).
+
+### Deterministic merge rules for the allowlisted mutable paths
+
+- `PROJECT.md`: overwrite the file with the final, user-confirmed `§pre` block (and any other canonical content required by the shipped template). Do not attempt partial merges.
+- `AGENTS.md`: overwrite the file with the shipped canonical version.
+- `.github/copilot-instructions.md`: if the file exists, append the shipped canonical ForgentFramework instructions as a single contiguous block at the end; do not edit or reorder the pre-existing content.
+- `.vscode/settings.json`: if the file exists, perform a JSON merge that only adds the required Copilot setting keys (do not delete existing keys). If the file is not valid JSON, do not modify it; report a follow-up.
+- `.agents/compliance/awesome-copilot-gate.md`: overwrite the file with the fully-resolved, placeholder-free gate report content for this change set.
 
 ## AWESOME-COPILOT gate (deterministic)
 
@@ -148,17 +194,19 @@ When the gate triggers:
   - If you cannot perform the consultation during dry-run, you MAY use placeholders **only** when each such field is explicitly marked `PENDING`.
   - Every `PENDING` item MUST include a concrete follow-up step that will be performed during APPLY to resolve it.
 
-- **Apply output MUST ensure** `.agents/compliance/awesome-copilot-gate.md` contains **no** placeholders/TODOs.
-  - Either include full consultation evidence, OR use the explicit branch `Consultation performed: unable` with a concrete `Reason` and concrete `Fallback` (no placeholders/TODOs anywhere in the report).
+- **Apply output MUST ensure** `.agents/compliance/awesome-copilot-gate.md` contains **ZERO** placeholders/TODOs/PENDING.
+  - Either include full consultation evidence, OR use the explicit branch `Consultation performed: unable` with a concrete `Reason` and concrete `Fallback` (no placeholders/TODOs/PENDING anywhere in the report).
   - When network access is available, the Apply step MUST auto-fill the consulted URL, immutable ref (commit SHA/tag), and license SPDX+verified-path fields without asking the user.
+
+Fatal condition (Apply):
+
+- If the resolved report would still contain **any** placeholder markers such as `TODO`, `PENDING`, `TBD`, or angle-bracket placeholders like `<...>`, you MUST abort the apply (do not proceed with writing other files) and report the failure + what is missing.
 
 ## Install workflow (high level)
 
 1. Read `framework/00-multi-agent-development-spec.md` and linked modules.
 2. Auto-discover and fill `PROJECT.md` (see `## Auto-discovery: fill PROJECT.md` section above); only ask user for missing fields.
-3. Use templates shipped in the framework package to create the repo layout:
-   - repo artifacts: `framework/templates/repo-files-templates/root/**`
-   - bootstrap agents: `framework/templates/bootstrap-agents-templates/root/**`
+3. Use templates shipped in the framework package to create the repo layout, constrained to the in-scope output allowlist and collision rules above.
 4. Ensure `.agents/compliance/awesome-copilot-gate.md` exists (template is shipped; update only when gate triggers).
 
 Stop after finishing with:

@@ -80,6 +80,7 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-03-03 | all agents | fix | Removed legacy `excludeAgent: true` YAML frontmatter from agent prompts/templates; rely on `user-invokable: false` (and routing/allowlists) for visibility and compatibility | copilot |
 | 2026-03-03 | bootstrap templates | behavior | Made AWESOME-COPILOT gate checks stage-aware to avoid dry-run deadlocks: orchestrator now labels critic calls with `Review stage: DRY_RUN` vs `APPLIED_RESULT`; critic allows `PENDING` placeholders in dry-run gate-report drafts only with a concrete post-APPLY follow-up; applied-result review blocks any placeholders/TODOs unless using `Consultation performed: unable` with concrete Reason+Fallback | copilot |
 | 2026-03-03 | bootstrap templates | behavior | Auto-consult AWESOME-COPILOT on APPLY: executors must consult `https://github.com/github/awesome-copilot`, pin an immutable reference (commit SHA/tag), verify license (SPDX + inspected path), and write concrete values into `.agents/compliance/awesome-copilot-gate.md` without asking the user when network access is available; inability branch remains `Consultation performed: unable` with concrete Reason+Fallback and no placeholders | copilot |
+| 2026-03-03 | bootstrap-installer | behavior | Enforced DRY_RUN/APPLY gate (no `PROJECT.md` writes before APPLY), added deterministic SKIP-on-exists + explicit modify-allowlist merge rules, and constrained template application to explicit in-scope output paths | copilot |
 
 ## Change Types
 
