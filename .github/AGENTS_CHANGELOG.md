@@ -78,6 +78,7 @@ All changes to `.github/agents/*.agent.md` files and core pipeline behaviour mus
 | 2026-03-02 | bootstrap-installer, bootstrap-critic, bootstrap-remover, bootstrap-upgrader, bootstrap-repo-context-bootstrap, bootstrap-repo-context-bootstrap-critic | fix | Added `user-invokable: false` to hide non-orchestrator bootstrap agents from VS Code agent picker; only `bootstrap-orchestrator` remains visible to the user | copilot |
 | 2026-03-02 | `bootstrap-orchestrator` | behavior | Fixed two bugs: (1) plan requirement now mandates an explicit numbered list of all 7 phases (including critic-after-dry-run) output BEFORE any subagent call, including discovery; (2) orchestration steps expanded from 4 to 6: critic is now invoked AFTER the dry-run (blocks APPLY on non-APPROVE) AND again after apply — previously critic was skipped during dry-run | copilot |
 | 2026-03-03 | all agents | fix | Removed legacy `excludeAgent: true` YAML frontmatter from agent prompts/templates; rely on `user-invokable: false` (and routing/allowlists) for visibility and compatibility | copilot |
+| 2026-03-03 | bootstrap templates | behavior | Made AWESOME-COPILOT gate checks stage-aware to avoid dry-run deadlocks: orchestrator now labels critic calls with `Review stage: DRY_RUN` vs `APPLIED_RESULT`; critic allows `PENDING` placeholders in dry-run gate-report drafts only with a concrete post-APPLY follow-up; applied-result review blocks any placeholders/TODOs unless using `Consultation performed: unable` with concrete Reason+Fallback | copilot |
 
 ## Change Types
 

@@ -45,6 +45,12 @@ You MUST follow the Upgrade playbook in `framework/spec/06-adoption-roadmap.md` 
 2. **Confirm**: wait for the exact token `APPLY`.
 3. **Apply**: make changes and summarise.
 
+Clarification:
+
+- During **Dry-run**, you MUST NOT write repo files (do not call `editFiles` / `createFiles`).
+- During **Apply**, you MAY write repo files within the hard boundaries.
+- You MUST NOT write `.agents/session/**` or `.agents/traces/**` in any stage (orchestrator-only).
+
 ## Mandatory upgrade checks
 
 - Update the pinned spec version in `PROJECT.md` header line: `> Spec: Multi-Agent Development Specification vX.Y.Z`.
@@ -61,6 +67,18 @@ If you change `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md`
 - Ensure each changed `.agent.md` / `.prompt.md` includes an updated `## Provenance` section when external sources were used (Appendix A1.1).
 
 If using `awesome-copilot` as a source collection, load `.agents/skills/awesome-copilot-navigator/SKILL.md`.
+
+### Stage-aware handling (to avoid dry-run deadlocks)
+
+When the gate triggers:
+
+- **Dry-run output MUST include** a section titled exactly: `## AWESOME-COPILOT gate report (dry-run draft)`.
+  - Include the intended contents of `.agents/compliance/awesome-copilot-gate.md` as it would be after APPLY.
+  - If you cannot perform the consultation during dry-run, you MAY use placeholders **only** when each such field is explicitly marked `PENDING`.
+  - Every `PENDING` item MUST include a concrete follow-up step that will be performed during APPLY to resolve it.
+
+- **Apply output MUST ensure** `.agents/compliance/awesome-copilot-gate.md` contains **no** placeholders/TODOs.
+  - Either include full consultation evidence, OR use the explicit branch `Consultation performed: unable` with a concrete `Reason` and concrete `Fallback` (no placeholders/TODOs anywhere in the report).
 
 Stop after finishing with:
 

@@ -99,6 +99,12 @@ You MUST follow the safety protocol:
 2. **Confirm**: wait for the user to respond with the exact token `APPLY`.
 3. **Apply**: only after `APPLY`, perform the changes and summarise what happened.
 
+Clarification:
+
+- During **Dry-run**, you MUST NOT write repo files (do not call `editFiles` / `createFiles`).
+- During **Apply**, you MAY write repo files within the hard boundaries.
+- You MUST NOT write `.agents/session/**` or `.agents/traces/**` in any stage (orchestrator-only).
+
 ## AWESOME-COPILOT gate (deterministic)
 
 Trigger: any change to:
@@ -121,6 +127,18 @@ Additionally, when triggered you MUST consult `awesome-copilot` and record audit
 If you are unable to consult, record the explicit reason and a concrete fallback in the gate report.
 
 If you used external sources (including `awesome-copilot`), you MUST also follow per-artifact provenance rules (Appendix A1.1) and MUST load `.agents/skills/awesome-copilot-navigator/SKILL.md`.
+
+### Stage-aware handling (to avoid dry-run deadlocks)
+
+When the gate triggers:
+
+- **Dry-run output MUST include** a section titled exactly: `## AWESOME-COPILOT gate report (dry-run draft)`.
+  - Include the intended contents of `.agents/compliance/awesome-copilot-gate.md` as it would be after APPLY.
+  - If you cannot perform the consultation during dry-run, you MAY use placeholders **only** when each such field is explicitly marked `PENDING`.
+  - Every `PENDING` item MUST include a concrete follow-up step that will be performed during APPLY to resolve it.
+
+- **Apply output MUST ensure** `.agents/compliance/awesome-copilot-gate.md` contains **no** placeholders/TODOs.
+  - Either include full consultation evidence, OR use the explicit branch `Consultation performed: unable` with a concrete `Reason` and concrete `Fallback` (no placeholders/TODOs anywhere in the report).
 
 ## Install workflow (high level)
 

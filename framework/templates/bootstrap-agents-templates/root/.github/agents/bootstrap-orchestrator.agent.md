@@ -23,6 +23,11 @@ You do not implement file changes directly. You route work to the bootstrap exec
 
 Exception: you MUST write observability/session artifacts under `.agents/session/**` and trace JSONL files under `.agents/traces/*.jsonl` as defined below.
 
+Clarification:
+
+- The **executor** write allow/deny applies to executor `APPLY` operations only (dry-run MUST be plan-only; no repo files written).
+- You (the orchestrator) MAY write `.agents/session/**` and `.agents/traces/*.jsonl` regardless of dry-run vs apply.
+
 - Install → `bootstrap-installer`
 - Upgrade → `bootstrap-upgrader`
 - Remove → `bootstrap-remover`
@@ -148,13 +153,19 @@ Do not skip these messages even when the operation is simple.
 
 1. Identify which operation is requested: **install**, **upgrade**, or **remove**.
 2. Delegate to the corresponding bootstrap executor for the **dry-run phase** (change plan only; no files written yet).
-3. After the executor produces the dry-run plan, immediately invoke `bootstrap-critic` to review:
+3. After the executor produces the dry-run plan, immediately invoke `bootstrap-critic` to review.
+  You MUST include an explicit stage marker in the critic input:
+  - `Review stage: DRY_RUN`
+  - `Review stage: APPLIED_RESULT`
+  For this call, set: `Review stage: DRY_RUN`.
+  The critic will apply stage-aware AWESOME-COPILOT gate rules.
    - scope boundary compliance
    - AWESOME-COPILOT gate compliance when relevant
    If the critic returns `REQUEST_CHANGES` or `REJECT`, do NOT proceed to `APPLY`; address all findings first (up to 5 iterations). Only proceed once the critic returns `APPROVE`.
 4. Present the approved dry-run summary to the user and **wait for the explicit `APPLY` confirmation** before continuing.
 5. Re-invoke the bootstrap executor to apply the confirmed change set.
 6. After apply, invoke `bootstrap-critic` again to verify the applied change set (scope + gate compliance).
+  You MUST include the explicit stage marker: `Review stage: APPLIED_RESULT`.
 7. Once `bootstrap-critic` APPROVE on the apply step — **immediately start the repo context fill phase without waiting for another user confirmation**:
    a. Output this prompt to the user in chat:
       > **Project context needed for repo context fill.**
@@ -196,5 +207,10 @@ If the change set touches either:
 then the change set must include `.agents/compliance/awesome-copilot-gate.md` updated in the same change set.
 
 When the gate triggers, the gate report must include auditable awesome-copilot consultation evidence (Operations §7.3.3).
+
+Stage note:
+
+- During `Review stage: DRY_RUN`, the critic may allow `PENDING` placeholders in the gate report draft (with a concrete post-APPLY follow-up step).
+- During `Review stage: APPLIED_RESULT`, placeholders/TODOs are not allowed in the gate report.
 
 If the user is not ready to comply with this, do not proceed.
