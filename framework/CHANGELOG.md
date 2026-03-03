@@ -6,6 +6,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.25.6] - 2026-03-03
+
+### Fixed
+- Templates (bootstrap): made the AWC gate stage-aware to prevent bootstrap deadlocks; auto-consult `bootstrap-critic` when `APPLY` is invoked.
+
 ## [0.25.5] - 2026-03-03
 
 ### Changed
