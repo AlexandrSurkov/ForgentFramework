@@ -49,6 +49,8 @@ Return `REQUEST_CHANGES` with a `BLOCKER` if any of the following are true:
 - The gate report draft contains any placeholder/TODO values that are NOT explicitly marked as `PENDING`.
 - The gate report draft includes placeholders/TODO values but does NOT include a concrete follow-up step that will be performed during APPLY to resolve all `PENDING` items.
 
+The follow-up step MUST be feasible during APPLY and MUST include an attempt to auto-consult `https://github.com/github/awesome-copilot` and fill the immutable reference + license verification fields (i.e., the executor should not rely on asking the user for URL/SHA/license details when network access is available).
+
 Placeholders/TODO values include (non-exhaustive): `TODO`, `TBD`, `<url>`, `<SPDX>`, any `<...>` token, or any obvious template sentinel.
 
 You MAY `APPROVE` a DRY_RUN even when the gate report draft includes `PENDING` placeholders, **only if** every `PENDING` item includes a concrete follow-up step that is feasible during APPLY.
@@ -60,9 +62,15 @@ Return `REQUEST_CHANGES` with a `BLOCKER` if any of the following are true:
 - the report exists but does not list **all** changed agent/prompt artifacts
 - the report exists but is missing any required sections/fields defined in `framework/spec/07-framework-operations.md` §7.3.3
 - the report exists but contains any placeholders/TODOs (including any `<...>` tokens)
-- the report exists but the awesome-copilot consultation evidence is missing or invalid (Operations §7.3.3)
+- the report exists but the awesome-copilot consultation evidence is missing or invalid (Operations §7.3.3), including any of:
+  - `Consulted material URL` is missing or does not equal `https://github.com/github/awesome-copilot`
+  - `Immutable reference` is missing (must be a commit SHA for `main` at time of consultation, or an exact tag name)
+  - `License` SPDX identifier is missing
+  - `License verified at` path is missing
 
 Exception (APPLIED_RESULT only): If the report explicitly uses the branch `Consultation performed: unable`, then it may omit consultation evidence **only if** it includes a concrete `Reason` and a concrete `Fallback` plan (both fully filled; no placeholders/TODOs anywhere in the report).
+
+Note: The consultation evidence may be auto-filled by the executor during APPLY; it does not require user-provided URL/SHA/license details when network access is available.
 
 If external sources were used, verify that each changed `.agent.md`/`.prompt.md` includes an appropriate `## Provenance` section per Appendix A1.1.
 

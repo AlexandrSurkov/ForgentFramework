@@ -213,4 +213,9 @@ Stage note:
 - During `Review stage: DRY_RUN`, the critic may allow `PENDING` placeholders in the gate report draft (with a concrete post-APPLY follow-up step).
 - During `Review stage: APPLIED_RESULT`, placeholders/TODOs are not allowed in the gate report.
 
+Bootstrap executor expectation:
+
+- During DRY_RUN, do not ask the user for awesome-copilot URL/SHA/license details; use `PENDING` only when needed and include a concrete APPLY follow-up.
+- During APPLY (after user confirms `APPLY`), the executor is expected to attempt to consult `https://github.com/github/awesome-copilot`, pin an immutable reference (commit SHA/tag), verify the license (SPDX + inspected path), and write concrete values into `.agents/compliance/awesome-copilot-gate.md`.
+
 If the user is not ready to comply with this, do not proceed.
