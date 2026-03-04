@@ -23,12 +23,22 @@ This critic focuses on:
 
 1. **Placeholder fill correctness**: all fillable `TODO` values and `<project>` / `<Project>` strings in the in-scope files were replaced with real values — not left as `TODO` or `<project>` where inference was possible.
 2. **No hallucinated values**: filled values are plausible given the workspace — no invented project names, fake URLs, or dummy credentials.
-3. **Scope control**: only the allowed files were edited (`PROJECT.md`, `.vscode/project.code-workspace`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`, `.agents/a2a/README.md`) and only `AGENTS.md` / `llms.txt` were created at repo roots.
+3. **Scope control**: only the allowed files were edited (`PROJECT.md`, `.vscode/project.code-workspace`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`, `.agents/a2a/README.md`, and host `.github/agents/**/*.agent.md` / `.github/prompts/**/*.prompt.md` when enrichment is required) and only `AGENTS.md` / `llms.txt` were created at repo roots.
 4. **Safety**: no secrets, credentials, tokens, or environment-specific data in any generated or edited content.
 5. **Non-destructive**: existing non-TODO values were not overwritten.
 6. **Workspace file correctness**: `.vscode/project.code-workspace` JSON is syntactically valid. It should have no remaining `<project>` strings **when the project name is inferable**; if it cannot be inferred, any remaining `<project>` MUST be reported in `## Unfilled items table` with a factual reason + an explicit user question.
 
-7. **Unknowns handled correctly**: when values cannot be inferred, the executor did NOT invent them and instead produced:
+7. **All-repo processing**: every discovered repo root was processed (create missing OR enrich existing sparse `AGENTS.md` / `llms.txt`). Existing sparse files must not be skipped without reason.
+8. **Host aggregation**: host repo context (`AGENTS.md`, `llms.txt`, and allowlisted host context files) reflects discovered cross-repo metadata where inferable.
+9. **Host agent enrichment gate**: if host `.github/agents/**` or `.github/prompts/**` were enriched, `.agents/compliance/awesome-copilot-gate.md` exists, is updated in the same change set, and has no placeholders/TODOs.
+
+11. **Deterministic evidence artifacts**: executor output includes both required tables:
+  - `## Per-repo processing table` with exact columns
+    `repo_root | agents_action(created|enriched|unchanged|skipped) | llms_action(created|enriched|unchanged|skipped) | reason`
+  - `## Host aggregation table` with exact columns
+    `source_repo_root | source_artifact | extracted_fact | host_destination | apply_action`
+
+10. **Unknowns handled correctly**: when values cannot be inferred, the executor did NOT invent them and instead produced:
   - `## Questions for the user` (actionable, minimal)
   - `## Unfilled items table` (with `File`, `Placeholder/Field`, `Why unknown`, `How to fill`)
 
@@ -41,6 +51,11 @@ This critic focuses on:
 - Spot-check `AGENTS.md` and `llms.txt` for remaining `TODO` entries that were inferrable.
 - Verify the executor’s `## Unfilled items table` (and `## Questions for the user` if present) are consistent with the actual file state on disk.
 - Check that no file outside the allowed edit list was modified.
+- Verify each discovered repo root has deterministic action evidence (`created` / `enriched` / `exists`) for both `AGENTS.md` and `llms.txt`.
+- Verify each discovered repo root is represented in `## Per-repo processing table` with deterministic actions.
+- Verify host aggregation claims are represented in `## Host aggregation table` and correspond to actual host-file edits.
+- If host agent/prompt files were touched, verify AWESOME-COPILOT gate artifact completeness and placeholder-free state.
+  - Also verify gate evidence includes consulted material URL `https://github.com/github/awesome-copilot` with immutable reference + license verification, or explicit `Consultation performed: unable` with concrete reason/fallback.
 
 When TODOs remain:
 
@@ -57,6 +72,12 @@ When TODOs remain:
 - Missing `## Questions for the user` when unfilled items exist → **WARNING**.
 - More than 3 inferrable `TODO` values still unfilled in `PROJECT.md §pre` AND they are not listed in the Unfilled items table with a strong justification → **WARNING**.
 - A file outside the allowed edit/create list was touched → **BLOCKER**.
+- A discovered repo root is omitted from processing summary without deterministic skip reason → **BLOCKER**.
+- Existing sparse `AGENTS.md` or `llms.txt` at a discovered repo root was left unenriched without factual reason in `## Unfilled items table` → **WARNING**.
+- Host context aggregation omitted despite available cross-repo evidence → **WARNING**.
+- Host `.github/agents/**` or `.github/prompts/**` enriched without compliant `.agents/compliance/awesome-copilot-gate.md` update → **BLOCKER**.
+- Missing `## Per-repo processing table` or wrong column schema → **BLOCKER**.
+- Missing `## Host aggregation table` or wrong column schema → **BLOCKER**.
 
 ## Output format
 

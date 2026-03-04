@@ -41,6 +41,13 @@ For Install/Upgrade/Remove tasks, the acting bootstrap agent MUST follow this de
 1. **Dry-run**: produce a complete change plan.
       - MUST enumerate file operations: create/modify/delete and paths.
       - MUST call out any destructive step.
+  - MUST include deterministic artifacts in this exact order:
+    1) **Discovery Evidence Table** — each row MUST include: `evidence_id`, `source_path_or_command`, `observation`, `inference`, `confidence`, `fills_todo_id`.
+    2) **Unresolved TODO Table** — each row MUST include: `todo_id`, `description`, `why_unresolved_after_discovery`, `blocking_stage`, `required_input`.
+    3) **Question Mapping Table** — each row MUST include: `question_id`, `maps_to_todo_id`, `question_text`, `accepted_answer_format`, `unblocks_stage`.
+  - MUST use stage markers in the dry-run text exactly as: `[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`.
+  - MUST maximize autonomous discovery and evidence-based autofill before producing any user question.
+  - MUST NOT include user questions for TODOs that were resolved by discovery/autofill.
 
 2. **Confirm**: request explicit user confirmation.
   - MUST wait for the user to respond with the exact token `APPLY` before writing or deleting any **repo artifacts**.
@@ -49,6 +56,91 @@ For Install/Upgrade/Remove tasks, the acting bootstrap agent MUST follow this de
 3. **Apply**: perform the changes and summarize what happened.
       - MUST list modified files.
       - MUST point to any follow-up validations (tests, evals).
+
+### 7.2.1 Deterministic template deployment manifest (install/upgrade)
+
+For `Install` (and for `Upgrade` when replacing shipped framework assets), the executor MUST produce a critic-verifiable deployment manifest that covers shipped framework templates deployed into the **host repo** (the repository that contains `framework/`).
+
+Manifest requirements:
+
+- MUST include one row per intended file operation with columns:
+  `manifest_id | source_template_path | destination_path | operation(create|modify|skip|delete) | reason | stage(dry-run|apply)`
+- MUST cover at minimum source templates under:
+  - `framework/templates/repo-files-templates/root/**`
+  - `framework/templates/bootstrap-agents-templates/root/**`
+- MUST include a deterministic source inventory summary with exact counters:
+  - `source_rows_repo_templates`
+  - `source_rows_bootstrap_templates`
+  - `source_rows_total`
+- MUST resolve each source row to a concrete host destination path.
+- MUST include a completeness summary with exact counters:
+  - `rows_total`
+  - `rows_applied`
+  - `rows_skipped`
+  - `rows_failed`
+
+Completeness rule:
+
+- `rows_failed` MUST equal `0` for an `APPROVE` decision on `Review stage: APPLIED_RESULT`.
+- Any missing source→destination mapping row is a deterministic `BLOCKER`.
+- `rows_total` MUST equal `source_rows_total`; mismatch is a deterministic `BLOCKER`.
+
+### 7.2.2 Topology classification and clarifying-question rule
+
+Bootstrap discovery MUST classify topology before asking topology-related questions.
+
+Topology classes:
+
+- `single-repo`: only one in-scope writable repo root is discovered.
+- `multi-repo`: more than one in-scope writable repo root is discovered.
+
+Required dry-run fields:
+
+- `topology_class`
+- `topology_confidence` (`high` | `low`)
+- `topology_signal` (observable evidence string that MUST include discovered repo-root paths and detection basis)
+
+`topology_signal` minimum shape (single-line, deterministic):
+
+- `repo_roots=[...]; host_repo=<path>; sibling_repo_roots=[...]; detection_basis=<vcs|workspace|metadata|fallback>; contradictions=<none|...>; low_confidence_reason=<none|...>; topology_question_allowed=<yes|no>`
+
+Deterministic low-confidence rule:
+
+- `topology_confidence` MUST be `low` if any of the following holds:
+  - discovery found conflicting root candidates with no single deterministic winner,
+  - fallback heuristic was required and produced 2+ plausible root sets,
+  - detected roots contradict explicit repository metadata (`PROJECT.md`, workspace config, or VCS markers).
+
+Clarifying question constraint:
+
+- Topology clarification MAY be asked only when `topology_confidence = low`.
+- At most one topology clarifying question is allowed per dry-run.
+- The question MUST map to exactly one unresolved TODO row in the Question Mapping Table.
+- If `topology_confidence = low`, `topology_signal` MUST include a non-`none` `low_confidence_reason` value.
+- If `topology_confidence = high`, `topology_signal` MUST set `low_confidence_reason=none` and `topology_question_allowed=no`.
+
+If `topology_confidence = high`, no topology clarifying question is allowed.
+
+### 7.2.3 Install/upgrade completion gate + RC mapping (normative)
+
+Completion gate (non-bypass):
+
+- For `Install` and `Upgrade`, bootstrap execution MUST NOT be marked complete immediately after `Apply`.
+- Completion is allowed only after both post-apply stages succeed:
+  1) `bootstrap-repo-context-bootstrap` processed all discovered repos (including sibling repos when topology is `multi-repo`), and
+  2) `bootstrap-repo-context-bootstrap-critic` returned `APPROVE`.
+- If either stage is skipped, deferred, or not approved, the run MUST remain incomplete (for example `HANDOFF_REQUIRED`), and `TASK_COMPLETE` MUST NOT be emitted.
+- This rule applies equally to orchestrated runs and direct `bootstrap-installer` / `bootstrap-upgrader` invocation paths.
+
+Normative RC mapping (audit labels):
+
+| RC label | Required clause(s) |
+|---|---|
+| **RC1 — Template deployment completeness** | §7.2.1 deterministic deployment manifest + counters (`rows_total = source_rows_total`, `rows_failed = 0` for `APPLIED_RESULT`) |
+| **RC2 — Topology determination behavior** | §7.2.2 topology classification + deterministic low-confidence rule + single-question constraint |
+| **RC3 — Multi-repo per-repo context fill** | §7.2.3 completion gate item (1): `bootstrap-repo-context-bootstrap` MUST process all discovered repos, including siblings in `multi-repo` |
+| **RC4 — Host aggregation from sibling context** | [06-adoption-roadmap.md](06-adoption-roadmap.md) §6.install step 7 host-aggregation requirements (source→host aggregation table) |
+| **RC5 — Agent enrichment + AWESOME-COPILOT gate** | §7.3 trigger + required gate artifact/fields + enforcement mechanism; plus §7.2.3 completion gate when post-apply host enrichment is in scope |
 
 ---
 

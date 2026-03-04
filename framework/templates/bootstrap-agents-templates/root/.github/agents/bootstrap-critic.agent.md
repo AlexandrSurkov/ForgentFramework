@@ -26,12 +26,76 @@ The orchestrator MUST include a single-line stage marker in the critic input:
 - `Review stage: DRY_RUN` (plan-only; executor wrote no repo artifacts yet — orchestrator may have written local-only `.agents/session/**` and `.agents/traces/*.jsonl`)
 - `Review stage: APPLIED_RESULT` (post-APPLY verification of the actual change set)
 
-If the stage marker is missing or ambiguous, return `REQUEST_CHANGES` with a **WARNING** asking the orchestrator to add it.
+If the stage marker is missing, ambiguous, duplicated, or not one of the exact allowed values above, return `REQUEST_CHANGES` with a **BLOCKER** and stop further checks until corrected.
 
 ## Deterministic checks
 
+### Stage marker determinism (deterministic BLOCKER)
+Accept only these exact single-line markers:
+
+- `Review stage: DRY_RUN`
+- `Review stage: APPLIED_RESULT`
+
+Return `REQUEST_CHANGES` with a `BLOCKER` if:
+
+- any other marker spelling/casing/alias is used,
+- both markers appear in one review,
+- marker is missing.
+
 ### Boundary
 Return `REJECT` if the executor performed unrelated product work.
+
+### Canonical DRY_RUN contract exactness (deterministic BLOCKER for DRY_RUN)
+For `Review stage: DRY_RUN`, return `REQUEST_CHANGES` with a `BLOCKER` if any of the following are true:
+
+- Any required marker is missing, renamed, duplicated, or out of order. Required exact order:
+  1. `[DISCOVERY]`
+  2. `[UNRESOLVED]`
+  3. `[QUESTIONS]`
+  4. `[PLAN]`
+- The **Discovery Evidence Table** is missing or does not use exactly these columns:
+  `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
+- The **Unresolved TODO Table** is missing or does not use exactly these columns:
+  `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
+- The **Question Mapping Table** is missing or does not use exactly these columns:
+  `question_id | maps_to_todo_id | question_text | accepted_answer_format | unblocks_stage`
+- The dry-run asks user questions that are not represented in the Question Mapping Table.
+- The Question Mapping Table contains questions not mapped to unresolved TODO IDs.
+- The dry-run includes user questions while the Unresolved TODO Table has no real rows.
+
+The contract above must match `framework/spec/07-framework-operations.md` §7.2 exactly; any alternative headings/aliases/shapes are a BLOCKER in DRY_RUN.
+
+Topology determinism (DRY_RUN):
+
+- Return `REQUEST_CHANGES` with a `BLOCKER` if dry-run omits any of:
+  - `topology_class` (`single-repo` | `multi-repo`)
+  - `topology_confidence` (`high` | `low`)
+  - `topology_signal` (observable evidence)
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_signal` does not include all required parts:
+  - `repo_roots=[...]`
+  - `host_repo=<path>`
+  - `sibling_repo_roots=[...]`
+  - `detection_basis=<...>`
+  - `contradictions=<...>`
+  - `low_confidence_reason=<...>`
+  - `topology_question_allowed=<yes|no>`
+- Return `REQUEST_CHANGES` with a `BLOCKER` if a topology clarifying question is asked when `topology_confidence = high`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if more than one topology clarifying question is asked.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = high` but `low_confidence_reason` is not `none`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = high` but `topology_question_allowed` is not `no`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = low` but `low_confidence_reason` is `none`.
+
+Deployment manifest completeness (DRY_RUN + APPLIED_RESULT):
+
+- Return `REQUEST_CHANGES` with a `BLOCKER` if output omits a source→destination deployment manifest with required columns:
+  `manifest_id | source_template_path | destination_path | operation(create|modify|skip|delete) | reason | stage(dry-run|apply)`
+- Return `REQUEST_CHANGES` with a `BLOCKER` if output omits manifest counters:
+  `source_rows_repo_templates`, `source_rows_bootstrap_templates`, `source_rows_total`, `rows_total`, `rows_applied`, `rows_skipped`, `rows_failed`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `rows_total` does not equal `source_rows_total`.
+- For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` when `rows_failed` is not `0`.
+- For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` if any declared template source row has no concrete host destination mapping.
+
+For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `WARNING` if applied output omits a concise summary of resolved/unresolved TODO outcomes.
 
 ### AWESOME-COPILOT gate (deterministic BLOCKER)
 If the change set includes any changes to:
@@ -70,6 +134,10 @@ Return `REQUEST_CHANGES` with a `BLOCKER` if any of the following are true:
 
 Exception (APPLIED_RESULT only): If the report explicitly uses the branch `Consultation performed: unable`, then it may omit consultation evidence **only if** it includes a concrete `Reason` and a concrete `Fallback` plan (both fully filled; no placeholders/TODOs anywhere in the report).
 
+Host enrichment extension:
+
+- If applied changes include host context-bootstrap enrichment of `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md`, enforce the same gate checks above as deterministic `BLOCKER`s.
+
 Note: The consultation evidence may be auto-filled by the executor during APPLY; it does not require user-provided URL/SHA/license details when network access is available.
 
 If external sources were used, verify that each changed `.agent.md`/`.prompt.md` includes an appropriate `## Provenance` section per Appendix A1.1.
@@ -82,6 +150,15 @@ For any bootstrap operation that installs, upgrades, or removes framework artifa
 - Remove playbook
 
 Return `REQUEST_CHANGES` with a `BLOCKER` if the operation’s steps, checks, or required artifacts materially diverge from the applicable playbook.
+
+### Install/upgrade completion semantics (deterministic BLOCKER)
+
+For `Install` or `Upgrade`, return `REQUEST_CHANGES` with a `BLOCKER` if any completion claim is present while post-apply context stages were skipped or not approved.
+
+Deterministic conditions:
+
+- For `Review stage: APPLIED_RESULT`, if output claims terminal completion (`TASK_COMPLETE`, `completed`, `done`) without evidence that post-apply `bootstrap-repo-context-bootstrap` and `bootstrap-repo-context-bootstrap-critic` completed successfully, return `REQUEST_CHANGES` with a `BLOCKER`.
+- If direct `bootstrap-installer` / `bootstrap-upgrader` invocation output omits an explicit incomplete handoff state (for example `HANDOFF_REQUIRED`) and required next-step routing to `bootstrap-repo-context-bootstrap` + `bootstrap-repo-context-bootstrap-critic`, return `REQUEST_CHANGES` with a `BLOCKER`.
 
 ## Output format
 

@@ -6,6 +6,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-03-04
+
+### Changed
+- Bootstrap operations/spec now require deterministic manifest source-inventory counters (`source_rows_repo_templates`, `source_rows_bootstrap_templates`, `source_rows_total`) and enforce `rows_total = source_rows_total`.
+- Topology classification now requires a structured observable `topology_signal` (repo roots, host root, sibling roots, detection basis, contradictions, low-confidence reason, topology-question allowance) with deterministic high/low consistency checks.
+- Install post-apply context bootstrap now requires critic-verifiable per-repo processing and host aggregation tables, including sibling-repo processing in multi-repo topology.
+- Bootstrap templates (`bootstrap-installer`, `bootstrap-orchestrator`, `bootstrap-repo-context-bootstrap`, `bootstrap-repo-context-bootstrap-critic`, `bootstrap-critic`) were aligned to enforce RC1–RC5 behavior deterministically.
+- Install/upgrade completion semantics now explicitly prohibit terminal completion when post-apply `context-bootstrap` or `context-bootstrap-critic` is skipped; direct installer/upgrader invocation must return explicit handoff semantics instead of completion.
+- Added explicit normative RC1–RC5 mapping in Operations (§7.2.3) and linked Roadmap install playbook references for deterministic audit traceability.
+
+## [0.25.10] - 2026-03-04
+
+### Changed
+- Install/operations guidance now enforces autonomy-first execution and asks users only for unresolved `TODO` values.
+- Bootstrap workflow/templates/docs were aligned with the new autonomy-first + unresolved-`TODO` policy.
+- Repo-files template mirrors were synchronized with the updated canonical spec modules.
+
 ## [0.25.9] - 2026-03-04
 
 ### Fixed

@@ -129,21 +129,37 @@ After creating the agent files, stop and list the created files.
 
 This playbook is executed by the **Bootstrap Installer (Group 2)**.
 
+Normative remediation policy for bootstrap operations (Install/Upgrade/Remove):
+- Bootstrap agents MUST maximize autonomous repository discovery before asking the user for additional inputs.
+- Bootstrap agents MUST use evidence-based autofill for inferred values (from files, repository layout, and existing configuration artifacts).
+- Bootstrap agents MAY ask user questions only for TODOs that remain unresolved after exhaustive discovery.
+- Each user question MUST map to a single unresolved TODO and MUST state the blocking step that cannot continue without that answer.
+- Bootstrap agents MUST NOT ask broad or redundant questionnaires when the answer is derivable from repository evidence.
+
+Normative RC mapping labels for this playbook are defined in Operations 07 §7.2.3: [07-framework-operations.md](07-framework-operations.md) §7.2.3.
+
 1. Run the Group 2 entrypoint:
    - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-orchestrator.agent.md`) and request **Install**.
-   - Alternatively: run `.github/agents/bootstrap-installer.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md`).
-2. Ask the user for required inputs before planning any file changes:
-   - Confirm the framework package is available at repo root as `framework/` (vendored copy) or ask where to source it from.
-   - Confirm `PROJECT.md` exists and that `## §pre: Project parameters` is complete (use §6.pre checklist). If missing/incomplete, stop and request the user provide the missing answers.
-   - Confirm whether this is a single repo or multi-repo setup (AgentConfig repo + component repos) and which repo(s) you are allowed to edit in this run.
-   - Confirm whether any existing `.github/agents/**`, `.agents/**`, `AGENTS.md`, `llms.txt`, or `.github/copilot-instructions.md` are already in use and must be merged/preserved.
-3. Apply the operational invariants (link only) before and during execution:
+  - Alternatively: run `.github/agents/bootstrap-installer.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md`) ONLY if the direct path preserves the mandatory post-apply handoff/gates in steps 7–8 (no completion before those gates pass).
+2. Perform an autonomous discovery pass before planning any file changes:
+  - Discover whether the framework package is already available at repo root as `framework/` (vendored copy) and infer source/update strategy from repository evidence.
+  - Discover whether `PROJECT.md` exists and whether `## §pre: Project parameters` is complete using the §6.pre checklist.
+  - Discover repository topology (single-repo vs multi-repo AgentConfig + components) and in-scope writable repositories for this run, and record `topology_class`, `topology_confidence`, and `topology_signal` per [07-framework-operations.md](07-framework-operations.md) §7.2.2.
+  - Discover existing `.github/agents/**`, `.agents/**`, `AGENTS.md`, `llms.txt`, and `.github/copilot-instructions.md` and infer merge/preserve requirements from current usage.
+  - Record discovery evidence and autofilled decisions in Dry-run artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
+3. Ask user questions only for unresolved TODOs after discovery:
+  - Emit one question per unresolved TODO.
+  - For each question, include TODO ID, blocking phase/step, and accepted answer format.
+  - Topology clarification is special-cased: ask at most one topology question, and only when `topology_confidence = low`.
+4. Apply the operational invariants (link only) before and during execution:
    - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
    - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
    - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
    - Spec pinning location (`PROJECT.md` header only): [07-framework-operations.md](07-framework-operations.md) §7.4
-4. Dry-run: produce a complete phase-by-phase plan for §6.0–§6.8 and enumerate every create/modify/delete operation with paths (per [07-framework-operations.md](07-framework-operations.md) §7.2).
-5. Apply (only after the Operations safety confirmation per §7.2), using shipped templates as the baseline:
+5. Dry-run: produce a complete phase-by-phase plan for §6.0–§6.8 and enumerate every create/modify/delete operation with paths (per [07-framework-operations.md](07-framework-operations.md) §7.2).
+  - The dry-run MUST include a deterministic source→destination deployment manifest for host repo outputs per [07-framework-operations.md](07-framework-operations.md) §7.2.1.
+  - The dry-run MUST include the source inventory summary counters from [07-framework-operations.md](07-framework-operations.md) §7.2.1 and ensure planned `rows_total = source_rows_total`.
+6. Apply (only after the Operations safety confirmation per §7.2), using shipped templates as the baseline:
    - Template sources:
      - Repo context files: `framework/templates/repo-files-templates/root/**`
      - Bootstrap agents (Group 2): `framework/templates/bootstrap-agents-templates/root/**`
@@ -155,8 +171,22 @@ This playbook is executed by the **Bootstrap Installer (Group 2)**.
      - `.agents/skills/**` (project/component skills)
      - `.agents/compliance/awesome-copilot-gate.md` (create/update when [07-framework-operations.md](07-framework-operations.md) §7.3 triggers)
      - `.vscode/mcp.json` (when adopting MCP in §6.4)
-6. Verify the installation results at the roadmap level:
+    - Deployment completeness requirement: after APPLY, all manifest rows from §7.2.1 MUST resolve to host destinations with `rows_failed = 0`.
+    - Deployment accounting requirement: after APPLY, `rows_total` MUST equal `source_rows_total`.
+  7. Post-apply context bootstrap (mandatory for install):
+    - Run `bootstrap-repo-context-bootstrap` across ALL discovered repos (not only missing-file repos).
+    - Include host-level sibling discovery in scope: when topology is `multi-repo`, discovered sibling repo roots MUST be processed in the same run.
+    - For each discovered repo, non-destructively enrich existing sparse `AGENTS.md` and `llms.txt` where placeholders/TODO gaps exist; do not overwrite already-concrete values.
+    - Produce a critic-verifiable per-repo processing table with one row per discovered repo root and columns:
+      `repo_root | agents_action(created|enriched|unchanged|skipped) | llms_action(created|enriched|unchanged|skipped) | reason`.
+    - Aggregate discovered per-repo metadata into the host repo context files (`AGENTS.md`, `llms.txt`, and other allowlisted host context files) to fill host-level missing context.
+    - Produce a host aggregation table with one row per aggregated item and columns:
+      `source_repo_root | source_artifact | extracted_fact | host_destination | apply_action`.
+    - If host `.github/agents/**` or `.github/prompts/**` are enriched during this step, enforce AWESOME-COPILOT gate compliance and ensure no placeholders remain in the gate report.
+  8. Verify the installation results at the roadmap level:
    - Follow phases §6.0–§6.8 checklists and stop with a summary of created/modified files and any deferred items.
+    - Install completion is prohibited unless step 7 ran and `bootstrap-repo-context-bootstrap-critic` approved the post-apply context result.
+    - If install was invoked directly via `bootstrap-installer`, the executor MUST return an explicit handoff for step 7 critic-gated completion (for example `HANDOFF_REQUIRED`) and MUST NOT emit completion status.
 
 ---
 
@@ -175,6 +205,8 @@ Rules:
 - Create files using the templates in the spec (exact section referenced in each phase).
 - At each phase: check off items in the checklist. Do not proceed to the next
    phase until all checkboxes are done or explicitly deferred with a reason.
+- Before asking the user for any missing parameter, run exhaustive repository discovery and evidence-based autofill.
+- Ask user questions ONLY for TODOs unresolved after discovery, and map each question to one unresolved TODO with a blocking step.
 - Ask NEEDS_HUMAN if a parameter requires a team decision you cannot infer
    from PROJECT.md answers.
 - Language: create all file content in the configured Artifact language (PROJECT.md §pre; default English).
@@ -383,24 +415,28 @@ This playbook is executed by the **Bootstrap Upgrader (Group 2)**.
 1. Run the Group 2 entrypoint:
    - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` and request **Upgrade**.
    - Alternatively: run `.github/agents/bootstrap-upgrader.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-upgrader.agent.md`).
-2. Ask the user for required inputs before planning changes:
-   - Confirm the new framework package contents are available (updated `framework/` vendored copy).
-   - Confirm the project’s current pinned spec version is present in `PROJECT.md` header (`> Spec: Multi-Agent Development Specification vX.Y.Z`).
-   - Confirm whether `.github/agents/**` and `.github/prompts/**` are allowed to change in this upgrade (some teams lock these behind review).
-3. Apply the operational invariants (link only) before and during execution:
+2. Perform an autonomous discovery pass before planning changes:
+  - Discover whether the new framework package contents are available (updated `framework/` vendored copy).
+  - Discover the project’s current pinned spec version from `PROJECT.md` header (`> Spec: Multi-Agent Development Specification vX.Y.Z`).
+  - Discover repository policy constraints for `.github/agents/**` and `.github/prompts/**` changes from existing governance artifacts.
+  - Record discovery evidence and autofilled decisions in Dry-run artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
+3. Ask user questions only for unresolved TODOs after discovery:
+  - Emit one question per unresolved TODO.
+  - For each question, include TODO ID, blocking upgrade step, and accepted answer format.
+4. Apply the operational invariants (link only) before and during execution:
    - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
    - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
    - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
    - Spec pinning and mandatory update of `PROJECT.md` header: [07-framework-operations.md](07-framework-operations.md) §7.4
-4. Identify versions:
+5. Identify versions:
    - NEW: `framework/00-multi-agent-development-spec.md` header.
    - OLD: `PROJECT.md` header line `> Spec: Multi-Agent Development Specification vX.Y.Z`.
-5. Dry-run: enumerate every file create/modify/delete and explicitly call out destructive steps (per [07-framework-operations.md](07-framework-operations.md) §7.2).
-6. Apply (only after the Operations safety confirmation per §7.2):
+6. Dry-run: enumerate every file create/modify/delete and explicitly call out destructive steps (per [07-framework-operations.md](07-framework-operations.md) §7.2).
+7. Apply (only after the Operations safety confirmation per §7.2):
    - Update the vendored `framework/` package.
    - Run the Bootstrap Upgrader procedure (next section).
    - Update `PROJECT.md` header `> Spec:` to the new version.
-7. After apply, perform required follow-ups when the AWESOME-COPILOT trigger fired (link only):
+8. After apply, perform required follow-ups when the AWESOME-COPILOT trigger fired (link only):
    - Update `.agents/compliance/awesome-copilot-gate.md` per [07-framework-operations.md](07-framework-operations.md) §7.3.
    - If your repo maintains prompt version history and/or evals, run the project’s configured process (Prompt Versioning / Evals modules).
 
@@ -470,6 +506,8 @@ Step 6 — Update PROJECT.md header:
 Rules:
   - NEEDS_HUMAN if a BREAKING change requires a team decision
     (e.g. model removed from an available tier, new mandatory gate requiring CI reconfiguration)
+  - Before asking the user for any missing parameter, run exhaustive repository discovery and evidence-based autofill.
+  - Ask user questions ONLY for TODOs unresolved after discovery, and map each question to one unresolved TODO with a blocking upgrade step.
   - Additive changes that require significant effort may be deferred:
     record as TODO in PROJECT.md §6 Roadmap with spec version reference
   - Language: create all file content in the configured Artifact language (PROJECT.md §pre; default English).
@@ -486,24 +524,28 @@ This playbook is executed by the **Bootstrap Remover (Group 2)**.
 1. Run the Group 2 entrypoint:
    - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` and request **Remove**.
    - Alternatively: run `.github/agents/bootstrap-remover.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-remover.agent.md`).
-2. Ask the user for required inputs before planning deletions:
-   - Removal mode: **Minimal removal** (spec-only) or **Full cleanup** (spec + agent system scaffolding).
-   - Confirm whether any of these paths are repurposed for non-framework use and must be preserved/merged instead of deleted:
-     `.github/agents/**`, `.github/prompts/**`, `.agents/**`, `PROJECT.md`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`, `.vscode/**`.
-   - Confirm whether the repo has multiple components (and which ones are in-scope for removal in this run).
-3. Apply the operational invariants (link only) before and during execution:
+2. Perform an autonomous discovery pass before planning deletions:
+  - Discover the likely removal mode based on repository state (**Minimal removal** vs **Full cleanup**) and mark it as autofilled if unambiguous.
+  - Discover whether target paths are repurposed for non-framework use and must be preserved/merged instead of deleted:
+    `.github/agents/**`, `.github/prompts/**`, `.agents/**`, `PROJECT.md`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`, `.vscode/**`.
+  - Discover repository component structure and in-scope component boundaries for this run.
+  - Record discovery evidence and autofilled decisions in Dry-run artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
+3. Ask user questions only for unresolved TODOs after discovery:
+  - Emit one question per unresolved TODO.
+  - For each question, include TODO ID, blocking removal step, and accepted answer format.
+4. Apply the operational invariants (link only) before and during execution:
    - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
    - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
    - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
-4. Dry-run: enumerate all files that will be deleted or modified, and list all references/links that must be updated to avoid broken paths.
-5. Apply (only after the Operations safety confirmation per §7.2):
+5. Dry-run: enumerate all files that will be deleted or modified, and list all references/links that must be updated to avoid broken paths.
+6. Apply (only after the Operations safety confirmation per §7.2):
    - Remove framework-owned agent prompts (unless confirmed as repurposed by the user):
      - Group 2 (bootstrap) agents: `.github/agents/bootstrap-*.agent.md`
      - Group 1 (project) agents installed for this framework (enumerate from `AGENTS.md` and the current `.github/agents/` contents)
    - Minimal removal (spec-only): delete `framework/` and update any links that reference `framework/**` paths.
    - Full cleanup (spec + agent system): additionally remove framework-introduced scaffolding under `.github/prompts/**`, `.agents/**`, `.vscode/**`, and framework-owned docs/config files, while preserving any repurposed files confirmed by the user.
      - Ordering rule: when removing `.agents/**`, keep `.agents/compliance/awesome-copilot-gate.md` until the very end so the bootstrap critic can verify the AWESOME-COPILOT gate on the applied change set; delete `.agents/compliance/awesome-copilot-gate.md` only as the final cleanup step after all other removals.
-6. Stop and summarize what was deleted/changed, and list any preserved files that were treated as repurposed.
+7. Stop and summarize what was deleted/changed, and list any preserved files that were treated as repurposed.
 
 Expected outputs/files:
 - Minimal removal (spec-only):
@@ -531,6 +573,8 @@ You — Bootstrap Remover (Group 2). Your task is to remove the framework and fr
 Constraints:
 - Follow `framework/spec/07-framework-operations.md` safety gate: dry-run → wait for exact token APPLY → apply.
 - Default to the safest interpretation: never delete a file unless it was introduced solely for this framework.
+- Before asking the user for any missing parameter, run exhaustive repository discovery and evidence-based autofill.
+- Ask user questions ONLY for TODOs unresolved after discovery, and map each question to one unresolved TODO with a blocking removal step.
 - If unsure whether a file is repurposed, ask NEEDS_HUMAN.
 
 Dry-run output MUST include:

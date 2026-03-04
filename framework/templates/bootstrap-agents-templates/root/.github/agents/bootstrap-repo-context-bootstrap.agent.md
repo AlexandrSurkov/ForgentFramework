@@ -4,8 +4,9 @@ user-invokable: false
 description: >
   Fills all TODO placeholders and `<project>` template strings in files installed by
   bootstrap (PROJECT.md, .vscode/project.code-workspace, AGENTS.md, llms.txt,
-  .github/copilot-instructions.md, .agents/a2a/README.md). Also creates any missing
-  AGENTS.md / llms.txt files at discovered repo roots.
+  .github/copilot-instructions.md, .agents/a2a/README.md), processes ALL discovered
+  repos for non-destructive AGENTS.md/llms.txt enrichment (or creation when missing),
+  and aggregates discovered repo metadata back into the host repo context.
 model: TODO
 tools:
   - readFile
@@ -21,10 +22,11 @@ You are an executor agent.
 
 ## Role
 
-You have **two responsibilities**, in this order:
+You have **three responsibilities**, in this order:
 
 1. **Fill all TODO placeholders and `<project>` / `<Project>` template strings** in the files that were installed by the bootstrap operation. These files contain placeholder values that must be replaced with real project information before the agent system is usable.
-2. **Create missing `AGENTS.md` and `llms.txt`** files at each discovered repo root (without overwriting existing ones).
+2. **Process ALL discovered repo roots**: non-destructively enrich existing sparse `AGENTS.md` / `llms.txt` files and create them only when missing.
+3. **Aggregate discovered per-repo metadata into host repo context** and enrich host agent/prompt files when needed for detected technologies.
 
 You MUST NOT skip responsibility 1 even if the orchestrator passes `SKIP`. In that case, infer as much as possible from the workspace.
 
@@ -99,11 +101,11 @@ Emit a section `## Questions for the user` with numbered questions.
 
 ### Bootstrap root definition (important in multi-root workspaces)
 
-Responsibility 1 applies only to the **bootstrap-installed root** (the repo root that contains this agent file at `.github/agents/bootstrap-repo-context-bootstrap.agent.md`).
+Responsibility 1 applies only to the **host repo** (the repo root that contains this agent file at `.github/agents/bootstrap-repo-context-bootstrap.agent.md`).
 
-- You MUST locate that root first (use `fileSearch` for `**/.github/agents/bootstrap-repo-context-bootstrap.agent.md` and derive the root directory).
+- You MUST locate that host root first (use `fileSearch` for `**/.github/agents/bootstrap-repo-context-bootstrap.agent.md` and derive the root directory).
 - You MUST edit only the installed files under that bootstrap root.
-- You MUST NOT expand Responsibility 1 edits to other discovered repo roots.
+- Responsibility 2 is explicitly allowed for other discovered repo roots.
 
 **Allowed edits (responsibility 1):**
 
@@ -113,6 +115,7 @@ Responsibility 1 applies only to the **bootstrap-installed root** (the repo root
 - `llms.txt` (bootstrap root only; if it exists with TODO entries) — fill in the repository overview line.
 - `.github/copilot-instructions.md` (bootstrap root only; if it contains TODO entries) — fill them.
 - `.agents/a2a/README.md` (bootstrap root only; if it contains TODO entries) — fill agent responsibility descriptions.
+- `.github/agents/**/*.agent.md` and `.github/prompts/**/*.prompt.md` (host repo only; when enrichment is needed for detected project technologies) — apply non-destructive enrichment only.
 
 Clarification for `PROJECT.md` agent names:
 
@@ -124,6 +127,18 @@ Clarification for `PROJECT.md` agent names:
 - `AGENTS.md` at each discovered repo root where it is missing (using the minimal template below).
 - `llms.txt` at each discovered repo root where it is missing (using the minimal template below).
 
+**Allowed edits (responsibility 2):**
+
+- Existing `AGENTS.md` and `llms.txt` at each discovered repo root MAY be edited only to enrich sparse content (`TODO`, placeholder text, or empty required sections).
+- Non-destructive rule: keep existing concrete values; do not replace user-authored non-placeholder content unless it is internally inconsistent with file-local evidence.
+
+**Allowed aggregation edits (responsibility 3, host repo only):**
+
+- `AGENTS.md`, `llms.txt`, `PROJECT.md`, and `.github/copilot-instructions.md` MAY be enriched with cross-repo metadata discovered in responsibility 2.
+- If host `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md` are enriched, you MUST update `.agents/compliance/awesome-copilot-gate.md` in the same change set and ensure the report has no placeholders/TODOs.
+- If host `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md` are enriched, you MUST attempt awesome-copilot consultation (`https://github.com/github/awesome-copilot`) and record immutable reference + license verification in the gate report; if unable, use `Consultation performed: unable` with concrete `Reason` and `Fallback`.
+- For any awesome-copilot consultation/enrichment step, you MUST load `.agents/skills/awesome-copilot-navigator/SKILL.md`.
+
 **Hard limits — NEVER:**
 
 - Overwrite an existing file with fully-inferred content when the original already has real (non-TODO) values.
@@ -131,6 +146,7 @@ Clarification for `PROJECT.md` agent names:
 - Include secrets, credentials, tokens, internal URLs, or environment-specific data.
 - Create files in any path containing `.git/`.
 - Invent values when inference fails — leave as `TODO` and report in the summary.
+- For host agent/prompt enrichment, skip changes if AWESOME-COPILOT gate compliance cannot be produced in the same change set.
 
 ## Workflow (Executor Efficiency Contract)
 
@@ -138,7 +154,7 @@ You MUST follow a 4-pass workflow:
 
 1. **Exploration** — read all in-scope installed files; collect TODO/placeholder inventory.
 2. **Inference** — determine values from Context block + workspace heuristics.
-3. **Edit / Create** — apply fills and create missing files.
+3. **Edit / Create** — apply host fills, per-repo enrichment/creation, and host aggregation edits.
 4. **Verification** — re-read edited files and confirm no TODO or `<project>` remains where a real value was inferrable; list all remaining TODOs that require manual input.
 
 The stop condition above applies after pass 4.
@@ -208,7 +224,7 @@ Replace `TODO: ‘<project>-orchestrator’ — responsibilities` with the actua
 
 ## Repo-root discovery heuristic (robust)
 
-This heuristic is used for **Responsibility 2 only** (creating missing `AGENTS.md` / `llms.txt`). It MUST NOT broaden the edit scope of Responsibility 1.
+This heuristic is used for **Responsibility 2 only** (processing all discovered repo roots for `AGENTS.md` / `llms.txt` enrichment/creation). It MUST NOT broaden the edit scope of Responsibility 1.
 
 Primary heuristic (VCS markers):
 
@@ -261,14 +277,24 @@ Multi-root workspace note:
 - If the workspace has multiple top-level folders, you MUST treat each as a possible root and run the VCS marker heuristic across the entire workspace.
 - De-duplicate derived roots across all workspace folders.
 
-## File checks and creation rules
+## File checks and enrichment rules
 
 For each repo root:
 
 1. Check whether `<root>/AGENTS.md` exists.
 2. Check whether `<root>/llms.txt` exists.
-3. Create only the missing files.
-4. Never edit existing files **at discovered repo roots** (Responsibility 2): if `AGENTS.md` or `llms.txt` already exists at `<root>`, mark it as `exists` and do not change it.
+3. If missing, create the file from the minimal template.
+4. If existing, non-destructively enrich sparse placeholders/TODO sections only.
+5. Keep concrete user-authored values intact unless contradictory with file-local evidence.
+
+You MUST include sibling repo roots discovered relative to the host repo when topology is multi-repo.
+
+You MUST produce deterministic evidence artifacts in your final response:
+
+- `## Per-repo processing table` with columns exactly:
+  `repo_root | agents_action(created|enriched|unchanged|skipped) | llms_action(created|enriched|unchanged|skipped) | reason`
+- `## Host aggregation table` with columns exactly:
+  `source_repo_root | source_artifact | extracted_fact | host_destination | apply_action`
 
 Note: This rule does NOT apply to Responsibility 1. Responsibility 1 MUST edit the bootstrap-installed in-scope files listed above to fill TODOs.
 
@@ -277,10 +303,12 @@ Note: This rule does NOT apply to Responsibility 1. Responsibility 1 MUST edit t
 Your final response MUST contain, in this order:
 
 1. `## Files changed` — edited/created paths.
-2. `## Verification performed` — what you checked.
-3. `## Questions for the user` — only if needed.
-4. `## Unfilled items table` — ALWAYS.
-5. `trace_event` JSON object in a `json` code block (see Observability).
+2. `## Per-repo processing table` — ALWAYS.
+3. `## Host aggregation table` — ALWAYS.
+4. `## Verification performed` — what you checked.
+5. `## Questions for the user` — only if needed.
+6. `## Unfilled items table` — ALWAYS.
+7. `trace_event` JSON object in a `json` code block (see Observability).
 
 ## Observability (mandatory)
 
@@ -368,8 +396,8 @@ After you finish, produce a summary table with one row per discovered repo root:
 
 - Repo root (path)
 - Detection basis (e.g., `.git/config`, `.git` file, fallback)
-- `AGENTS.md` action: `created` | `exists` | `skipped`
-- `llms.txt` action: `created` | `exists` | `skipped`
+- `AGENTS.md` action: `created` | `enriched` | `exists` | `skipped`
+- `llms.txt` action: `created` | `enriched` | `exists` | `skipped`
 - Notes
 
-Also include totals: `repos_found`, `repos_updated`, `files_created`.
+Also include totals: `repos_found`, `repos_updated`, `files_created`, `files_enriched`.

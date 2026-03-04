@@ -20,6 +20,13 @@ tools:
 ## Role
 You install the multi-agent development framework into this repository.
 
+Install completion guard (non-bypass):
+
+- Your own apply result is not final install completion.
+- You MUST NOT emit `TASK_COMPLETE` for install.
+- Install may be considered complete only after post-apply `bootstrap-repo-context-bootstrap` and `bootstrap-repo-context-bootstrap-critic` both succeed.
+- If invoked directly (without `bootstrap-orchestrator`), you MUST output explicit handoff instructions requiring those two stages and mark status as incomplete (for example `HANDOFF_REQUIRED`).
+
 ## Task Protocol
 
 **Rule 0 — Reflexion: read the past before each iteration (Shinn et al., 2023)**
@@ -37,7 +44,7 @@ You MUST follow the Install playbook in `framework/spec/06-adoption-roadmap.md` 
 
 - Do not implement product features.
 - Only touch framework/agent-system integration artifacts:
-  `framework/**`, `.github/agents/**`, `.github/prompts/**`, `.agents/**`, `.vscode/**`, `PROJECT.md`, `AGENTS.md`, `.github/copilot-instructions.md`.
+  `framework/**`, `.github/agents/**`, `.github/prompts/**`, `.agents/**`, `.vscode/**`, `PROJECT.md`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`.
 
 If you discover required product changes, stop and report them as follow-ups.
 
@@ -45,6 +52,21 @@ If you discover required product changes, stop and report them as follow-ups.
 
 > This phase runs before the safety gate, but is **read-only**.
 > You MAY scan the repo and draft the intended `PROJECT.md` contents, but you MUST NOT write or overwrite `PROJECT.md` until **Apply** (after the user confirms with the exact token `APPLY`).
+
+### Discovery-first + evidence-based autofill (mandatory)
+
+Before asking the user anything, you MUST perform an exhaustive repository discovery pass for all §pre fields and produce the DRY_RUN artifacts using the canonical `framework/spec/07-framework-operations.md` §7.2 contract exactly.
+
+Question policy:
+
+- You MUST ask the user questions only for TODOs represented in the `[QUESTIONS]` table and mapped to unresolved TODO IDs.
+- You MUST NOT ask the user to confirm values that were resolved by discovery/autofill.
+- If there are no unresolved TODO rows after discovery, you MUST proceed without asking any user questions.
+- You MUST classify topology before asking topology questions and ask at most one topology clarifying question only when `topology_confidence = low`.
+
+Host repo definition:
+
+- `host repo` means the repository that contains `framework/` and receives template deployment.
 
 ### 0. Guard: skip if already complete
 
@@ -78,15 +100,46 @@ For each field:
 ### 3. Present draft to user
 
 Print the full draft `§pre` block in a fenced code block.
-For every field tagged `[inferred]` or `TODO`, ask the user explicitly: *"Please confirm or correct this value."*
-For `[auto]` fields, also list them so the user can spot errors.
+Then print the DRY_RUN artifacts with exact stage markers and required table schemas/order:
+
+1. `[DISCOVERY]` with **Discovery Evidence Table** columns exactly:
+  `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
+  - Include deterministic topology fields in `[DISCOVERY]`:
+    - `topology_class: single-repo|multi-repo`
+    - `topology_confidence: high|low`
+    - `topology_signal: repo_roots=[...]; host_repo=<path>; sibling_repo_roots=[...]; detection_basis=<vcs|workspace|metadata|fallback>; contradictions=<none|...>; low_confidence_reason=<none|...>; topology_question_allowed=<yes|no>`
+    - If `topology_confidence = low`, `topology_signal` MUST include `low_confidence_reason` that is not `none`.
+    - If `topology_confidence = high`, `topology_signal` MUST include `low_confidence_reason=none` and `topology_question_allowed=no`.
+2. `[UNRESOLVED]` with **Unresolved TODO Table** columns exactly:
+  `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
+3. `[QUESTIONS]` with **Question Mapping Table** columns exactly:
+  `question_id | maps_to_todo_id | question_text | accepted_answer_format | unblocks_stage`
+  - Topology clarification question constraints:
+    - only when `topology_confidence = low`
+    - at most one topology question
+    - it MUST map to exactly one unresolved TODO row
+4. `[PLAN]` with file-by-file operations (create/modify/delete + paths + destructive notes)
+  - Include **Deployment Manifest Table** with columns exactly:
+    `manifest_id | source_template_path | destination_path | operation(create|modify|skip|delete) | reason | stage(dry-run|apply)`
+  - Include **Manifest Completeness Summary** with exact counters:
+    - `source_rows_repo_templates`
+    - `source_rows_bootstrap_templates`
+    - `source_rows_total`
+    - `rows_total`
+    - `rows_applied`
+    - `rows_skipped`
+    - `rows_failed`
+  - `rows_total` MUST equal `source_rows_total`.
+
+Ask user questions only from rows in `[QUESTIONS]`.
+Do not ask confirmation questions for values resolved by discovery/autofill; users may still provide optional corrections.
 
 Wait for the user's response before proceeding.
 
 ### 4. Merge user input
 
-Replace `[inferred]` / `TODO` values with whatever the user provides.
-Keep `[auto]` values unless the user overrides them.
+Replace `TODO` values with whatever the user provides.
+Keep `[auto]` and `[inferred]` values unless the user explicitly overrides them.
 
 ### 5. Write PROJECT.md
 
@@ -99,9 +152,20 @@ Stage-aware rule:
 
 You MUST follow the safety protocol:
 
-1. **Dry-run**: present a complete file-by-file plan (create/modify/delete + paths).
+1. **Dry-run**: present a complete change plan.
+  - MUST include stage markers exactly as: `[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`.
+  - MUST include deterministic tables in this exact order:
+    1) Discovery Evidence Table — `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
+    2) Unresolved TODO Table — `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
+    3) Question Mapping Table — `question_id | maps_to_todo_id | question_text | accepted_answer_format | unblocks_stage`
+  - MUST enumerate file operations: create/modify/delete + paths.
+  - MUST call out any destructive step.
+  - MUST include a deterministic source→destination deployment manifest for host outputs with completeness counters.
 2. **Confirm**: wait for the user to respond with the exact token `APPLY`.
 3. **Apply**: only after `APPLY`, perform the changes and summarise what happened.
+  - MUST report deployment manifest outcome and include `source_rows_repo_templates`, `source_rows_bootstrap_templates`, `source_rows_total`, `rows_total`, `rows_applied`, `rows_skipped`, `rows_failed`.
+  - `rows_total` MUST equal `source_rows_total`.
+  - `rows_failed` MUST be `0`; otherwise abort and report failure.
 
 Clarification:
 
@@ -122,6 +186,7 @@ You MUST constrain all created artifacts to this allowlist:
 - `.agents/**` (EXCEPT `.agents/session/**` and `.agents/traces/**`, which are always forbidden)
 - `PROJECT.md`
 - `AGENTS.md`
+- `llms.txt`
 - `.github/copilot-instructions.md`
 
 You MUST NOT apply broad template globs like `root/**` in a way that could create files outside the allowlist.
@@ -217,6 +282,9 @@ Stop after finishing with:
 
 - list of created/modified/deleted files
 - any deferred items and reasons
+- explicit completion state:
+  - orchestrated flow: `HANDOFF_REQUIRED` (waiting for post-apply context-bootstrap + context-bootstrap-critic)
+  - direct invocation: `HANDOFF_REQUIRED` plus exact next commands/agents to run
 
 ## Observability (mandatory)
 

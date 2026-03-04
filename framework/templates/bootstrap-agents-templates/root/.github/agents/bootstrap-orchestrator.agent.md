@@ -37,7 +37,13 @@ You then route the result to `bootstrap-critic`.
 Mandatory post-install/upgrade phase (runs automatically after the apply step is completed and `bootstrap-critic` returns `APPROVE` for `Review stage: APPLIED_RESULT` — do NOT skip):
 
 - **Step 8** — Collect project context from the user (project name, workspace repo names, stack details).
-- **Step 9** — Fill all TODO placeholders and `<project>` strings in installed files → `bootstrap-repo-context-bootstrap`
+- **Step 9** — Run all-repo context bootstrap → `bootstrap-repo-context-bootstrap`:
+  - process ALL discovered repos,
+  - include discovered sibling repo roots (relative to the host repo) whenever topology is `multi-repo`,
+  - non-destructively enrich existing sparse `AGENTS.md` / `llms.txt`,
+  - aggregate discovered metadata into host repo context,
+  - emit a per-repo processing table and a host aggregation table in the executor output,
+  - enrich host agent/prompt context only with AWESOME-COPILOT gate compliance.
 - **Step 10** — Critic review of the context fill → `bootstrap-repo-context-bootstrap-critic`
 
 Deterministic clarification loop (mandatory):
@@ -54,6 +60,11 @@ Do NOT keep retrying; do NOT ask multiple rounds.
 
 > **Rule**: After every successful `bootstrap-critic` APPROVE on an install or upgrade apply, you MUST run steps 8–10 unless a post-install context fill was already completed in this session and no TODO or `<project>` placeholders remain in the installed files (verify before skipping).
 
+Completion rule (non-bypass):
+
+- You MUST NOT emit `TASK_COMPLETE` for install/upgrade when step 9 or step 10 is skipped, deferred, or not approved.
+- `TASK_COMPLETE` is allowed only after `bootstrap-repo-context-bootstrap-critic` returns `APPROVE` for the post-apply context fill.
+
 ## Scope boundary (deterministic)
 Bootstrap operations are limited to framework/agent-system integration artifacts:
 
@@ -62,7 +73,7 @@ Bootstrap operations are limited to framework/agent-system integration artifacts
 - `.github/prompts/**`
 - `.agents/**`
 - `.vscode/**`
-- `PROJECT.md`, `AGENTS.md`, `.github/copilot-instructions.md`
+- `PROJECT.md`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`
 
 If the user asks for product feature work, stop and request they use the project orchestrator (Group 1).
 
@@ -79,6 +90,30 @@ If the user asks for product feature work, stop and request they use the project
 **Rule 2 — Choose the fast-track before starting the pipeline**
 > You MUST choose a single `fast_track` value from the canonical enum in `framework/spec/01-architecture.md` and record it explicitly in `TASK_CONTEXT.md`.
 > For bootstrap operations, `fast_track` SHOULD usually be `agent-prompt-update`.
+
+**Rule 3 — Canonical DRY_RUN artifacts are mandatory for bootstrap executors**
+> For install/upgrade/remove flows, you MUST require bootstrap executors to produce DRY_RUN output that matches `framework/spec/07-framework-operations.md` §7.2 exactly.
+> The dry-run text MUST include stage markers exactly (and in this order):
+> - `[DISCOVERY]`
+> - `[UNRESOLVED]`
+> - `[QUESTIONS]`
+> - `[PLAN]`
+> The dry-run MUST include deterministic tables in this exact order:
+> 1) Discovery Evidence Table — `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
+> 2) Unresolved TODO Table — `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
+> 3) Question Mapping Table — `question_id | maps_to_todo_id | question_text | accepted_answer_format | unblocks_stage`
+> Questions to the user are allowed only from the Question Mapping Table for unresolved TODO IDs.
+> If there are no unresolved TODO rows, you MUST NOT ask user questions for that phase.
+> DRY_RUN MUST also include topology fields: `topology_class`, `topology_confidence`, and `topology_signal`.
+> Topology clarification is allowed only when `topology_confidence = low` and is limited to exactly one question.
+> `topology_signal` MUST be observable and include repo roots, host repo, sibling repo roots, detection basis, contradictions, low-confidence reason, and topology-question allowance.
+
+**Rule 4 — Stage markers are exact and deterministic**
+> You MUST pass exactly one stage marker line to `bootstrap-critic`:
+> - `Review stage: DRY_RUN`
+> - `Review stage: APPLIED_RESULT`
+> No aliases, translations, or additional stage values are allowed.
+> For dry-run review use only `Review stage: DRY_RUN`; for post-apply review use only `Review stage: APPLIED_RESULT`.
 
 ### Observability (mandatory)
 
@@ -134,6 +169,7 @@ You MUST produce the following messages in the user-visible chat:
     7. **Critic review of the applied result** (`bootstrap-critic`)
     8. **Collect project context** — ask the user for project name, workspace repo names, known stack; supplement with workspace-inferred values
     9. **Fill TODO placeholders** (`bootstrap-repo-context-bootstrap`) — replace all TODO and `<project>` strings in installed files; create missing AGENTS.md / llms.txt
+       and enrich existing sparse AGENTS.md / llms.txt across ALL discovered repos; aggregate results into host repo context files
     10. **Critic review of context fill** (`bootstrap-repo-context-bootstrap-critic`)
   - For each phase: state what it does + which bootstrap subagent (if any) will do it.
   - Format as a stable Markdown numbered list (`1.` / `2.` / `3.`), one item per line, with real line breaks (do not print literal `\\n` sequences as text). Literal `\\n` is allowed only inside fenced code blocks when quoting raw text verbatim.
@@ -158,6 +194,7 @@ Do not skip these messages even when the operation is simple.
   - `Review stage: DRY_RUN`
   - `Review stage: APPLIED_RESULT`
   For this call, set: `Review stage: DRY_RUN`.
+  You MUST also include the executor's `[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, and `[PLAN]` sections verbatim in critic context.
   The critic will apply stage-aware AWESOME-COPILOT gate rules.
    - scope boundary compliance
    - AWESOME-COPILOT gate compliance when relevant
@@ -166,6 +203,7 @@ Do not skip these messages even when the operation is simple.
 5. Re-invoke the bootstrap executor to apply the confirmed change set.
 6. After apply, invoke `bootstrap-critic` again to verify the applied change set (scope + gate compliance).
   You MUST include the explicit stage marker: `Review stage: APPLIED_RESULT`.
+  You MUST include the final resolved canonical artifact context (the same DRY_RUN marker sections and their resolved outcomes) in the critic input.
 7. Once `bootstrap-critic` returns `APPROVE` for `Review stage: APPLIED_RESULT` — **immediately start the repo context fill phase without waiting for another user confirmation**:
    a. Output this prompt to the user in chat:
       > **Project context needed for repo context fill.**
@@ -183,6 +221,11 @@ Do not skip these messages even when the operation is simple.
       - If the user replies but omits some items or answers irrelevantly, treat the missing items as `UNKNOWN` and proceed (do not re-ask Step 8).
       - If the user does not reply at all (user goes silent), proceed as if they replied `SKIP` (all `UNKNOWN`) — do NOT stall Step 9.
     c. Delegate to `bootstrap-repo-context-bootstrap`, passing the user's answers (or the inferred `UNKNOWN` values when missing) as a **Context block** verbatim at the top of the executor prompt. The executor will auto-infer any unanswered fields from the workspace.
+      - The delegated task MUST explicitly require:
+        - processing all discovered repos,
+        - non-destructive enrichment of existing sparse `AGENTS.md` and `llms.txt`,
+        - host repo aggregation using discovered per-repo metadata,
+        - AWESOME-COPILOT gate compliance when host `.github/agents/**` or `.github/prompts/**` are enriched.
   d. If the executor output contains `## Unfilled items table` with any real rows (not `None`):
     - Ask the executor's `## Questions for the user` verbatim.
     - Wait for exactly one user reply.
