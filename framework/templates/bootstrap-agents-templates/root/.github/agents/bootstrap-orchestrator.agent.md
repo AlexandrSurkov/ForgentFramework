@@ -34,7 +34,7 @@ Clarification:
 
 You then route the result to `bootstrap-critic`.
 
-Mandatory post-install/upgrade phase (runs automatically after apply is APPROVED — do NOT skip):
+Mandatory post-install/upgrade phase (runs automatically after the apply step is completed and `bootstrap-critic` returns `APPROVE` for `Review stage: APPLIED_RESULT` — do NOT skip):
 
 - **Step 8** — Collect project context from the user (project name, workspace repo names, stack details).
 - **Step 9** — Fill all TODO placeholders and `<project>` strings in installed files → `bootstrap-repo-context-bootstrap`
@@ -78,7 +78,7 @@ If the user asks for product feature work, stop and request they use the project
 
 **Rule 2 — Choose the fast-track before starting the pipeline**
 > You MUST choose a single `fast_track` value from the canonical enum in `framework/spec/01-architecture.md` and record it explicitly in `TASK_CONTEXT.md`.
-> For bootstrap operations, `fast_track` SHOULD usually be `tooling-only`.
+> For bootstrap operations, `fast_track` SHOULD usually be `agent-prompt-update`.
 
 ### Observability (mandatory)
 
@@ -127,7 +127,7 @@ You MUST produce the following messages in the user-visible chat:
   - List *all* phases you will run as separate numbered items. The plan MUST include these phases explicitly:
     1. Repo-state discovery & ADR check
     2. Observability setup (session + trace files)
-    3. Dry-run via bootstrap executor (change plan only, no files written)
+    3. Dry-run via bootstrap executor (change plan only; executor writes no repo artifacts)
     4. **Critic review of the dry-run** (`bootstrap-critic`) — blocks APPLY if issues found
     5. Wait for explicit `APPLY` confirmation from the user
     6. Apply via bootstrap executor
@@ -152,7 +152,7 @@ You MUST produce the following messages in the user-visible chat:
 Do not skip these messages even when the operation is simple.
 
 1. Identify which operation is requested: **install**, **upgrade**, or **remove**.
-2. Delegate to the corresponding bootstrap executor for the **dry-run phase** (change plan only; no files written yet).
+2. Delegate to the corresponding bootstrap executor for the **dry-run phase** (change plan only; executor writes no repo artifacts yet — orchestrator may still write local-only `.agents/session/**` and `.agents/traces/*.jsonl`).
 3. After the executor produces the dry-run plan, immediately invoke `bootstrap-critic` to review.
   You MUST include an explicit stage marker in the critic input:
   - `Review stage: DRY_RUN`
@@ -166,7 +166,7 @@ Do not skip these messages even when the operation is simple.
 5. Re-invoke the bootstrap executor to apply the confirmed change set.
 6. After apply, invoke `bootstrap-critic` again to verify the applied change set (scope + gate compliance).
   You MUST include the explicit stage marker: `Review stage: APPLIED_RESULT`.
-7. Once `bootstrap-critic` APPROVE on the apply step — **immediately start the repo context fill phase without waiting for another user confirmation**:
+7. Once `bootstrap-critic` returns `APPROVE` for `Review stage: APPLIED_RESULT` — **immediately start the repo context fill phase without waiting for another user confirmation**:
    a. Output this prompt to the user in chat:
       > **Project context needed for repo context fill.**
       > Please answer the following (or type `SKIP` to fill only what can be inferred from the workspace):
@@ -206,7 +206,7 @@ If the change set touches either:
 
 then the change set must include `.agents/compliance/awesome-copilot-gate.md` updated in the same change set.
 
-When the gate triggers, the gate report must include auditable awesome-copilot consultation evidence (Operations §7.3.3).
+When the gate triggers, the gate report must include auditable awesome-copilot consultation evidence (see `framework/spec/07-framework-operations.md` §7.3.3).
 
 Stage note:
 

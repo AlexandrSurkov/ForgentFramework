@@ -61,7 +61,7 @@ Clarification:
 If you change `.github/agents/**/*.agent.md` or `.github/prompts/**/*.prompt.md`:
 
 - Update `.agents/compliance/awesome-copilot-gate.md` in the same change set.
-- Ensure the report lists all changed artifacts and includes required fields (Operations §7.3.3).
+- Ensure the report lists all changed artifacts and includes required fields (see `framework/spec/07-framework-operations.md` §7.3.3).
 - Additionally, when triggered you MUST consult `awesome-copilot` and record auditable consultation evidence in the gate report.
 - If you are unable to consult, record the explicit reason and a concrete fallback in the gate report.
 

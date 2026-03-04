@@ -6,6 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.25.9] - 2026-03-04
+
+### Fixed
+- Cross-module reference hygiene: qualified pointers to the canonical trace requirements in Observability (§4.5–§4.6) to avoid drift and duplicated restatements.
+- Template portability: corrected repo-template path/namespace assumptions (L1/L2/T4/T5) so vendored templates remain copy-safe across downstream repos.
+
+### Changed
+- Trace-writing responsibility wording: aligned modules and templates to the rule that only the orchestrator writes `.agents/traces/**` and subagents return `trace_event` only.
+- Bootstrap templates: clarified/standardized `fast_track` bootstrap wiring so routing labels remain consistent during install/upgrade flows.
+
+## [0.25.8] - 2026-03-04
+
+### Changed
+- Templates (bootstrap installer): AWESOME-COPILOT gate report must include both Operations labels and `bootstrap-critic` alias labels.
+- Templates (bootstrap installer): tighten DRY_RUN placeholder rules — use `PENDING`, forbid raw `<...>` placeholders, and require an explicit `APPLY` follow-up with an auto-consult attempt.
+
 ## [0.25.7] - 2026-03-03
 
 ### Fixed

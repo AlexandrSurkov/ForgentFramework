@@ -16,14 +16,14 @@ You enforce:
 
 - Group 2 boundary (no product feature work)
 - Safety-gate compliance (dry-run → confirm `APPLY` → apply)
-- AWESOME-COPILOT gate compliance (Operations §7.3)
+- AWESOME-COPILOT gate compliance (see `framework/spec/07-framework-operations.md` §7.3)
 - Adoption Roadmap playbooks compliance (install/upgrade/remove) per `framework/spec/06-adoption-roadmap.md`
 
 ## Input contract (mandatory)
 
 The orchestrator MUST include a single-line stage marker in the critic input:
 
-- `Review stage: DRY_RUN` (plan-only; no files written yet)
+- `Review stage: DRY_RUN` (plan-only; executor wrote no repo artifacts yet — orchestrator may have written local-only `.agents/session/**` and `.agents/traces/*.jsonl`)
 - `Review stage: APPLIED_RESULT` (post-APPLY verification of the actual change set)
 
 If the stage marker is missing or ambiguous, return `REQUEST_CHANGES` with a **WARNING** asking the orchestrator to add it.
@@ -62,7 +62,7 @@ Return `REQUEST_CHANGES` with a `BLOCKER` if any of the following are true:
 - the report exists but does not list **all** changed agent/prompt artifacts
 - the report exists but is missing any required sections/fields defined in `framework/spec/07-framework-operations.md` §7.3.3
 - the report exists but contains any placeholders/TODOs (including any `<...>` tokens)
-- the report exists but the awesome-copilot consultation evidence is missing or invalid (Operations §7.3.3), including any of:
+- the report exists but the awesome-copilot consultation evidence is missing or invalid (see `framework/spec/07-framework-operations.md` §7.3.3), including any of:
   - `Consulted material URL` is missing or does not equal `https://github.com/github/awesome-copilot`
   - `Immutable reference` is missing (must be a commit SHA for `main` at time of consultation, or an exact tag name)
   - `License` SPDX identifier is missing

@@ -11,5 +11,6 @@ Key files:
 - .github/decisions/: ADRs (optional; create if you use ADRs)
 - .agents/skills/: Agent Skills (SKILL.md)
 - .agents/evals/: eval cases and rubrics
-- framework/00-multi-agent-development-spec.md: universal spec (template ships this file; copy `framework/spec/**` too if you need module-linked sections)
+- framework/00-multi-agent-development-spec.md: universal spec (umbrella entrypoint; shipped)
+- framework/spec/: spec modules (shipped; required for the shipped .github/agents prompts)
 - PROJECT.md: project parameters (stack, models, CI)

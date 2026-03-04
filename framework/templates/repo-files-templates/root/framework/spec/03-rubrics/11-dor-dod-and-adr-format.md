@@ -84,7 +84,7 @@ Path: `.github/decisions/ADR-NNN-title.md`
 # ADR-NNN: Decision title
 
 **Date:** YYYY-MM-DD
-**Status:** PROPOSED | ACCEPTED | DEPRECATED | SUPERSEDED
+**Status:** PROPOSED | ACCEPTED | DEPRECATED | SUPERSEDES
 **Author:** [agent or human]
 
 ## Context

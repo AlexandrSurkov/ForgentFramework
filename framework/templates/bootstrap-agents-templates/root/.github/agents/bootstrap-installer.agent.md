@@ -176,11 +176,13 @@ APPLY-specific consultation requirements (no user prompts):
 
 - During **Apply** (after the user confirms with the exact token `APPLY`), you MUST attempt to consult the fixed source collection URL: `https://github.com/github/awesome-copilot`.
 - When network access is available, you MUST NOT ask the user for the URL, commit SHA/tag, or license details — retrieve and verify them yourself.
-- You MUST pin an immutable reference and write it into `.agents/compliance/awesome-copilot-gate.md` with no placeholders:
-  - `Consulted material URL`: must be exactly `https://github.com/github/awesome-copilot`
+- You MUST pin an immutable reference and write it into `.agents/compliance/awesome-copilot-gate.md` with no placeholders.
+- To avoid deterministic gate mismatches, the report MUST include BOTH the Framework Operations labels AND the bootstrap-critic alias labels, each on its own line, with the same values:
+  - `Consulted material: https://github.com/github/awesome-copilot`
+  - `Consulted material URL: https://github.com/github/awesome-copilot` (must match `Consulted material`)
   - `Immutable reference`: the exact commit SHA of `main` at the time you consulted it (or an exact tag name if you consulted a tag)
-  - `License`: SPDX identifier (e.g., `CC-BY-4.0`) derived from the repo’s license metadata/file
-  - `License verified at`: the concrete path you inspected (e.g., `LICENSE`, `LICENSE.md`, or equivalent)
+  - `License: SPDX_IDENTIFIER (verified at VERIFIED_PATH)` where `SPDX_IDENTIFIER` is the SPDX identifier (e.g., `CC-BY-4.0`) derived from the repo’s license metadata/file and `VERIFIED_PATH` is the concrete path you inspected (e.g., `LICENSE`, `LICENSE.md`, or equivalent). Do not include literal `<` or `>` characters.
+  - `License verified at: VERIFIED_PATH` where `VERIFIED_PATH` is exactly the same path as in the `License: ... (verified at VERIFIED_PATH)` line
 - If network access is not available, or if the license cannot be verified, you MUST still update `.agents/compliance/awesome-copilot-gate.md` using the explicit branch `Consultation performed: unable` with a concrete `Reason` and a concrete `Fallback` plan — and still **no placeholders/TODOs** anywhere.
 
 If you used external sources (including `awesome-copilot`), you MUST also follow per-artifact provenance rules (Appendix A1.1) and MUST load `.agents/skills/awesome-copilot-navigator/SKILL.md`.
@@ -191,8 +193,10 @@ When the gate triggers:
 
 - **Dry-run output MUST include** a section titled exactly: `## AWESOME-COPILOT gate report (dry-run draft)`.
   - Include the intended contents of `.agents/compliance/awesome-copilot-gate.md` as it would be after APPLY.
-  - If you cannot perform the consultation during dry-run, you MAY use placeholders **only** when each such field is explicitly marked `PENDING`.
+  - If you cannot perform the consultation during dry-run, you MUST NOT use raw placeholder tokens (for example: any angle-bracket placeholder like `<...>`, including `<url>`, `<SPDX>`, `<path>`, or any similar marker).
+  - Instead, for any field you cannot yet resolve, you MUST use the literal value `PENDING` (e.g., `Immutable reference: PENDING`, `License verified at: PENDING`, or `License: PENDING (verified at PENDING)`).
   - Every `PENDING` item MUST include a concrete follow-up step that will be performed during APPLY to resolve it.
+  - Each follow-up step MUST explicitly state that APPLY will attempt to auto-consult `https://github.com/github/awesome-copilot` to fill the immutable reference and to verify+fill the license SPDX and verified-path fields (and then replace all `PENDING` values with concrete values).
 
 - **Apply output MUST ensure** `.agents/compliance/awesome-copilot-gate.md` contains **ZERO** placeholders/TODOs/PENDING.
   - Either include full consultation evidence, OR use the explicit branch `Consultation performed: unable` with a concrete `Reason` and concrete `Fallback` (no placeholders/TODOs/PENDING anywhere in the report).

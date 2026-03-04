@@ -76,7 +76,7 @@ If the gate is triggered, the following are explicit failure conditions and you 
 
 ### Gate report completeness (deterministic)
 
-Treat the gate report as **COMPLETE** only if ALL of the following are true (aligns with `framework/spec/03-rubrics/03-critic-rules-and-report-format.md` Rule 8 and Operations §7.3.3):
+Treat the gate report as **COMPLETE** only if ALL of the following are true (aligns with `framework/spec/03-rubrics/03-critic-rules-and-report-format.md` Rule 8 and `framework/spec/07-framework-operations.md §7.3.3`):
 
 1) The produced result includes `.agents/compliance/awesome-copilot-gate.md` (file present and updated alongside the agent/prompt edits).
 2) The report lists **all** changed agent/prompt artifacts under `## Changed artifacts (MUST be complete)` (stale/missing entries are a BLOCKER).

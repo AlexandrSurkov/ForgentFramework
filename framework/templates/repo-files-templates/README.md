@@ -1,6 +1,6 @@
 # Repo Files Templates — Ideal Multi-Agent Repo (Copilot-Native)
 
-This folder contains **standardized templates** for the “ideal” repository structure described in [framework/spec/guide-copilot-native-multi-agent-repo-structure.md](../../spec/guide-copilot-native-multi-agent-repo-structure.md).
+This folder contains **standardized templates** for the “ideal” repository structure described in [framework/spec/guide-copilot-native-multi-agent-repo-structure.md](root/framework/spec/guide-copilot-native-multi-agent-repo-structure.md).
 
 ## How to use
 
@@ -14,7 +14,7 @@ This folder contains **standardized templates** for the “ideal” repository s
 - Copilot discovery surface: `.github/agents/`, `.github/prompts/`, `.github/instructions/` (and optional `.github/decisions/` if you use ADRs)
 - Agent runtime artifacts: `.agents/skills/`, `.agents/evals/` (runtime-created: `.agents/session/` and `.agents/traces/*.jsonl` are local-only and not committed)
 - A2A profile stub under `.agents/a2a/`
-- AgentConfig docs: `framework/00-multi-agent-development-spec.md` (template stub; copy `framework/spec/**` too if you need module links), `PROJECT.md`, `.vscode/`, `domain/`
+- AgentConfig docs: `framework/00-multi-agent-development-spec.md` (umbrella spec) + `framework/spec/**` (spec modules — REQUIRED by the shipped `.github/agents/**` prompts), `PROJECT.md`, `.vscode/`, `domain/`
 
 ## Notes
 

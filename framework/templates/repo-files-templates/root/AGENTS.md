@@ -25,7 +25,8 @@ TODO: One sentence describing what this repo builds.
 | `.agents/evals/` | Agent/prompt evaluation assets |
 | `.agents/traces/` | Traces (local-only; gitignored; not committed) |
 | `.agents/session/` | Runtime scratch/session files (created at runtime; gitignored; not committed) |
-| `framework/00-multi-agent-development-spec.md` | Universal multi-agent spec (**template ships a stub**; copy `framework/spec/**` too if you need module links referenced from the spec) |
+| `framework/00-multi-agent-development-spec.md` | Universal multi-agent spec (umbrella entrypoint; shipped; normative) |
+| `framework/spec/` | Spec modules (shipped; required for the shipped `.github/agents/**` prompts) |
 | `PROJECT.md` | Project parameters: stack, models, CI, critic triggers |
 | `domain/` | Domain knowledge: glossary, contexts, events, specs |
 

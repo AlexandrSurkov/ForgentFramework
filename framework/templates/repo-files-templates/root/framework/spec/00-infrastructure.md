@@ -677,7 +677,7 @@ Without branch protection, Gates 1–3 can be bypassed by merging without a PR.
 |---|---|---|---|
 | Root README | Repo root | New developer / agent / contributor | Quick start: where, what, how to run |
 | Component README | Each package/service in a monorepo | Developer working with the module | Purpose, public interface, scope constraints |
-| AGENTS.md | Next to Root/Component README | AI agent | Machine-readable context: commands, conventions |
+| AGENTS.md | Next to Root/Component README | AI agent | Machine-readable context: commands, conventions, structure |
 
 > AGENTS.md and README are different documents: README is for humans; AGENTS.md is for agents.
 > Avoid duplication: AGENTS.md should link to README for narrative context.
