@@ -14,8 +14,8 @@ This includes calls to the critic (`bootstrap-critic`): the orchestrator must em
 
 Copy/merge the contents of:
 
-- `framework/templates/repo-files-templates/root/` (repo artifacts)
-- `framework/templates/bootstrap-agents-templates/root/` (bootstrap agents)
+- `repo-files-templates/root/` (repo artifacts)
+- `bootstrap-agents-templates/root/` (bootstrap agents)
 
 …into the target repository root.
 
