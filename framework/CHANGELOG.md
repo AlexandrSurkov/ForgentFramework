@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.31.3] - 2026-03-05
+
+### Fixed
+- Bootstrap critic enforcement now includes a deterministic BLOCKER when **Sibling Validation Table** rows are not lexicographically ordered by `candidate_path`.
+- Bootstrap critic now enforces value-level workspace-first fallback semantics in DRY_RUN topology preflight: workspace scan must be attempted first; user-path validation is allowed only when workspace scan is unavailable, with deterministic candidate-source consistency checks.
+
 ## [0.31.2] - 2026-03-05
 
 ### Changed

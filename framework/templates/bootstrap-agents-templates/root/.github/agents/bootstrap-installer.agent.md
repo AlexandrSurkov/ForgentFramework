@@ -66,12 +66,15 @@ Question policy:
 - If there are no unresolved TODO rows after discovery, you MUST proceed without asking any user questions.
 - You MUST ask and persist `user_topology_intent` before PRE_DISCOVERY.
 - You MUST classify topology before asking topology clarifying questions and ask at most one topology clarifying question only when `topology_confidence = low`.
-- If `user_topology_intent = multi-repo`, you MUST perform parent-directory sibling VCS-root scan relative to `host_repo` before topology classification, and include explicit parent-scan evidence plus sibling attach output in PRE_DISCOVERY/topology preflight.
+- If `user_topology_intent = multi-repo`, you MUST use deterministic sibling-discovery precedence: first attempt workspace-derived parent-directory sibling VCS-root scan relative to `host_repo`; only if that scan is unavailable, request explicit user-provided sibling paths and validate each path before attach.
+- If `user_topology_intent = multi-repo`, you MUST include deterministic evidence for both scan attempts in PRE_DISCOVERY/topology preflight: `workspace_scan_attempted=yes`, `workspace_scan_status=<ok|unavailable>`, `workspace_scan_evidence=<explicit evidence|none>`, `user_paths_attempted=<yes|no>`, `user_paths_status=<provided_valid|provided_invalid|not_provided|not_required>`, `user_paths_evidence=<explicit evidence|none>`.
 - If `user_topology_intent = multi-repo`, you MUST include **Sibling Scan & Attach Table** rows (`sibling_repo_root_relative_path | scan_evidence | attach_action(attached|skipped|failed) | attach_output`) sorted lexicographically by sibling relative path.
-- If `user_topology_intent = multi-repo`, you MUST block DRY_RUN unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`) and sibling attach output is present (`sibling_attach_output!=none`).
+- If `user_topology_intent = multi-repo`, you MUST include **Sibling Validation Table** rows (`candidate_path | candidate_source(workspace|user) | validation_status(valid|invalid) | validation_evidence | attach_action(attached|skipped|failed) | attach_output`) sorted lexicographically by `candidate_path`.
+- If `user_topology_intent = multi-repo`, you MUST block DRY_RUN unless `validated_count>=1` and `attached_count>=1` in `sibling_validation_summary`.
+- If `user_topology_intent = multi-repo`, you MUST block DRY_RUN when workspace-derived parent scan is unavailable unless the response includes `## PRE_DRY_RUN_BLOCK` with deterministic recovery options in `next_action`: `recovery_precedence=workspace_scan_first_then_user_paths` and `recovery_options=RETRY_WORKSPACE_DERIVED_SCAN|PROVIDE_SIBLING_PATHS`.
 - If host parent directory is unreadable/unavailable, you MUST force `topology_confidence=low`, set `preflight_verdict=fail`, and block DRY_RUN.
 - If any DRY_RUN prerequisite is missing, you MUST emit `## PRE_DRY_RUN_BLOCK` before any dry-run stage markers with fields exactly: `block_code`, `blocked_stage=DRY_RUN`, `required_prerequisites`, `observed_state`, `next_action`.
-- Allowed `block_code` values: `MISSING_TOPOLOGY_INTENT`, `PRE_DISCOVERY_UNCONFIRMED`, `MULTI_PARENT_SCAN_MISSING`, `MULTI_SIBLING_ATTACH_MISSING`, `TOPOLOGY_PREFLIGHT_FAIL`.
+- Allowed `block_code` values: `MISSING_TOPOLOGY_INTENT`, `PRE_DISCOVERY_UNCONFIRMED`, `MULTI_PARENT_SCAN_MISSING`, `MULTI_PARENT_SCAN_UNAVAILABLE`, `MULTI_SIBLING_ATTACH_MISSING`, `TOPOLOGY_PREFLIGHT_FAIL`.
 - If parent scan finds sibling VCS roots, you MUST classify topology as `multi-repo` and emit `sibling_repo_roots` as host-excluded relative paths in deterministic lexicographic order.
 
 Host repo definition:
@@ -127,6 +130,7 @@ PRE_DISCOVERY deterministic table requirement:
   - **Inferred Project Identity Table** (`field | inferred_value | evidence | confidence`)
   - **Technology Evidence Table** (`repo_root_relative_path | category(technology|database|devops) | inferred_value | evidence_path_or_command | confidence`)
   - If `user_topology_intent = multi-repo`, MUST include **Sibling Scan & Attach Table** (`sibling_repo_root_relative_path | scan_evidence | attach_action(attached|skipped|failed) | attach_output`).
+  - If `user_topology_intent = multi-repo`, MUST include **Sibling Validation Table** (`candidate_path | candidate_source(workspace|user) | validation_status(valid|invalid) | validation_evidence | attach_action(attached|skipped|failed) | attach_output`).
 
 After PRE_DISCOVERY, ask the user to confirm/correct discovery output using deterministic token format (`CONFIRMED` or `CORRECTIONS: ...`) and persist a `confirmed_discovery_snapshot_id`.
 You MUST NOT output any DRY_RUN stage marker blocks before this confirmation step is complete.
@@ -139,10 +143,10 @@ Then print the DRY_RUN artifacts (only after confirmation) with exact stage mark
     - `user_topology_intent: single-repo|multi-repo`
     - `topology_confidence: high|low`
     - `topology_signal: repo_roots=[...]; host_repo=<path>; sibling_repo_roots=[...]; detection_basis=<vcs|workspace|metadata|fallback>; contradictions=<none|...>; low_confidence_reason=<none|...>; topology_question_allowed=<yes|no>`
-    - `topology_preflight: topology_class=<single-repo|multi-repo>; host_repo=<path>; sibling_repo_roots=[...]; parent_scan_status=<ok|unavailable>; parent_scan_evidence=<explicit evidence|none>; sibling_attach_output=<explicit output|none>; self_repo_exclusion_applied=<yes|no>; preflight_verdict=<pass|fail>; fail_reason=<none|...>`
+    - `topology_preflight: topology_class=<single-repo|multi-repo>; host_repo=<path>; sibling_repo_roots=[...]; parent_scan_status=<ok|unavailable>; parent_scan_evidence=<explicit evidence|none>; sibling_attach_output=<explicit output|none>; workspace_scan_attempted=<yes|no>; workspace_scan_status=<ok|unavailable>; workspace_scan_evidence=<explicit evidence|none>; user_paths_attempted=<yes|no>; user_paths_status=<provided_valid|provided_invalid|not_provided|not_required>; user_paths_evidence=<explicit evidence|none>; sibling_validation_summary=candidate_count=<int>,validated_count=<int>,attached_count=<int>,validation_source=<workspace|user|workspace+user>; self_repo_exclusion_applied=<yes|no>; preflight_verdict=<pass|fail>; fail_reason=<none|...>`
     - If `topology_confidence = low`, `topology_signal` MUST include `low_confidence_reason` that is not `none`.
     - If `topology_confidence = high`, `topology_signal` MUST include `low_confidence_reason=none` and `topology_question_allowed=no`.
-    - Hard precondition: generation/enrichment planning is allowed only when `topology_preflight` has `preflight_verdict=pass`, `self_repo_exclusion_applied=yes`, and (if `user_topology_intent=multi-repo`) `parent_scan_status=ok`, `parent_scan_evidence!=none`, `sibling_attach_output!=none`.
+    - Hard precondition: generation/enrichment planning is allowed only when `topology_preflight` has `preflight_verdict=pass`, `self_repo_exclusion_applied=yes`, and (if `user_topology_intent=multi-repo`) `parent_scan_status=ok`, `parent_scan_evidence!=none`, `sibling_attach_output!=none`, `validated_count>=1`, and `attached_count>=1`.
 2. `[UNRESOLVED]` with **Unresolved TODO Table** columns exactly:
   `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
 3. `[QUESTIONS]` with **Question Mapping Table** columns exactly:
@@ -195,6 +199,8 @@ You MUST follow the safety protocol:
   - MUST include `confirmed_discovery_snapshot_id`.
   - MUST stop and re-run PRE_DISCOVERY confirmation if discovery evidence changed after confirmation (stale snapshot guard).
   - If `user_topology_intent=multi-repo`, MUST block DRY_RUN when parent sibling scan evidence or sibling attach output is missing.
+  - If `user_topology_intent=multi-repo` and workspace-derived parent scan is unavailable, MUST emit deterministic `## PRE_DRY_RUN_BLOCK` with `block_code=MULTI_PARENT_SCAN_UNAVAILABLE` and deterministic recovery guidance in `next_action`: `recovery_precedence=workspace_scan_first_then_user_paths` and `recovery_options=RETRY_WORKSPACE_DERIVED_SCAN|PROVIDE_SIBLING_PATHS`.
+  - If `user_topology_intent=multi-repo`, DRY_RUN MUST NOT proceed unless `sibling_validation_summary` reports `validated_count>=1` and `attached_count>=1`.
   - MUST include stage markers exactly as: `[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`.
   - MUST include deterministic tables in this exact order:
     1) Discovery Evidence Table — `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`

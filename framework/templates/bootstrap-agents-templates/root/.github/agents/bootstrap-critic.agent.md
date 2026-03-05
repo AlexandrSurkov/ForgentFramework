@@ -67,8 +67,9 @@ For `Review stage: DRY_RUN`, return `REQUEST_CHANGES` with a `BLOCKER` if any of
 - DRY_RUN topology/repo-inventory assumptions differ from the confirmed PRE_DISCOVERY snapshot without explicit user-provided corrections.
 - DRY_RUN appears to consume a stale snapshot after discovery evidence changed post-confirmation.
 - When DRY_RUN prerequisites are missing, output does not include deterministic block section `## PRE_DRY_RUN_BLOCK` with fields `block_code`, `blocked_stage=DRY_RUN`, `required_prerequisites`, `observed_state`, `next_action`.
-- `## PRE_DRY_RUN_BLOCK` includes an invalid `block_code` (allowed: `MISSING_TOPOLOGY_INTENT`, `PRE_DISCOVERY_UNCONFIRMED`, `MULTI_PARENT_SCAN_MISSING`, `MULTI_SIBLING_ATTACH_MISSING`, `TOPOLOGY_PREFLIGHT_FAIL`).
+- `## PRE_DRY_RUN_BLOCK` includes an invalid `block_code` (allowed: `MISSING_TOPOLOGY_INTENT`, `PRE_DISCOVERY_UNCONFIRMED`, `MULTI_PARENT_SCAN_MISSING`, `MULTI_PARENT_SCAN_UNAVAILABLE`, `MULTI_SIBLING_ATTACH_MISSING`, `TOPOLOGY_PREFLIGHT_FAIL`).
 - `## PRE_DRY_RUN_BLOCK` is present but DRY_RUN stage markers (`[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`) are still emitted in the same blocked response.
+- If `user_topology_intent=multi-repo` and workspace-derived parent scan is unavailable, `## PRE_DRY_RUN_BLOCK` is missing deterministic recovery guidance in `next_action`: `recovery_precedence=workspace_scan_first_then_user_paths` and `recovery_options=RETRY_WORKSPACE_DERIVED_SCAN|PROVIDE_SIBLING_PATHS`.
 
 - Any required marker is missing, renamed, duplicated, or out of order. Required exact order:
   1. `[DISCOVERY]`
@@ -107,10 +108,20 @@ Topology determinism (DRY_RUN):
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = high` but `topology_question_allowed` is not `no`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = low` but `low_confidence_reason` is `none`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if dry-run omits `topology_preflight` with all required fields:
-  - `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `sibling_attach_output`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`
+  - `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `sibling_attach_output`, `workspace_scan_attempted`, `workspace_scan_status`, `workspace_scan_evidence`, `user_paths_attempted`, `user_paths_status`, `user_paths_evidence`, `sibling_validation_summary`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and output does not show that a parent-directory sibling VCS-root scan ran before topology classification.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and output does not show deterministic precedence of recovery attempts: workspace-derived parent scan first, then explicit user-provided sibling paths only when workspace scan is unavailable.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and DRY_RUN proceeds without parent-scan evidence (`parent_scan_status!=ok` or `parent_scan_evidence=none`).
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and DRY_RUN proceeds without sibling attach output (`sibling_attach_output=none`).
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and output omits **Sibling Validation Table** rows with columns exactly: `candidate_path | candidate_source(workspace|user) | validation_status(valid|invalid) | validation_evidence | attach_action(attached|skipped|failed) | attach_output`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and **Sibling Validation Table** rows are not lexicographically ordered by `candidate_path`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and `sibling_validation_summary` omits aggregate counters `candidate_count`, `validated_count`, or `attached_count`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and DRY_RUN proceeds while `validated_count<1` or `attached_count<1`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and fallback value semantics violate workspace-first precedence: `workspace_scan_attempted` is not `yes`, or `workspace_scan_status` is missing/invalid.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and `workspace_scan_status=ok` while `user_paths_attempted` is not `no`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and `workspace_scan_status=unavailable` while `user_paths_attempted` is not `yes`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and `workspace_scan_status=ok` but any **Sibling Validation Table** row has `candidate_source=user`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and `workspace_scan_status=unavailable` but **Sibling Validation Table** rows do not include at least one `candidate_source=user`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if parent directory unreadable/unavailable is not handled as `topology_confidence=low` with `preflight_verdict=fail` and explicit `fail_reason`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if parent scan reports sibling VCS roots but `topology_class` is not `multi-repo`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `sibling_repo_roots` is not host-excluded, relative-path normalized, and lexicographically ordered.
