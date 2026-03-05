@@ -55,17 +55,23 @@ If you discover required product changes, stop and report them as follow-ups.
 
 ### Discovery-first + evidence-based autofill (mandatory)
 
-Before asking the user anything, you MUST perform an exhaustive repository discovery pass for all §pre fields and produce a PRE_DISCOVERY output first; DRY_RUN artifacts may be produced only after the user confirms/corrects PRE_DISCOVERY per `framework/spec/07-framework-operations.md` §7.2.
+Before PRE_DISCOVERY, you MUST ask exactly one deterministic topology-intent question first: `Topology intent: single-repo or multi-repo?`.
+You MUST parse and persist the user response as `user_topology_intent` (`single-repo` | `multi-repo`) before running PRE_DISCOVERY.
+After intent capture, you MUST perform an exhaustive repository discovery pass for all §pre fields and produce PRE_DISCOVERY output; DRY_RUN artifacts may be produced only after the user confirms/corrects PRE_DISCOVERY per `framework/spec/07-framework-operations.md` §7.2.
 
 Question policy:
 
 - You MUST ask the user questions only for TODOs represented in the `[QUESTIONS]` table and mapped to unresolved TODO IDs.
 - You MUST NOT ask the user to confirm values that were resolved by discovery/autofill.
 - If there are no unresolved TODO rows after discovery, you MUST proceed without asking any user questions.
-- You MUST classify topology before asking topology questions and ask at most one topology clarifying question only when `topology_confidence = low`.
-- You MUST perform parent-directory sibling VCS-root scan relative to `host_repo` before topology classification and include explicit parent-scan evidence in PRE_DISCOVERY/topology preflight.
-- You MUST block DRY_RUN unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`).
+- You MUST ask and persist `user_topology_intent` before PRE_DISCOVERY.
+- You MUST classify topology before asking topology clarifying questions and ask at most one topology clarifying question only when `topology_confidence = low`.
+- If `user_topology_intent = multi-repo`, you MUST perform parent-directory sibling VCS-root scan relative to `host_repo` before topology classification, and include explicit parent-scan evidence plus sibling attach output in PRE_DISCOVERY/topology preflight.
+- If `user_topology_intent = multi-repo`, you MUST include **Sibling Scan & Attach Table** rows (`sibling_repo_root_relative_path | scan_evidence | attach_action(attached|skipped|failed) | attach_output`) sorted lexicographically by sibling relative path.
+- If `user_topology_intent = multi-repo`, you MUST block DRY_RUN unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`) and sibling attach output is present (`sibling_attach_output!=none`).
 - If host parent directory is unreadable/unavailable, you MUST force `topology_confidence=low`, set `preflight_verdict=fail`, and block DRY_RUN.
+- If any DRY_RUN prerequisite is missing, you MUST emit `## PRE_DRY_RUN_BLOCK` before any dry-run stage markers with fields exactly: `block_code`, `blocked_stage=DRY_RUN`, `required_prerequisites`, `observed_state`, `next_action`.
+- Allowed `block_code` values: `MISSING_TOPOLOGY_INTENT`, `PRE_DISCOVERY_UNCONFIRMED`, `MULTI_PARENT_SCAN_MISSING`, `MULTI_SIBLING_ATTACH_MISSING`, `TOPOLOGY_PREFLIGHT_FAIL`.
 - If parent scan finds sibling VCS roots, you MUST classify topology as `multi-repo` and emit `sibling_repo_roots` as host-excluded relative paths in deterministic lexicographic order.
 
 Host repo definition:
@@ -107,7 +113,7 @@ Print the full draft `§pre` block in a fenced code block.
 Then print a PRE_DISCOVERY section in chat that includes all of the following deterministic outputs:
 
 - The chat section header MUST be exactly `## PRE_DISCOVERY Report`.
-- The report MUST include required fields before any dry-run output: `snapshot_id`, `generated_at` (ISO8601), `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
+- The report MUST include required fields before any dry-run output: `snapshot_id`, `generated_at` (ISO8601), `host_repo`, `user_topology_intent`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
 
 - repository topology summary + topology preflight,
 - full repo inventory with relative repo-root paths,
@@ -120,6 +126,7 @@ PRE_DISCOVERY deterministic table requirement:
   - **Full Repo Inventory Table** (`repo_root_relative_path | detection_basis | vcs_marker | in_scope(yes|no) | reason`)
   - **Inferred Project Identity Table** (`field | inferred_value | evidence | confidence`)
   - **Technology Evidence Table** (`repo_root_relative_path | category(technology|database|devops) | inferred_value | evidence_path_or_command | confidence`)
+  - If `user_topology_intent = multi-repo`, MUST include **Sibling Scan & Attach Table** (`sibling_repo_root_relative_path | scan_evidence | attach_action(attached|skipped|failed) | attach_output`).
 
 After PRE_DISCOVERY, ask the user to confirm/correct discovery output using deterministic token format (`CONFIRMED` or `CORRECTIONS: ...`) and persist a `confirmed_discovery_snapshot_id`.
 You MUST NOT output any DRY_RUN stage marker blocks before this confirmation step is complete.
@@ -129,12 +136,13 @@ Then print the DRY_RUN artifacts (only after confirmation) with exact stage mark
   `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
   - Include deterministic topology fields in `[DISCOVERY]`:
     - `topology_class: single-repo|multi-repo`
+    - `user_topology_intent: single-repo|multi-repo`
     - `topology_confidence: high|low`
     - `topology_signal: repo_roots=[...]; host_repo=<path>; sibling_repo_roots=[...]; detection_basis=<vcs|workspace|metadata|fallback>; contradictions=<none|...>; low_confidence_reason=<none|...>; topology_question_allowed=<yes|no>`
-    - `topology_preflight: topology_class=<single-repo|multi-repo>; host_repo=<path>; sibling_repo_roots=[...]; parent_scan_status=<ok|unavailable>; parent_scan_evidence=<explicit evidence|none>; self_repo_exclusion_applied=<yes|no>; preflight_verdict=<pass|fail>; fail_reason=<none|...>`
+    - `topology_preflight: topology_class=<single-repo|multi-repo>; host_repo=<path>; sibling_repo_roots=[...]; parent_scan_status=<ok|unavailable>; parent_scan_evidence=<explicit evidence|none>; sibling_attach_output=<explicit output|none>; self_repo_exclusion_applied=<yes|no>; preflight_verdict=<pass|fail>; fail_reason=<none|...>`
     - If `topology_confidence = low`, `topology_signal` MUST include `low_confidence_reason` that is not `none`.
     - If `topology_confidence = high`, `topology_signal` MUST include `low_confidence_reason=none` and `topology_question_allowed=no`.
-    - Hard precondition: generation/enrichment planning is allowed only when `topology_preflight` has `preflight_verdict=pass`, `self_repo_exclusion_applied=yes`, `parent_scan_status=ok`, and `parent_scan_evidence!=none`.
+    - Hard precondition: generation/enrichment planning is allowed only when `topology_preflight` has `preflight_verdict=pass`, `self_repo_exclusion_applied=yes`, and (if `user_topology_intent=multi-repo`) `parent_scan_status=ok`, `parent_scan_evidence!=none`, `sibling_attach_output!=none`.
 2. `[UNRESOLVED]` with **Unresolved TODO Table** columns exactly:
   `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
 3. `[QUESTIONS]` with **Question Mapping Table** columns exactly:
@@ -179,12 +187,14 @@ Stage-aware rule:
 
 You MUST follow the safety protocol:
 
-1. **PRE_DISCOVERY**: present deterministic discovery output and show it in chat.
+1. **Topology intent capture**: ask the user first (`single-repo` or `multi-repo`) and persist `user_topology_intent` before PRE_DISCOVERY.
+2. **PRE_DISCOVERY**: present deterministic discovery output and show it in chat.
   - MUST include topology, full repo inventory (relative paths), inferred project identity, and technologies/databases/devops evidence.
-2. **Confirm discovery**: wait for user confirmation/corrections and persist `confirmed_discovery_snapshot_id`.
-3. **Dry-run**: present a complete change plan based on the confirmed discovery snapshot.
+3. **Confirm discovery**: wait for user confirmation/corrections and persist `confirmed_discovery_snapshot_id`.
+4. **Dry-run**: present a complete change plan based on the confirmed discovery snapshot.
   - MUST include `confirmed_discovery_snapshot_id`.
   - MUST stop and re-run PRE_DISCOVERY confirmation if discovery evidence changed after confirmation (stale snapshot guard).
+  - If `user_topology_intent=multi-repo`, MUST block DRY_RUN when parent sibling scan evidence or sibling attach output is missing.
   - MUST include stage markers exactly as: `[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`.
   - MUST include deterministic tables in this exact order:
     1) Discovery Evidence Table — `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
@@ -193,8 +203,8 @@ You MUST follow the safety protocol:
   - MUST enumerate file operations: create/modify/delete + paths.
   - MUST call out any destructive step.
   - MUST include a deterministic source→destination deployment manifest for host outputs with completeness counters.
-4. **Confirm apply**: wait for the user to respond with the exact token `APPLY`.
-5. **Apply**: only after `APPLY`, perform the changes and summarise what happened.
+5. **Confirm apply**: wait for the user to respond with the exact token `APPLY`.
+6. **Apply**: only after `APPLY`, perform the changes and summarise what happened.
   - MUST report deployment manifest outcome and include `source_rows_repo_templates`, `source_rows_bootstrap_templates`, `source_rows_total`, `rows_total`, `rows_applied`, `rows_skipped`, `rows_failed`.
   - `rows_total` MUST equal `source_rows_total`.
   - `rows_failed` MUST be `0`; otherwise abort and report failure.

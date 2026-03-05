@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.31.2] - 2026-03-05
+
+### Changed
+- Safety gate now requires topology intent capture as the first user interaction (`single-repo` or `multi-repo`) and requires persisted `user_topology_intent` before PRE_DISCOVERY.
+- PRE_DISCOVERY/DRY_RUN contracts now require `user_topology_intent` carry-forward and, for `multi-repo` intent, deterministic parent-neighbor sibling VCS-root scan evidence plus sibling attach output.
+- DRY_RUN gating is now deterministic for multi-repo intent: missing sibling scan evidence or missing sibling attach output is a blocking condition.
+- Operations and roadmap canonical modules were synchronized with template mirrors, and bootstrap templates (`bootstrap-orchestrator`, `bootstrap-installer`, `bootstrap-critic`) were aligned to enforce the same intent-first + multi-repo attach contract.
+
 ## [0.31.1] - 2026-03-05
 
 ### Fixed

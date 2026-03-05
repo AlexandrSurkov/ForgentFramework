@@ -98,9 +98,10 @@ If the user asks for product feature work, stop and request they use the project
 
 **Rule 3 — PRE_DISCOVERY before DRY_RUN is mandatory for bootstrap executors**
 > For install/upgrade/remove flows, you MUST require bootstrap executors to complete PRE_DISCOVERY first, get user confirmation/corrections, and only then produce DRY_RUN output that matches `framework/spec/07-framework-operations.md` §7.2 exactly.
+> Before PRE_DISCOVERY, you MUST require the executor to ask the user first: `single-repo` or `multi-repo`, parse/store this as `user_topology_intent`, and carry it into PRE_DISCOVERY.
 > PRE_DISCOVERY output MUST be shown in chat and MUST include:
 > - report header `## PRE_DISCOVERY Report`,
-> - required fields `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`,
+> - required fields `snapshot_id`, `generated_at`, `host_repo`, `user_topology_intent`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`,
 > - topology/preflight evidence,
 > - full repo inventory with relative repo-root paths,
 > - inferred project identity,
@@ -109,9 +110,14 @@ If the user asks for product feature work, stop and request they use the project
 > You MUST NOT invoke a DRY_RUN executor call before receiving one of these confirmation tokens and persisting the confirmed snapshot.
 > DRY_RUN MUST include `confirmed_discovery_snapshot_id` and MUST use only confirmed PRE_DISCOVERY assumptions.
 > If PRE_DISCOVERY evidence changes after confirmation, DRY_RUN MUST be stopped and PRE_DISCOVERY re-confirmed.
-> PRE_DISCOVERY MUST include parent-directory sibling VCS-root scan evidence relative to `host_repo`; this scan MUST run before topology classification.
-> DRY_RUN MUST be blocked unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`).
+> If `user_topology_intent=multi-repo`, PRE_DISCOVERY MUST include parent-directory sibling VCS-root scan evidence relative to `host_repo`; this scan MUST run before topology classification.
+> If `user_topology_intent=multi-repo`, PRE_DISCOVERY MUST include sibling attach output (`sibling_attach_output!=none`).
+> If `user_topology_intent=multi-repo`, PRE_DISCOVERY MUST include a deterministic sibling scan/attach table with columns: `sibling_repo_root_relative_path | scan_evidence | attach_action(attached|skipped|failed) | attach_output`; rows MUST be lexicographically ordered by sibling relative path.
+> If `user_topology_intent=multi-repo`, DRY_RUN MUST be blocked unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`) and sibling attach output is present (`sibling_attach_output!=none`).
 > If host parent directory is unreadable/unavailable, topology MUST be forced to low confidence and topology preflight MUST fail; DRY_RUN remains blocked.
+> If any DRY_RUN prerequisite is missing, the executor MUST output `## PRE_DRY_RUN_BLOCK` before any dry-run stage markers with deterministic fields: `block_code`, `blocked_stage=DRY_RUN`, `required_prerequisites`, `observed_state`, `next_action`.
+> Allowed `block_code` values: `MISSING_TOPOLOGY_INTENT`, `PRE_DISCOVERY_UNCONFIRMED`, `MULTI_PARENT_SCAN_MISSING`, `MULTI_SIBLING_ATTACH_MISSING`, `TOPOLOGY_PREFLIGHT_FAIL`.
+> When `## PRE_DRY_RUN_BLOCK` is present, you MUST NOT invoke DRY_RUN critic review yet; instead, resolve prerequisites first.
 > If parent scan detects sibling VCS roots, topology MUST be `multi-repo` and sibling paths MUST be host-excluded, relative, and deterministically ordered.
 > The dry-run text MUST include stage markers exactly (and in this order):
 > - `[DISCOVERY]`
@@ -184,9 +190,9 @@ You MUST produce the following messages in the user-visible chat:
   - List *all* phases you will run as separate numbered items. The plan MUST include these phases explicitly:
     1. Repo-state discovery & ADR check
     2. Observability setup (session + trace files)
-     3. PRE_DISCOVERY via bootstrap executor (deterministic discovery output only; no repo artifact writes)
+    3. Ask topology intent first (`single-repo` or `multi-repo`) and persist it, then run PRE_DISCOVERY via bootstrap executor (deterministic discovery output only; no repo artifact writes)
       4. Confirm/correct PRE_DISCOVERY with the user (`CONFIRMED` or `CORRECTIONS: ...`) and persist a confirmed discovery snapshot
-     5. Dry-run via bootstrap executor using the confirmed discovery snapshot (change plan only; executor writes no repo artifacts)
+         5. Dry-run via bootstrap executor using the confirmed discovery snapshot (change plan only; executor writes no repo artifacts)
      6. **Critic review of the dry-run** (`bootstrap-critic`) — blocks APPLY if issues found
      7. Wait for explicit `APPLY` confirmation from the user
      8. Apply via bootstrap executor
@@ -214,13 +220,15 @@ You MUST produce the following messages in the user-visible chat:
 Do not skip these messages even when the operation is simple.
 
 1. Identify which operation is requested: **install**, **upgrade**, or **remove**.
-2. Delegate to the corresponding bootstrap executor for the **PRE_DISCOVERY phase** (deterministic discovery output only; executor writes no repo artifacts).
-3. Show PRE_DISCOVERY output in chat and require the user to confirm/correct it. Persist a confirmed discovery snapshot and pass it to the executor.
+2. Require the bootstrap executor to ask the user first for topology intent (`single-repo` or `multi-repo`) and persist `user_topology_intent` before PRE_DISCOVERY.
+3. Delegate to the corresponding bootstrap executor for the **PRE_DISCOVERY phase** (deterministic discovery output only; executor writes no repo artifacts).
+4. Show PRE_DISCOVERY output in chat and require the user to confirm/correct it. Persist a confirmed discovery snapshot and pass it to the executor.
   - PRE_DISCOVERY chat output MUST include the exact report header `## PRE_DISCOVERY Report` and required fields listed in Rule 3.
   - If user provided corrections, you MUST reflect those corrections in the persisted snapshot before requesting DRY_RUN.
-4. Delegate to the corresponding bootstrap executor for the **dry-run phase** using the confirmed discovery snapshot (change plan only; executor writes no repo artifacts yet — orchestrator may still write local-only `.agents/session/**` and `.agents/traces/*.jsonl`).
+5. Delegate to the corresponding bootstrap executor for the **dry-run phase** using the confirmed discovery snapshot (change plan only; executor writes no repo artifacts yet — orchestrator may still write local-only `.agents/session/**` and `.agents/traces/*.jsonl`).
+  - If `user_topology_intent=multi-repo` and PRE_DISCOVERY lacks parent sibling scan evidence or sibling attach output, DRY_RUN is blocked.
   - If snapshot evidence changed after confirmation, halt and re-run PRE_DISCOVERY confirmation before dry-run.
-5. After the executor produces the dry-run plan, immediately invoke `bootstrap-critic` to review.
+6. After the executor produces the dry-run plan, immediately invoke `bootstrap-critic` to review.
   You MUST include an explicit stage marker in the critic input:
   - `Review stage: DRY_RUN`
   - `Review stage: APPLIED_RESULT`
@@ -230,12 +238,12 @@ Do not skip these messages even when the operation is simple.
    - scope boundary compliance
    - AWESOME-COPILOT gate compliance when relevant
   If the critic returns `REQUEST_CHANGES` or `REJECT`, do NOT proceed to `APPLY`; address all findings first (up to 5 iterations). Only proceed once the critic returns `APPROVE`.
-6. Present the approved dry-run summary to the user and **wait for the explicit `APPLY` confirmation** before continuing.
-7. Re-invoke the bootstrap executor to apply the confirmed change set.
-8. After apply, invoke `bootstrap-critic` again to verify the applied change set (scope + gate compliance).
+7. Present the approved dry-run summary to the user and **wait for the explicit `APPLY` confirmation** before continuing.
+8. Re-invoke the bootstrap executor to apply the confirmed change set.
+9. After apply, invoke `bootstrap-critic` again to verify the applied change set (scope + gate compliance).
   You MUST include the explicit stage marker: `Review stage: APPLIED_RESULT`.
   You MUST include the final resolved canonical artifact context (the same DRY_RUN marker sections and their resolved outcomes) in the critic input.
-9. Once `bootstrap-critic` returns `APPROVE` for `Review stage: APPLIED_RESULT` — **immediately start the repo context fill phase without waiting for another user confirmation**:
+10. Once `bootstrap-critic` returns `APPROVE` for `Review stage: APPLIED_RESULT` — **immediately start the repo context fill phase without waiting for another user confirmation**:
    - Before step 8, verify APPLIED_RESULT evidence includes:
      - Baseline Host Artifacts Table with all required rows passing,
      - placeholder-free `.agents/compliance/awesome-copilot-gate.md`,

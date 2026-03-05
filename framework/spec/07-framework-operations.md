@@ -38,6 +38,11 @@ Routing:
 
 For Install/Upgrade/Remove tasks, the acting bootstrap agent MUST follow this deterministic safety protocol:
 
+0. **Topology intent capture (first user prompt)**: ask the user first whether the run is `single-repo` or `multi-repo`.
+  - MUST be asked before PRE_DISCOVERY.
+  - MUST parse/store the response as `user_topology_intent` (`single-repo` | `multi-repo`).
+  - The persisted intent MUST be carried into PRE_DISCOVERY and DRY_RUN assumptions.
+
 1. **PRE_DISCOVERY**: produce and show a deterministic discovery snapshot in chat before any dry-run planning.
   - MUST emit a chat section titled exactly `## PRE_DISCOVERY Report`.
   - PRE_DISCOVERY output MUST be user-visible in chat; hidden/internal-only discovery is not compliant.
@@ -45,12 +50,17 @@ For Install/Upgrade/Remove tasks, the acting bootstrap agent MUST follow this de
     - `snapshot_id`
     - `generated_at` (ISO8601)
     - `host_repo`
+    - `user_topology_intent`
     - `topology_class`
     - `topology_confidence`
     - `topology_signal`
     - `topology_preflight`
   - MUST classify topology and include the full topology preflight record required by §7.2.2.
-  - MUST perform a parent-directory sibling VCS-root scan relative to `host_repo` before topology classification, and MUST report parent-scan evidence in PRE_DISCOVERY/topology preflight.
+  - If `user_topology_intent=multi-repo`, MUST perform a parent-directory sibling VCS-root scan relative to `host_repo` before topology classification, and MUST report parent-scan evidence in PRE_DISCOVERY/topology preflight.
+  - If `user_topology_intent=multi-repo`, MUST include sibling attach output evidence in PRE_DISCOVERY/topology preflight.
+  - If `user_topology_intent=multi-repo`, MUST include a deterministic **Sibling Scan & Attach Table** with columns:
+    `sibling_repo_root_relative_path | scan_evidence | attach_action(attached|skipped|failed) | attach_output`.
+    - Rows MUST be host-excluded, relative-path normalized, and lexicographically ordered by `sibling_repo_root_relative_path`.
   - MUST include a **Full Repo Inventory Table** with rows for every discovered in-scope repo and columns:
     `repo_root_relative_path | detection_basis | vcs_marker | in_scope(yes|no) | reason`.
   - MUST include an **Inferred Project Identity Table** with columns:
@@ -78,6 +88,14 @@ For Install/Upgrade/Remove tasks, the acting bootstrap agent MUST follow this de
       - MUST use only confirmed snapshot values for topology/repo inventory/project-name assumptions.
       - MUST enumerate file operations: create/modify/delete and paths.
       - MUST call out any destructive step.
+  - If `user_topology_intent=multi-repo`, DRY_RUN MUST be blocked when PRE_DISCOVERY/topology preflight lacks parent sibling scan evidence (`parent_scan_status!=ok` or `parent_scan_evidence=none`) or sibling attach output (`sibling_attach_output=none`).
+  - If Dry-run is blocked by missing prerequisites, MUST emit an explicit chat section titled exactly `## PRE_DRY_RUN_BLOCK` before any dry-run stage markers with fields:
+    - `block_code` (`MISSING_TOPOLOGY_INTENT` | `PRE_DISCOVERY_UNCONFIRMED` | `MULTI_PARENT_SCAN_MISSING` | `MULTI_SIBLING_ATTACH_MISSING` | `TOPOLOGY_PREFLIGHT_FAIL`)
+    - `blocked_stage` (always `DRY_RUN`)
+    - `required_prerequisites`
+    - `observed_state`
+    - `next_action`
+  - When `## PRE_DRY_RUN_BLOCK` is emitted, the output MUST NOT include dry-run stage markers (`[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`) until the blocking prerequisite is resolved.
   - MUST include deterministic artifacts in this exact order:
     1) **Discovery Evidence Table** — each row MUST include: `evidence_id`, `source_path_or_command`, `observation`, `inference`, `confidence`, `fills_todo_id`.
     2) **Unresolved TODO Table** — each row MUST include: `todo_id`, `description`, `why_unresolved_after_discovery`, `blocking_stage`, `required_input`.
@@ -135,11 +153,14 @@ Hard topology preflight (blocking):
   - `sibling_repo_roots`
   - `parent_scan_status` (`ok` | `unavailable`)
   - `parent_scan_evidence` (`<explicit evidence>` | `none`)
+  - `sibling_attach_output` (`<explicit output>` | `none`)
   - `self_repo_exclusion_applied` (`yes` | `no`)
   - `preflight_verdict` (`pass` | `fail`)
   - `fail_reason` (`none` | `<explicit reason>`)
-- Parent-directory sibling scan is mandatory and MUST run before topology classification.
-- DRY_RUN is blocked unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`).
+- User topology intent MUST be captured and persisted before PRE_DISCOVERY.
+- If `user_topology_intent=multi-repo`, parent-directory sibling scan is mandatory and MUST run before topology classification.
+- If `user_topology_intent=multi-repo`, DRY_RUN is blocked unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`) and sibling attach output is present (`sibling_attach_output!=none`).
+- If DRY_RUN is blocked before planning, the agent MUST emit `## PRE_DRY_RUN_BLOCK` with deterministic fields defined in §7.2.
 - If the host parent directory is unreadable/unavailable, topology MUST be forced to low confidence and preflight MUST fail (`preflight_verdict=fail`) with explicit `fail_reason`; DRY_RUN remains blocked.
 - `self_repo_exclusion_applied` MUST be `yes`; `sibling_repo_roots` MUST NOT include `host_repo`.
 - If one or more sibling VCS roots are detected by parent scan, topology MUST be `multi-repo`.

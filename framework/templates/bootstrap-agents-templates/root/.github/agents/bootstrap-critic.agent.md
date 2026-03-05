@@ -49,12 +49,14 @@ Return `REJECT` if the executor performed unrelated product work.
 For `Review stage: DRY_RUN`, return `REQUEST_CHANGES` with a `BLOCKER` if any of the following are true:
 
 - The output does not contain evidence that PRE_DISCOVERY completed and was user-confirmed before DRY_RUN.
+- The output does not contain evidence that topology intent was asked FIRST (`single-repo` or `multi-repo`) and persisted before PRE_DISCOVERY.
 - PRE_DISCOVERY output does not include the explicit report header `## PRE_DISCOVERY Report`.
-- PRE_DISCOVERY output omits required report fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
+- PRE_DISCOVERY output omits required report fields: `snapshot_id`, `generated_at`, `host_repo`, `user_topology_intent`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
 - PRE_DISCOVERY output omits any required deterministic table:
   - **Full Repo Inventory Table** (`repo_root_relative_path | detection_basis | vcs_marker | in_scope(yes|no) | reason`)
   - **Inferred Project Identity Table** (`field | inferred_value | evidence | confidence`)
   - **Technology Evidence Table** (`repo_root_relative_path | category(technology|database|devops) | inferred_value | evidence_path_or_command | confidence`)
+- If `user_topology_intent=multi-repo`, PRE_DISCOVERY output omits the required **Sibling Scan & Attach Table** (`sibling_repo_root_relative_path | scan_evidence | attach_action(attached|skipped|failed) | attach_output`) or table rows are not lexicographically ordered by `sibling_repo_root_relative_path`.
 - PRE_DISCOVERY output does not enforce required evidence-category coverage for `identity`, `technology stack`, `database`, and `devops`:
   - `identity`: Inferred Project Identity Table MUST include a `project_name` row with evidence, or `inferred_value=UNKNOWN` plus explicit reason in `evidence`.
   - `technology stack`: Technology Evidence Table MUST include at least one `category=technology` row with evidence, or one `category=technology` row with `inferred_value=UNKNOWN` plus explicit reason in `evidence_path_or_command`.
@@ -64,6 +66,9 @@ For `Review stage: DRY_RUN`, return `REQUEST_CHANGES` with a `BLOCKER` if any of
 - DRY_RUN omits `confirmed_discovery_snapshot_id`.
 - DRY_RUN topology/repo-inventory assumptions differ from the confirmed PRE_DISCOVERY snapshot without explicit user-provided corrections.
 - DRY_RUN appears to consume a stale snapshot after discovery evidence changed post-confirmation.
+- When DRY_RUN prerequisites are missing, output does not include deterministic block section `## PRE_DRY_RUN_BLOCK` with fields `block_code`, `blocked_stage=DRY_RUN`, `required_prerequisites`, `observed_state`, `next_action`.
+- `## PRE_DRY_RUN_BLOCK` includes an invalid `block_code` (allowed: `MISSING_TOPOLOGY_INTENT`, `PRE_DISCOVERY_UNCONFIRMED`, `MULTI_PARENT_SCAN_MISSING`, `MULTI_SIBLING_ATTACH_MISSING`, `TOPOLOGY_PREFLIGHT_FAIL`).
+- `## PRE_DRY_RUN_BLOCK` is present but DRY_RUN stage markers (`[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`) are still emitted in the same blocked response.
 
 - Any required marker is missing, renamed, duplicated, or out of order. Required exact order:
   1. `[DISCOVERY]`
@@ -102,9 +107,10 @@ Topology determinism (DRY_RUN):
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = high` but `topology_question_allowed` is not `no`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = low` but `low_confidence_reason` is `none`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if dry-run omits `topology_preflight` with all required fields:
-  - `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`
-- Return `REQUEST_CHANGES` with a `BLOCKER` if output does not show that a parent-directory sibling VCS-root scan ran before topology classification.
-- Return `REQUEST_CHANGES` with a `BLOCKER` if DRY_RUN proceeds without parent-scan evidence (`parent_scan_status!=ok` or `parent_scan_evidence=none`).
+  - `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `sibling_attach_output`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and output does not show that a parent-directory sibling VCS-root scan ran before topology classification.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and DRY_RUN proceeds without parent-scan evidence (`parent_scan_status!=ok` or `parent_scan_evidence=none`).
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `user_topology_intent=multi-repo` and DRY_RUN proceeds without sibling attach output (`sibling_attach_output=none`).
 - Return `REQUEST_CHANGES` with a `BLOCKER` if parent directory unreadable/unavailable is not handled as `topology_confidence=low` with `preflight_verdict=fail` and explicit `fail_reason`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if parent scan reports sibling VCS roots but `topology_class` is not `multi-repo`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `sibling_repo_roots` is not host-excluded, relative-path normalized, and lexicographically ordered.

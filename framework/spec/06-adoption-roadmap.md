@@ -142,24 +142,28 @@ Normative RC mapping labels for this playbook are defined in Operations 07 §7.2
    - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-orchestrator.agent.md`) and request **Install**.
   - Alternatively: run `.github/agents/bootstrap-installer.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md`) ONLY if the direct path preserves the mandatory post-apply handoff/gates in steps 7–8 (no completion before those gates pass).
 2. Run a mandatory PRE_DISCOVERY stage before any DRY_RUN planning:
+  - Ask the user FIRST to choose topology intent (`single-repo` or `multi-repo`) and persist this as `user_topology_intent` before PRE_DISCOVERY.
   - Discover whether the framework package is already available at repo root as `framework/` (vendored copy) and infer source/update strategy from repository evidence.
   - Discover whether `PROJECT.md` exists and whether `## §pre: Project parameters` is complete using the §6.pre checklist.
   - Discover repository topology (single-repo vs multi-repo AgentConfig + components) and in-scope writable repositories for this run, and record `topology_class`, `topology_confidence`, and `topology_signal` per [07-framework-operations.md](07-framework-operations.md) §7.2.2.
-  - Before topology classification, run a parent-directory sibling VCS-root scan relative to `host_repo` and record deterministic parent-scan evidence.
+  - If `user_topology_intent=multi-repo`, before topology classification run a parent-directory sibling VCS-root scan relative to `host_repo` and record deterministic parent-scan evidence plus sibling attach output.
+  - If `user_topology_intent=multi-repo`, PRE_DISCOVERY MUST include a deterministic sibling scan/attach table with rows sorted lexicographically by sibling relative path.
   - Produce a deterministic full repo inventory (relative paths) for all discovered in-scope repos.
   - Produce deterministic evidence for inferred project identity, technologies, databases, and devops tooling.
-  - Run topology preflight before generation/enrichment and record: `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`.
-  - Topology preflight is blocking: if `preflight_verdict=fail`, if `self_repo_exclusion_applied!=yes`, if `sibling_repo_roots` includes `host_repo`, or if parent-scan evidence is missing (`parent_scan_status!=ok` or `parent_scan_evidence=none`), STOP and return an incomplete state (no generation/enrichment in steps 6–8).
+  - Run topology preflight before generation/enrichment and record: `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `sibling_attach_output`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`.
+  - Topology preflight is blocking: if `preflight_verdict=fail`, if `self_repo_exclusion_applied!=yes`, or if `sibling_repo_roots` includes `host_repo`, STOP and return an incomplete state (no generation/enrichment in steps 6–8).
+  - If `user_topology_intent=multi-repo`, topology preflight is also blocking when parent-scan evidence is missing (`parent_scan_status!=ok` or `parent_scan_evidence=none`) or sibling attach output is missing (`sibling_attach_output=none`).
   - If host parent directory is unreadable/unavailable, force `topology_confidence=low`, set `preflight_verdict=fail`, and block DRY_RUN.
   - If sibling VCS roots are detected by parent scan, classify topology as `multi-repo` and include sibling paths as host-excluded, relative, lexicographically ordered rows.
   - Discover existing `.github/agents/**`, `.agents/**`, `AGENTS.md`, `llms.txt`, and `.github/copilot-instructions.md` and infer merge/preserve requirements from current usage.
   - Record discovery evidence and autofilled decisions in PRE_DISCOVERY artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
 3. Require explicit user confirmation/correction of PRE_DISCOVERY output before DRY_RUN:
-  - PRE_DISCOVERY MUST be printed as an explicit chat report section titled `## PRE_DISCOVERY Report` and include required fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`, plus the deterministic inventory/evidence tables.
+  - PRE_DISCOVERY MUST be printed as an explicit chat report section titled `## PRE_DISCOVERY Report` and include required fields: `snapshot_id`, `generated_at`, `host_repo`, `user_topology_intent`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`, plus the deterministic inventory/evidence tables.
   - Show PRE_DISCOVERY output in chat and request confirmation/corrections.
   - The confirmation gate token format is deterministic: user replies `CONFIRMED` or `CORRECTIONS: ...`.
   - Persist a confirmed discovery snapshot (including user corrections) and reference it in DRY_RUN.
   - DRY_RUN is blocked until PRE_DISCOVERY is confirmed.
+  - When DRY_RUN is blocked for missing prerequisites, emit `## PRE_DRY_RUN_BLOCK` with deterministic fields from [07-framework-operations.md](07-framework-operations.md) §7.2 and do not emit dry-run stage markers.
 4. Ask user questions only for unresolved TODOs after confirmed discovery:
   - Emit one question per unresolved TODO.
   - For each question, include TODO ID, blocking phase/step, and accepted answer format.
@@ -175,7 +179,8 @@ Normative RC mapping labels for this playbook are defined in Operations 07 §7.2
   - The dry-run MUST include a deterministic source→destination deployment manifest for host repo outputs per [07-framework-operations.md](07-framework-operations.md) §7.2.1.
   - The dry-run MUST include the source inventory summary counters from [07-framework-operations.md](07-framework-operations.md) §7.2.1 and ensure planned `rows_total = source_rows_total`.
   - The dry-run MUST include the topology preflight record and MUST show `preflight_verdict=pass` before any planned generation/enrichment operations.
-  - DRY_RUN MUST be blocked unless topology preflight includes parent-scan evidence (`parent_scan_status=ok` and `parent_scan_evidence!=none`).
+  - If `user_topology_intent=multi-repo`, DRY_RUN MUST be blocked unless topology preflight includes parent-scan evidence (`parent_scan_status=ok` and `parent_scan_evidence!=none`) and sibling attach output (`sibling_attach_output!=none`).
+  - If DRY_RUN is blocked before planning, output `## PRE_DRY_RUN_BLOCK` and stop before `[DISCOVERY]`.
 7. Apply (only after the Operations safety confirmation per §7.2), using shipped templates as the baseline:
    - Template sources:
      - Repo context files: `framework/templates/repo-files-templates/root/**`
