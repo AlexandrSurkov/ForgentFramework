@@ -1,10 +1,10 @@
 {
   "folders": [
-    { "path": ".", "name": "<project>-AgentConfig" },
-    { "path": "../<project>-Backend", "name": "<project>-Backend" },
-    { "path": "../<project>-Frontend", "name": "<project>-Frontend" },
-    { "path": "../<project>-Automation", "name": "<project>-Automation" },
-    { "path": "../<project>-Docs", "name": "<project>-Documentation" }
+    // Bootstrap context fill MUST rewrite this list to exactly match the confirmed PRE_DISCOVERY repo inventory (relative paths only).
+    // The authoritative list MUST include host repo and all confirmed sibling repos for multi-repo topology.
+    // Do not keep stale rows and do not add inferred repos outside the confirmed inventory.
+    // No extra or stale rows are allowed after context bootstrap.
+    { "path": ".", "name": "<project>-AgentConfig" }
   ],
   "settings": {
     "chat.agentFilesLocations": {

@@ -31,14 +31,20 @@ This critic focuses on:
 7. **All-repo processing**: every discovered repo root was processed (create missing OR enrich existing sparse `AGENTS.md` / `llms.txt`). Existing sparse files must not be skipped without reason.
 8. **Host aggregation**: host repo context (`AGENTS.md`, `llms.txt`, and allowlisted host context files) reflects discovered cross-repo metadata where inferable.
 9. **Host agent enrichment gate**: if host `.github/agents/**` or `.github/prompts/**` were enriched, `.agents/compliance/awesome-copilot-gate.md` exists, is updated in the same change set, and has no placeholders/TODOs.
+10. **Deep-inspection evidence quality**: executor evidence shows each discovered repo was deeply inspected (README/build manifest/devops/database evidence where present) before deciding enrichment actions.
+11. **Host domain evidence fill**: host `domain/**/*.md` TODO placeholders are filled when supporting evidence exists; unresolved items must be justified in `## Unfilled items table`.
+12. **Workspace inventory alignment**: host `.vscode/project.code-workspace` folder entries align to confirmed discovery snapshot repo inventory relative paths deterministically.
+13. **Confirmed inventory alignment**: processed repo roots and workspace folder alignment use the orchestrator-provided confirmed discovery snapshot inventory (including explicit user corrections, if any).
 
-11. **Deterministic evidence artifacts**: executor output includes both required tables:
+14. **Deterministic evidence artifacts**: executor output includes all required tables:
   - `## Per-repo processing table` with exact columns
     `repo_root | agents_action(created|enriched|unchanged|skipped) | llms_action(created|enriched|unchanged|skipped) | reason`
   - `## Host aggregation table` with exact columns
     `source_repo_root | source_artifact | extracted_fact | host_destination | apply_action`
+  - `## Per-repo context quality table` with exact columns
+    `repo_root | required_fields_total | required_fields_unknown | unknown_ratio | quality_verdict(pass|fail)`
 
-10. **Unknowns handled correctly**: when values cannot be inferred, the executor did NOT invent them and instead produced:
+15. **Unknowns handled correctly**: when values cannot be inferred, the executor did NOT invent them and instead produced:
   - `## Questions for the user` (actionable, minimal)
   - `## Unfilled items table` (with `File`, `Placeholder/Field`, `Why unknown`, `How to fill`)
 
@@ -53,7 +59,14 @@ This critic focuses on:
 - Check that no file outside the allowed edit list was modified.
 - Verify each discovered repo root has deterministic action evidence (`created` / `enriched` / `exists`) for both `AGENTS.md` and `llms.txt`.
 - Verify each discovered repo root is represented in `## Per-repo processing table` with deterministic actions.
+- Verify discovered/processed repo roots match the confirmed discovery snapshot inventory provided by the orchestrator.
+- Verify executor evidence includes deep inspection per repo (README/build manifest/devops/database evidence where present).
 - Verify host aggregation claims are represented in `## Host aggregation table` and correspond to actual host-file edits.
+- Verify host `domain/**/*.md` TODO placeholders are evidence-filled when evidence exists.
+- Verify host `.vscode/project.code-workspace` folder entries match confirmed discovery snapshot repo inventory relative paths.
+- Verify `## Per-repo context quality table` thresholds:
+  - host row has `required_fields_unknown = 0` and `quality_verdict=pass`
+  - each sibling row has `unknown_ratio <= 0.10` and `quality_verdict=pass`
 - If host agent/prompt files were touched, verify AWESOME-COPILOT gate artifact completeness and placeholder-free state.
   - Also verify gate evidence includes consulted material URL `https://github.com/github/awesome-copilot` with immutable reference + license verification, or explicit `Consultation performed: unable` with concrete reason/fallback.
 
@@ -76,8 +89,14 @@ When TODOs remain:
 - Existing sparse `AGENTS.md` or `llms.txt` at a discovered repo root was left unenriched without factual reason in `## Unfilled items table` → **WARNING**.
 - Host context aggregation omitted despite available cross-repo evidence → **WARNING**.
 - Host `.github/agents/**` or `.github/prompts/**` enriched without compliant `.agents/compliance/awesome-copilot-gate.md` update → **BLOCKER**.
+- Host `domain/**/*.md` includes TODO placeholders that were evidence-fillable but remained unresolved without factual justification in `## Unfilled items table` → **BLOCKER**.
 - Missing `## Per-repo processing table` or wrong column schema → **BLOCKER**.
 - Missing `## Host aggregation table` or wrong column schema → **BLOCKER**.
+- Missing `## Per-repo context quality table` or wrong column schema → **BLOCKER**.
+- Any host/sibling threshold violation in `## Per-repo context quality table` → **BLOCKER**.
+- Any discovered repo root lacks deep-inspection evidence (README/build manifest/devops/database checks where present) before action selection → **BLOCKER**.
+- `.vscode/project.code-workspace` folders do not exactly match confirmed discovery snapshot inventory relative paths (extra/missing/stale rows) → **BLOCKER**.
+- Any confirmed discovery snapshot repo root (including explicit user-corrected entries) is missing from `## Per-repo processing table` → **BLOCKER**.
 
 ## Output format
 

@@ -11,7 +11,7 @@ The canonical home of a technology-agnostic Multi-Agent Development Specificatio
 
 | Path | Description |
 |---|---|
-| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.26.1) |
+| `framework/00-multi-agent-development-spec.md` | Canonical spec — source of truth for all agent behaviour rules (v0.31.1) |
 | `framework/CHANGELOG.md` | Spec release notes shipped with the spec package |
 | `PROJECT.md` | Project parameters: stack, models, rate limits, §pre answers |
 | `AGENTS.md` | This file — pinned into orchestrator context on every run |

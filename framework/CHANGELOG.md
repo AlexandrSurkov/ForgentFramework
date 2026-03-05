@@ -6,6 +6,69 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.31.1] - 2026-03-05
+
+### Fixed
+- Closed missed sibling repo detection by making parent-directory sibling VCS-root scan mandatory before topology classification, requiring deterministic parent-scan evidence in PRE_DISCOVERY/topology preflight, and blocking DRY_RUN when evidence is missing.
+- Added deterministic failure behavior for unreadable/unavailable host parent directories: force `topology_confidence=low`, fail topology preflight, and block DRY_RUN.
+- Required topology promotion to `multi-repo` when sibling VCS roots are found, with host-excluded sibling list normalization (relative paths, deterministic lexicographic order).
+- Aligned canonical/template spec modules and bootstrap templates (`bootstrap-installer`, `bootstrap-orchestrator`, `bootstrap-critic`) so critic enforcement of the parent-scan/sibling-topology contract is deterministic.
+
+### Changed
+- Tightened PRE_DISCOVERY evidence coverage requirements so `identity`, `technology stack`, `database`, and `devops` are each mandatory categories with either evidence rows or explicit `UNKNOWN` + reason, and aligned bootstrap-critic DRY_RUN validation accordingly.
+
+## [0.31.0] - 2026-03-05
+
+### Changed
+- Tightened Operations §7.2 (and template mirror) with explicit user-visible PRE_DISCOVERY requirements, deterministic no-DRY_RUN-before-confirmation rule, and clarified handling of unresolved inferred project identity.
+- Extended completion/post-apply rules to require `.vscode/project.code-workspace` in baseline host artifacts and to require evidence-based host `domain/**/*.md` TODO fill reporting.
+- Aligned bootstrap templates (`bootstrap-orchestrator`, `bootstrap-installer`, `bootstrap-repo-context-bootstrap`, `bootstrap-critic`, `bootstrap-repo-context-bootstrap-critic`) to enforce the same deterministic confirmation gate, confirmed-inventory workspace rewrite, and stronger per-repo/domain evidence BLOCKER checks.
+- Clarified shipped `.vscode/project.code-workspace` template expectations so context bootstrap must produce exact confirmed-inventory host/sibling folder alignment with relative paths only.
+
+## [0.30.0] - 2026-03-05
+
+### Changed
+- Extended the mandatory bootstrap safety protocol to Upgrade and Remove executor prompts: PRE_DISCOVERY report in chat, deterministic confirmation/corrections gate, and DRY_RUN dependency on `confirmed_discovery_snapshot_id`.
+- Added explicit Upgrade/Remove discovery-first requirements in bootstrap templates: topology + full relative repo inventory, inferred project identity, and technologies/databases/devops evidence before any dry-run planning.
+- Aligned Adoption Roadmap upgrade/remove playbooks (and template mirror) to the canonical PRE_DISCOVERY → confirm discovery → DRY_RUN → confirm apply → apply sequence, including stale-snapshot re-confirmation guard.
+- Updated embedded `6.agent.2` and `6.agent.3` prompt texts to require deterministic PRE_DISCOVERY report fields and confirmation token format (`CONFIRMED` / `CORRECTIONS: ...`) before DRY_RUN.
+
+## [0.29.0] - 2026-03-05
+
+### Changed
+- Strengthened Operations §7.2 and template mirror with an explicit PRE_DISCOVERY chat-report contract: required report header + mandatory fields (`snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`) before any DRY_RUN output.
+- Added deterministic discovery confirmation token gate (`CONFIRMED` or `CORRECTIONS: ...`) and stale-snapshot guard: DRY_RUN must stop and re-confirm if discovery evidence changes after confirmation.
+- Tightened roadmap install guidance (and template mirror) so PRE_DISCOVERY report/confirmation requirements are explicit and workspace alignment is exact-set based against confirmed inventory.
+- Updated bootstrap templates (`bootstrap-orchestrator`, `bootstrap-installer`, `bootstrap-critic`) to enforce explicit PRE_DISCOVERY report fields, confirmation gate evidence, and confirmed-snapshot DRY_RUN behavior.
+- Updated bootstrap context templates (`bootstrap-repo-context-bootstrap`, `bootstrap-repo-context-bootstrap-critic`) to require exact `.vscode/project.code-workspace` folder rewriting to confirmed repo inventory and deterministic BLOCKERs for missing deep-inspection evidence or inventory mismatch.
+- Simplified shipped `.vscode/project.code-workspace` template to inventory-driven baseline (host row only), requiring context bootstrap to materialize the confirmed repo set.
+
+## [0.28.0] - 2026-03-05
+
+### Changed
+- Clarified that post-apply context bootstrap processing scope is the confirmed PRE_DISCOVERY snapshot repo inventory (plus explicit user corrections), and mirrored this requirement in template spec modules.
+- Tightened install roadmap wording so context bootstrap and `.vscode/project.code-workspace` alignment both reference the confirmed discovery snapshot inventory using relative paths.
+- Strengthened bootstrap context-bootstrap templates: executor now MUST emit a deterministic per-repo context quality table and enforce host/sibling unknown-field thresholds; critic now treats missing quality table/threshold failures as deterministic BLOCKERs.
+- Aligned bootstrap orchestrator/installer/bootstrap-critic templates so handoff and completion checks explicitly require confirmed-snapshot inventory usage for post-apply context processing.
+
+## [0.27.0] - 2026-03-05
+
+### Changed
+- Added a mandatory PRE_DISCOVERY stage before DRY_RUN for bootstrap Install/Upgrade/Remove flows, with explicit user confirmation/correction gating before dry-run can start.
+- PRE_DISCOVERY now requires deterministic chat-visible discovery outputs: topology/preflight, full repo inventory with relative paths, inferred project identity, and evidence-backed technology/database/devops detection.
+- DRY_RUN is now required to reference and use a confirmed discovery snapshot (`confirmed_discovery_snapshot_id`) and to carry forward confirmed topology assumptions.
+- Install roadmap and mirrored template roadmap now require PRE_DISCOVERY confirmation before DRY_RUN and align step ordering accordingly.
+- Post-apply context bootstrap requirements now explicitly require deep inspection of every discovered repo, evidence-based AGENTS/llms enrichment quality, host domain-doc TODO fill when evidence exists, and deterministic `.vscode/project.code-workspace` alignment to discovered repo inventory paths.
+- Bootstrap template prompts (`bootstrap-orchestrator`, `bootstrap-installer`, `bootstrap-critic`, `bootstrap-repo-context-bootstrap`, `bootstrap-repo-context-bootstrap-critic`) were aligned to enforce PRE_DISCOVERY confirmation, confirmed-snapshot DRY_RUN behavior, and stronger context-bootstrap evidence checks.
+
+## [0.26.2] - 2026-03-05
+
+### Changed
+- Completion gates now include deterministic APPLIED_RESULT postconditions: required baseline host artifacts table, placeholder-free AWESOME-COPILOT gate report enforcement, and explicit approval blocking when postconditions fail.
+- Topology requirements now include a hard preflight record and blocking precondition before generation/enrichment, including deterministic sibling-scope handling and self-repo exclusion checks.
+- Install playbook and bootstrap templates (`bootstrap-orchestrator`, `bootstrap-installer`, `bootstrap-critic`) were minimally aligned to enforce the same APPLIED_RESULT postconditions, topology preflight gate, and deterministic required-unknown context-quality thresholds.
+- Added explicit RC6 mapping for completion postconditions and per-repo AGENTS/llms required-unknown quality thresholds.
+
 ## [0.26.1] - 2026-03-04
 
 ### Changed

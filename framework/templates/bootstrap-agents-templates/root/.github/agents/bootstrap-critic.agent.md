@@ -48,6 +48,23 @@ Return `REJECT` if the executor performed unrelated product work.
 ### Canonical DRY_RUN contract exactness (deterministic BLOCKER for DRY_RUN)
 For `Review stage: DRY_RUN`, return `REQUEST_CHANGES` with a `BLOCKER` if any of the following are true:
 
+- The output does not contain evidence that PRE_DISCOVERY completed and was user-confirmed before DRY_RUN.
+- PRE_DISCOVERY output does not include the explicit report header `## PRE_DISCOVERY Report`.
+- PRE_DISCOVERY output omits required report fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
+- PRE_DISCOVERY output omits any required deterministic table:
+  - **Full Repo Inventory Table** (`repo_root_relative_path | detection_basis | vcs_marker | in_scope(yes|no) | reason`)
+  - **Inferred Project Identity Table** (`field | inferred_value | evidence | confidence`)
+  - **Technology Evidence Table** (`repo_root_relative_path | category(technology|database|devops) | inferred_value | evidence_path_or_command | confidence`)
+- PRE_DISCOVERY output does not enforce required evidence-category coverage for `identity`, `technology stack`, `database`, and `devops`:
+  - `identity`: Inferred Project Identity Table MUST include a `project_name` row with evidence, or `inferred_value=UNKNOWN` plus explicit reason in `evidence`.
+  - `technology stack`: Technology Evidence Table MUST include at least one `category=technology` row with evidence, or one `category=technology` row with `inferred_value=UNKNOWN` plus explicit reason in `evidence_path_or_command`.
+  - `database`: Technology Evidence Table MUST include at least one `category=database` row with evidence, or one `category=database` row with `inferred_value=UNKNOWN` plus explicit reason in `evidence_path_or_command`.
+  - `devops`: Technology Evidence Table MUST include at least one `category=devops` row with evidence, or one `category=devops` row with `inferred_value=UNKNOWN` plus explicit reason in `evidence_path_or_command`.
+- The confirmation/corrections gate is missing deterministic evidence of user response format (`CONFIRMED` or `CORRECTIONS: ...`).
+- DRY_RUN omits `confirmed_discovery_snapshot_id`.
+- DRY_RUN topology/repo-inventory assumptions differ from the confirmed PRE_DISCOVERY snapshot without explicit user-provided corrections.
+- DRY_RUN appears to consume a stale snapshot after discovery evidence changed post-confirmation.
+
 - Any required marker is missing, renamed, duplicated, or out of order. Required exact order:
   1. `[DISCOVERY]`
   2. `[UNRESOLVED]`
@@ -84,6 +101,16 @@ Topology determinism (DRY_RUN):
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = high` but `low_confidence_reason` is not `none`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = high` but `topology_question_allowed` is not `no`.
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_confidence = low` but `low_confidence_reason` is `none`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if dry-run omits `topology_preflight` with all required fields:
+  - `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`
+- Return `REQUEST_CHANGES` with a `BLOCKER` if output does not show that a parent-directory sibling VCS-root scan ran before topology classification.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if DRY_RUN proceeds without parent-scan evidence (`parent_scan_status!=ok` or `parent_scan_evidence=none`).
+- Return `REQUEST_CHANGES` with a `BLOCKER` if parent directory unreadable/unavailable is not handled as `topology_confidence=low` with `preflight_verdict=fail` and explicit `fail_reason`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if parent scan reports sibling VCS roots but `topology_class` is not `multi-repo`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `sibling_repo_roots` is not host-excluded, relative-path normalized, and lexicographically ordered.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_preflight.preflight_verdict` is not `pass`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_preflight.self_repo_exclusion_applied` is not `yes`.
+- Return `REQUEST_CHANGES` with a `BLOCKER` if `topology_preflight.sibling_repo_roots` includes `topology_preflight.host_repo`.
 
 Deployment manifest completeness (DRY_RUN + APPLIED_RESULT):
 
@@ -94,6 +121,12 @@ Deployment manifest completeness (DRY_RUN + APPLIED_RESULT):
 - Return `REQUEST_CHANGES` with a `BLOCKER` if `rows_total` does not equal `source_rows_total`.
 - For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` when `rows_failed` is not `0`.
 - For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` if any declared template source row has no concrete host destination mapping.
+- For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` if output omits a **Baseline Host Artifacts Table** with columns exactly:
+  `artifact_path | required(yes|conditional) | exists_after_apply(yes|no) | evidence`.
+- For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` if any baseline host artifact row with `required=yes` has `exists_after_apply=no`.
+- For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` if baseline host artifacts do not include `.vscode/project.code-workspace` as `required=yes`.
+- For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` if `.agents/compliance/awesome-copilot-gate.md` contains any placeholder marker (`TODO`, `PENDING`, `TBD`, or `<...>` token).
+- For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `BLOCKER` if host `domain/**/*.md` TODO placeholders remained unresolved where executor evidence shows sufficient discovery support.
 
 For `Review stage: APPLIED_RESULT`, return `REQUEST_CHANGES` with a `WARNING` if applied output omits a concise summary of resolved/unresolved TODO outcomes.
 
@@ -159,6 +192,11 @@ Deterministic conditions:
 
 - For `Review stage: APPLIED_RESULT`, if output claims terminal completion (`TASK_COMPLETE`, `completed`, `done`) without evidence that post-apply `bootstrap-repo-context-bootstrap` and `bootstrap-repo-context-bootstrap-critic` completed successfully, return `REQUEST_CHANGES` with a `BLOCKER`.
 - If direct `bootstrap-installer` / `bootstrap-upgrader` invocation output omits an explicit incomplete handoff state (for example `HANDOFF_REQUIRED`) and required next-step routing to `bootstrap-repo-context-bootstrap` + `bootstrap-repo-context-bootstrap-critic`, return `REQUEST_CHANGES` with a `BLOCKER`.
+- For install/upgrade completion claims, return `REQUEST_CHANGES` with a `BLOCKER` if output omits a **Per-Repo Context Quality Table** with columns:
+  `repo_root | required_fields_total | required_fields_unknown | unknown_ratio | quality_verdict(pass|fail)`.
+- For install/upgrade completion claims, return `REQUEST_CHANGES` with a `BLOCKER` if output omits evidence that post-apply context bootstrap processed repo roots from the confirmed PRE_DISCOVERY snapshot inventory (plus explicit user corrections, if any).
+- For install/upgrade completion claims, return `REQUEST_CHANGES` with a `BLOCKER` if host repo row has `required_fields_unknown > 0` or `quality_verdict != pass`.
+- For install/upgrade completion claims, return `REQUEST_CHANGES` with a `BLOCKER` if any sibling repo row has `unknown_ratio > 0.10` or `quality_verdict != pass`.
 
 ## Output format
 

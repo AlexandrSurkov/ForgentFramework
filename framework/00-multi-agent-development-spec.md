@@ -1,6 +1,6 @@
 # Multi-Agent Development Specification
 
-> **Version:** 0.26.1 · **Updated:** 2026-03-04
+> **Version:** 0.31.1 · **Updated:** 2026-03-05
 
 > This is a universal specification: it defines principles, protocols, and critique rubrics **independent of technology**.
 > Project-specific application (stack, models, prompts, technology-specific rubric triggers) lives in a separate file at the **AgentConfig repo root** (e.g., `PROJECT.md` next to `framework/`).
@@ -13,6 +13,14 @@
 Install / Upgrade / Remove procedures live in: **[spec/07-framework-operations.md](spec/07-framework-operations.md)**.
 
 For the detailed, phase-by-phase setup workflow and the agent prompts (Implementation Agent / Spec Upgrade Agent), use: **[spec/06-adoption-roadmap.md](spec/06-adoption-roadmap.md)**.
+
+Bootstrap Install/Upgrade/Remove runs MUST enforce:
+- PRE_DISCOVERY before DRY_RUN,
+- explicit PRE_DISCOVERY chat report + user confirmation/corrections gate,
+- DRY_RUN consumption of the confirmed discovery snapshot,
+- mandatory parent-directory sibling VCS scan evidence before topology classification,
+- deep all-repo context inspection and evidence-based context fills,
+- deterministic `.vscode/project.code-workspace` folder alignment to confirmed repo inventory relative paths.
 
 ---
 

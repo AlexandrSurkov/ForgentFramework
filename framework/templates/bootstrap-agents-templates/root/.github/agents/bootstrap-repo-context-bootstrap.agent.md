@@ -28,7 +28,20 @@ You have **three responsibilities**, in this order:
 2. **Process ALL discovered repo roots**: non-destructively enrich existing sparse `AGENTS.md` / `llms.txt` files and create them only when missing.
 3. **Aggregate discovered per-repo metadata into host repo context** and enrich host agent/prompt files when needed for detected technologies.
 
+Deep-inspection requirement (mandatory):
+
+- You MUST deeply inspect EVERY discovered repo root before deciding `created|enriched|unchanged|skipped` actions.
+- Minimum evidence pass per repo root MUST include at least: repo-level README (if present), one primary build manifest (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `*.csproj`, etc. when present), CI/devops config evidence (for example `.github/workflows/**`, `azure-pipelines.yml`, `.gitlab-ci.yml`, `Jenkinsfile`), and database evidence (migrations or ORM config if present).
+- You MUST use this evidence to enrich AGENTS/llms quality; do not leave TODO-only content when evidence exists.
+
 You MUST NOT skip responsibility 1 even if the orchestrator passes `SKIP`. In that case, infer as much as possible from the workspace.
+
+Confirmed discovery inventory requirement (mandatory):
+
+- The orchestrator-provided `confirmed_discovery_snapshot_id` and repo inventory are authoritative.
+- You MUST process exactly the repo roots from that confirmed inventory (plus explicit user corrections, if provided by the orchestrator).
+- You MUST keep all repo-root references deterministic and relative to the host repo where applicable.
+- You MUST NOT add inferred repo roots that are absent from the confirmed inventory.
 
 ## Context input (provided by the orchestrator)
 
@@ -111,10 +124,12 @@ Responsibility 1 applies only to the **host repo** (the repo root that contains 
 
 - `PROJECT.md` — fill all `TODO` values in the `§pre` block and sections 1–4; replace `<project>` placeholders in agent names only when the project name is known (see clarification below).
 - `.vscode/project.code-workspace` — replace `<project>` placeholders with the actual project name when it is known/inferable (lowercased for path segments, PascalCase for display names if appropriate). If the project name is not confidently inferable, keep `<project>` and report it as unfilled.
+- `.vscode/project.code-workspace` — rewrite `folders` to exactly match the confirmed discovery snapshot repo inventory using relative paths only (host + confirmed siblings as applicable).
 - `AGENTS.md` (bootstrap root only; if it exists with TODO entries) — fill in repo purpose, run commands, conventions, agent operating model.
 - `llms.txt` (bootstrap root only; if it exists with TODO entries) — fill in the repository overview line.
 - `.github/copilot-instructions.md` (bootstrap root only; if it contains TODO entries) — fill them.
 - `.agents/a2a/README.md` (bootstrap root only; if it contains TODO entries) — fill agent responsibility descriptions.
+- `domain/**/*.md` (bootstrap root only) — fill TODO placeholders from discovered evidence when evidence exists; if evidence does not exist, keep TODO and report in `## Unfilled items table`.
 - `.github/agents/**/*.agent.md` and `.github/prompts/**/*.prompt.md` (host repo only; when enrichment is needed for detected project technologies) — apply non-destructive enrichment only.
 
 Clarification for `PROJECT.md` agent names:
@@ -199,7 +214,10 @@ For sections `## 3. Responsibility zones` and `## 4. Critic triggers`, fill only
 
 Replace ALL occurrences of `<project>` with the project name.
 
-- You MUST NOT invent repo names or add/remove folder entries.
+- You MUST deterministically align `folders` to the confirmed discovery snapshot repo inventory using relative paths from the host repo.
+- You MUST rewrite `folders` to exactly the confirmed discovery snapshot repo inventory (plus explicit user corrections), preserving only in-inventory rows.
+- Do not add inferred repo folders that are not present in the confirmed discovery snapshot repo inventory.
+- You MUST NOT invent repo names.
 - If the project name cannot be confidently inferred, do not replace `<project>`; record it as unfilled and ask the user.
 
 ### `AGENTS.md` (existing file with TODOs)
@@ -289,6 +307,16 @@ For each repo root:
 
 You MUST include sibling repo roots discovered relative to the host repo when topology is multi-repo.
 
+Per-repo quality scoring requirement (mandatory):
+
+- You MUST compute required AGENTS/llms quality per processed repo and emit `## Per-repo context quality table` with columns exactly:
+  `repo_root | required_fields_total | required_fields_unknown | unknown_ratio | quality_verdict(pass|fail)`
+- `required_fields_unknown` counts required AGENTS/llms fields still set to the literal `UNKNOWN` marker.
+- `unknown_ratio` MUST be `required_fields_unknown / required_fields_total` rounded to 2 decimals.
+- Thresholds:
+  - host repo row MUST have `required_fields_unknown = 0` and `quality_verdict=pass`
+  - each sibling repo row MUST have `unknown_ratio <= 0.10` and `quality_verdict=pass`
+
 You MUST produce deterministic evidence artifacts in your final response:
 
 - `## Per-repo processing table` with columns exactly:
@@ -305,10 +333,11 @@ Your final response MUST contain, in this order:
 1. `## Files changed` — edited/created paths.
 2. `## Per-repo processing table` — ALWAYS.
 3. `## Host aggregation table` — ALWAYS.
-4. `## Verification performed` — what you checked.
-5. `## Questions for the user` — only if needed.
-6. `## Unfilled items table` — ALWAYS.
-7. `trace_event` JSON object in a `json` code block (see Observability).
+4. `## Per-repo context quality table` — ALWAYS.
+5. `## Verification performed` — what you checked.
+6. `## Questions for the user` — only if needed.
+7. `## Unfilled items table` — ALWAYS.
+8. `trace_event` JSON object in a `json` code block (see Observability).
 
 ## Observability (mandatory)
 

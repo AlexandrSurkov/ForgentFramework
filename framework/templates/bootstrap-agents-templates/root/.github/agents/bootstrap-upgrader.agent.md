@@ -41,9 +41,18 @@ You MUST follow the Upgrade playbook in `framework/spec/06-adoption-roadmap.md` 
 
 ## Safety gate (deterministic)
 
-1. **Dry-run**: present a complete file-by-file plan (create/modify/delete + paths).
-2. **Confirm**: wait for the exact token `APPLY`.
-3. **Apply**: make changes and summarise.
+1. **PRE_DISCOVERY**: produce and show a deterministic discovery snapshot in chat before any dry-run planning.
+  - MUST emit the exact chat section header `## PRE_DISCOVERY Report`.
+  - MUST include required fields before any dry-run output: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
+  - MUST include topology/preflight evidence, full repo inventory with relative repo-root paths, inferred project identity, and technology evidence covering technologies/databases/devops tooling.
+2. **Confirm discovery**: request explicit user confirmation/corrections and persist a confirmed snapshot.
+  - MUST ask user to reply using deterministic token format: `CONFIRMED` or `CORRECTIONS: ...`.
+  - MUST wait for this confirmation before dry-run.
+3. **Dry-run**: present a complete file-by-file plan (create/modify/delete + paths) using only the confirmed discovery snapshot.
+  - MUST include `confirmed_discovery_snapshot_id`.
+  - MUST stop and request re-confirmation if discovery evidence changed after confirmation (stale snapshot guard).
+4. **Confirm apply**: wait for the exact token `APPLY`.
+5. **Apply**: make changes and summarise.
 
 Clarification:
 
@@ -97,6 +106,16 @@ Stop after finishing with:
 - list of modified files
 - validations run (if any)
 - any follow-ups
+
+## Discovery-first requirements (mandatory)
+
+- Before asking the user any question, maximize autonomous discovery and evidence-based autofill.
+- Ask user questions only for unresolved TODOs after discovery; each question MUST map to exactly one unresolved TODO and blocking upgrade step.
+- Dry-run text MUST include stage markers exactly (in order): `[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`.
+- Dry-run MUST include deterministic tables in this exact order:
+  1) Discovery Evidence Table — `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
+  2) Unresolved TODO Table — `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
+  3) Question Mapping Table — `question_id | maps_to_todo_id | question_text | accepted_answer_format | unblocks_stage`
 
 ## Observability (mandatory)
 

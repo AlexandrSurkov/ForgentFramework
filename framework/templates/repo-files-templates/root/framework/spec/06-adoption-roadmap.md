@@ -141,25 +141,42 @@ Normative RC mapping labels for this playbook are defined in Operations 07 §7.2
 1. Run the Group 2 entrypoint:
    - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-orchestrator.agent.md`) and request **Install**.
   - Alternatively: run `.github/agents/bootstrap-installer.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-installer.agent.md`) ONLY if the direct path preserves the mandatory post-apply handoff/gates in steps 7–8 (no completion before those gates pass).
-2. Perform an autonomous discovery pass before planning any file changes:
+2. Run a mandatory PRE_DISCOVERY stage before any DRY_RUN planning:
   - Discover whether the framework package is already available at repo root as `framework/` (vendored copy) and infer source/update strategy from repository evidence.
   - Discover whether `PROJECT.md` exists and whether `## §pre: Project parameters` is complete using the §6.pre checklist.
   - Discover repository topology (single-repo vs multi-repo AgentConfig + components) and in-scope writable repositories for this run, and record `topology_class`, `topology_confidence`, and `topology_signal` per [07-framework-operations.md](07-framework-operations.md) §7.2.2.
+  - Before topology classification, run a parent-directory sibling VCS-root scan relative to `host_repo` and record deterministic parent-scan evidence.
+  - Produce a deterministic full repo inventory (relative paths) for all discovered in-scope repos.
+  - Produce deterministic evidence for inferred project identity, technologies, databases, and devops tooling.
+  - Run topology preflight before generation/enrichment and record: `topology_class`, `host_repo`, `sibling_repo_roots`, `parent_scan_status`, `parent_scan_evidence`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`.
+  - Topology preflight is blocking: if `preflight_verdict=fail`, if `self_repo_exclusion_applied!=yes`, if `sibling_repo_roots` includes `host_repo`, or if parent-scan evidence is missing (`parent_scan_status!=ok` or `parent_scan_evidence=none`), STOP and return an incomplete state (no generation/enrichment in steps 6–8).
+  - If host parent directory is unreadable/unavailable, force `topology_confidence=low`, set `preflight_verdict=fail`, and block DRY_RUN.
+  - If sibling VCS roots are detected by parent scan, classify topology as `multi-repo` and include sibling paths as host-excluded, relative, lexicographically ordered rows.
   - Discover existing `.github/agents/**`, `.agents/**`, `AGENTS.md`, `llms.txt`, and `.github/copilot-instructions.md` and infer merge/preserve requirements from current usage.
-  - Record discovery evidence and autofilled decisions in Dry-run artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
-3. Ask user questions only for unresolved TODOs after discovery:
+  - Record discovery evidence and autofilled decisions in PRE_DISCOVERY artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
+3. Require explicit user confirmation/correction of PRE_DISCOVERY output before DRY_RUN:
+  - PRE_DISCOVERY MUST be printed as an explicit chat report section titled `## PRE_DISCOVERY Report` and include required fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`, plus the deterministic inventory/evidence tables.
+  - Show PRE_DISCOVERY output in chat and request confirmation/corrections.
+  - The confirmation gate token format is deterministic: user replies `CONFIRMED` or `CORRECTIONS: ...`.
+  - Persist a confirmed discovery snapshot (including user corrections) and reference it in DRY_RUN.
+  - DRY_RUN is blocked until PRE_DISCOVERY is confirmed.
+4. Ask user questions only for unresolved TODOs after confirmed discovery:
   - Emit one question per unresolved TODO.
   - For each question, include TODO ID, blocking phase/step, and accepted answer format.
   - Topology clarification is special-cased: ask at most one topology question, and only when `topology_confidence = low`.
-4. Apply the operational invariants (link only) before and during execution:
+5. Apply the operational invariants (link only) before and during execution:
    - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
    - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
    - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
    - Spec pinning location (`PROJECT.md` header only): [07-framework-operations.md](07-framework-operations.md) §7.4
-5. Dry-run: produce a complete phase-by-phase plan for §6.0–§6.8 and enumerate every create/modify/delete operation with paths (per [07-framework-operations.md](07-framework-operations.md) §7.2).
+6. Dry-run: produce a complete phase-by-phase plan for §6.0–§6.8 and enumerate every create/modify/delete operation with paths (per [07-framework-operations.md](07-framework-operations.md) §7.2).
+  - Dry-run MUST use and reference the confirmed discovery snapshot from step 3.
+  - Dry-run MUST stop and request re-confirmation if PRE_DISCOVERY evidence changed after confirmation (stale snapshot guard).
   - The dry-run MUST include a deterministic source→destination deployment manifest for host repo outputs per [07-framework-operations.md](07-framework-operations.md) §7.2.1.
   - The dry-run MUST include the source inventory summary counters from [07-framework-operations.md](07-framework-operations.md) §7.2.1 and ensure planned `rows_total = source_rows_total`.
-6. Apply (only after the Operations safety confirmation per §7.2), using shipped templates as the baseline:
+  - The dry-run MUST include the topology preflight record and MUST show `preflight_verdict=pass` before any planned generation/enrichment operations.
+  - DRY_RUN MUST be blocked unless topology preflight includes parent-scan evidence (`parent_scan_status=ok` and `parent_scan_evidence!=none`).
+7. Apply (only after the Operations safety confirmation per §7.2), using shipped templates as the baseline:
    - Template sources:
      - Repo context files: `framework/templates/repo-files-templates/root/**`
      - Bootstrap agents (Group 2): `framework/templates/bootstrap-agents-templates/root/**`
@@ -173,9 +190,15 @@ Normative RC mapping labels for this playbook are defined in Operations 07 §7.2
      - `.vscode/mcp.json` (when adopting MCP in §6.4)
     - Deployment completeness requirement: after APPLY, all manifest rows from §7.2.1 MUST resolve to host destinations with `rows_failed = 0`.
     - Deployment accounting requirement: after APPLY, `rows_total` MUST equal `source_rows_total`.
-  7. Post-apply context bootstrap (mandatory for install):
-    - Run `bootstrap-repo-context-bootstrap` across ALL discovered repos (not only missing-file repos).
-    - Include host-level sibling discovery in scope: when topology is `multi-repo`, discovered sibling repo roots MUST be processed in the same run.
+    - APPLIED_RESULT MUST include a Baseline Host Artifacts Table (`artifact_path | required(yes|conditional) | exists_after_apply(yes|no) | evidence`) and MUST fail if any required row has `exists_after_apply=no`.
+    - APPLIED_RESULT MUST fail if `.agents/compliance/awesome-copilot-gate.md` contains any placeholder marker (`TODO`, `PENDING`, `TBD`, `<...>`).
+  8. Post-apply context bootstrap (mandatory for install):
+    - Run `bootstrap-repo-context-bootstrap` across ALL repos in the confirmed discovery snapshot inventory (not only missing-file repos).
+    - Include host-level sibling discovery in scope: when topology is `multi-repo`, confirmed sibling repo roots MUST be processed in the same run.
+    - Context bootstrap MUST deeply inspect every discovered repo root and use discovered evidence to enrich AGENTS/llms context quality.
+    - Host `domain/**/*.md` context documents MUST be filled from discovered evidence when evidence exists (not left TODO-only when evidence exists).
+    - Host `.vscode/project.code-workspace` folder inventory MUST deterministically align to the confirmed discovery snapshot repo inventory using relative paths.
+    - Workspace alignment is exact-set based: rewrite `folders` entries to the confirmed inventory (relative paths only) and do not preserve stale/extraneous repo rows.
     - For each discovered repo, non-destructively enrich existing sparse `AGENTS.md` and `llms.txt` where placeholders/TODO gaps exist; do not overwrite already-concrete values.
     - Produce a critic-verifiable per-repo processing table with one row per discovered repo root and columns:
       `repo_root | agents_action(created|enriched|unchanged|skipped) | llms_action(created|enriched|unchanged|skipped) | reason`.
@@ -183,9 +206,15 @@ Normative RC mapping labels for this playbook are defined in Operations 07 §7.2
     - Produce a host aggregation table with one row per aggregated item and columns:
       `source_repo_root | source_artifact | extracted_fact | host_destination | apply_action`.
     - If host `.github/agents/**` or `.github/prompts/**` are enriched during this step, enforce AWESOME-COPILOT gate compliance and ensure no placeholders remain in the gate report.
-  8. Verify the installation results at the roadmap level:
+    - Produce a per-repo context quality table with columns:
+      `repo_root | required_fields_total | required_fields_unknown | unknown_ratio | quality_verdict(pass|fail)`.
+    - Required unknown-fields policy:
+      - host repo MUST have `required_fields_unknown = 0` and `quality_verdict=pass`;
+      - each sibling repo MUST have `unknown_ratio <= 0.10` and `quality_verdict=pass`.
+  9. Verify the installation results at the roadmap level:
    - Follow phases §6.0–§6.8 checklists and stop with a summary of created/modified files and any deferred items.
-    - Install completion is prohibited unless step 7 ran and `bootstrap-repo-context-bootstrap-critic` approved the post-apply context result.
+    - Install completion is prohibited unless step 8 ran and `bootstrap-repo-context-bootstrap-critic` approved the post-apply context result.
+    - Install completion is prohibited if APPLIED_RESULT baseline host artifacts failed, the gate report has placeholders, or any per-repo context quality row fails the required unknown-fields policy.
     - If install was invoked directly via `bootstrap-installer`, the executor MUST return an explicit handoff for step 7 critic-gated completion (for example `HANDOFF_REQUIRED`) and MUST NOT emit completion status.
 
 ---
@@ -415,28 +444,39 @@ This playbook is executed by the **Bootstrap Upgrader (Group 2)**.
 1. Run the Group 2 entrypoint:
    - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` and request **Upgrade**.
    - Alternatively: run `.github/agents/bootstrap-upgrader.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-upgrader.agent.md`).
-2. Perform an autonomous discovery pass before planning changes:
+2. Run a mandatory PRE_DISCOVERY stage before any DRY_RUN planning:
   - Discover whether the new framework package contents are available (updated `framework/` vendored copy).
   - Discover the project’s current pinned spec version from `PROJECT.md` header (`> Spec: Multi-Agent Development Specification vX.Y.Z`).
+  - Discover repository topology (single-repo vs multi-repo) and produce deterministic full repo inventory using relative repo-root paths.
+  - Produce deterministic evidence for inferred project identity, technologies, databases, and devops tooling.
+  - Run topology preflight and record: `topology_class`, `host_repo`, `sibling_repo_roots`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`.
   - Discover repository policy constraints for `.github/agents/**` and `.github/prompts/**` changes from existing governance artifacts.
-  - Record discovery evidence and autofilled decisions in Dry-run artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
-3. Ask user questions only for unresolved TODOs after discovery:
+  - Record discovery evidence and autofilled decisions in PRE_DISCOVERY artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
+3. Require explicit user confirmation/correction of PRE_DISCOVERY output before DRY_RUN:
+  - PRE_DISCOVERY MUST be printed as a chat report section titled exactly `## PRE_DISCOVERY Report`.
+  - PRE_DISCOVERY report MUST include required fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`, plus deterministic inventory/evidence tables.
+  - User response format is deterministic: `CONFIRMED` or `CORRECTIONS: ...`.
+  - Persist a confirmed discovery snapshot and require DRY_RUN to reference `confirmed_discovery_snapshot_id`.
+  - DRY_RUN is blocked until PRE_DISCOVERY is confirmed.
+4. Ask user questions only for unresolved TODOs after confirmed discovery:
   - Emit one question per unresolved TODO.
   - For each question, include TODO ID, blocking upgrade step, and accepted answer format.
-4. Apply the operational invariants (link only) before and during execution:
+5. Apply the operational invariants (link only) before and during execution:
    - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
    - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
    - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
    - Spec pinning and mandatory update of `PROJECT.md` header: [07-framework-operations.md](07-framework-operations.md) §7.4
-5. Identify versions:
+6. Identify versions:
    - NEW: `framework/00-multi-agent-development-spec.md` header.
    - OLD: `PROJECT.md` header line `> Spec: Multi-Agent Development Specification vX.Y.Z`.
-6. Dry-run: enumerate every file create/modify/delete and explicitly call out destructive steps (per [07-framework-operations.md](07-framework-operations.md) §7.2).
-7. Apply (only after the Operations safety confirmation per §7.2):
+7. Dry-run: enumerate every file create/modify/delete and explicitly call out destructive steps (per [07-framework-operations.md](07-framework-operations.md) §7.2).
+  - Dry-run MUST use and reference the confirmed discovery snapshot from step 3.
+  - Dry-run MUST stop and request re-confirmation if PRE_DISCOVERY evidence changed after confirmation (stale snapshot guard).
+8. Apply (only after the Operations safety confirmation per §7.2):
    - Update the vendored `framework/` package.
    - Run the Bootstrap Upgrader procedure (next section).
    - Update `PROJECT.md` header `> Spec:` to the new version.
-8. After apply, perform required follow-ups when the AWESOME-COPILOT trigger fired (link only):
+9. After apply, perform required follow-ups when the AWESOME-COPILOT trigger fired (link only):
    - Update `.agents/compliance/awesome-copilot-gate.md` per [07-framework-operations.md](07-framework-operations.md) §7.3.
    - If your repo maintains prompt version history and/or evals, run the project’s configured process (Prompt Versioning / Evals modules).
 
@@ -460,6 +500,12 @@ You — Bootstrap Upgrader (Group 2). 00-multi-agent-development-spec.md has bee
 Your task is to bring the project's agent configuration up to date with the new version.
 
 Safety gate: follow Operations 07 §7.2 (link only): [07-framework-operations.md](07-framework-operations.md).
+
+Before DRY_RUN, you MUST run PRE_DISCOVERY and confirmation:
+- Print a chat section titled exactly `## PRE_DISCOVERY Report` including required fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
+- Include topology/preflight evidence, full repo inventory with relative repo-root paths, inferred project identity, and technologies/databases/devops evidence.
+- Ask for deterministic confirmation (`CONFIRMED` or `CORRECTIONS: ...`) and persist a confirmed snapshot.
+- DRY_RUN MUST include `confirmed_discovery_snapshot_id` and use only confirmed PRE_DISCOVERY assumptions.
 
 Input:
   - 00-multi-agent-development-spec.md new version (umbrella index)
@@ -524,28 +570,39 @@ This playbook is executed by the **Bootstrap Remover (Group 2)**.
 1. Run the Group 2 entrypoint:
    - Recommended: run `.github/agents/bootstrap-orchestrator.agent.md` and request **Remove**.
    - Alternatively: run `.github/agents/bootstrap-remover.agent.md` directly (template: `framework/templates/bootstrap-agents-templates/root/.github/agents/bootstrap-remover.agent.md`).
-2. Perform an autonomous discovery pass before planning deletions:
+2. Run a mandatory PRE_DISCOVERY stage before any DRY_RUN planning:
   - Discover the likely removal mode based on repository state (**Minimal removal** vs **Full cleanup**) and mark it as autofilled if unambiguous.
+  - Discover repository topology (single-repo vs multi-repo) and produce deterministic full repo inventory using relative repo-root paths.
+  - Produce deterministic evidence for inferred project identity, technologies, databases, and devops tooling.
+  - Run topology preflight and record: `topology_class`, `host_repo`, `sibling_repo_roots`, `self_repo_exclusion_applied`, `preflight_verdict`, `fail_reason`.
   - Discover whether target paths are repurposed for non-framework use and must be preserved/merged instead of deleted:
     `.github/agents/**`, `.github/prompts/**`, `.agents/**`, `PROJECT.md`, `AGENTS.md`, `llms.txt`, `.github/copilot-instructions.md`, `.vscode/**`.
   - Discover repository component structure and in-scope component boundaries for this run.
-  - Record discovery evidence and autofilled decisions in Dry-run artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
-3. Ask user questions only for unresolved TODOs after discovery:
+  - Record discovery evidence and autofilled decisions in PRE_DISCOVERY artifacts per [07-framework-operations.md](07-framework-operations.md) §7.2.
+3. Require explicit user confirmation/correction of PRE_DISCOVERY output before DRY_RUN:
+  - PRE_DISCOVERY MUST be printed as a chat report section titled exactly `## PRE_DISCOVERY Report`.
+  - PRE_DISCOVERY report MUST include required fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`, plus deterministic inventory/evidence tables.
+  - User response format is deterministic: `CONFIRMED` or `CORRECTIONS: ...`.
+  - Persist a confirmed discovery snapshot and require DRY_RUN to reference `confirmed_discovery_snapshot_id`.
+  - DRY_RUN is blocked until PRE_DISCOVERY is confirmed.
+4. Ask user questions only for unresolved TODOs after confirmed discovery:
   - Emit one question per unresolved TODO.
   - For each question, include TODO ID, blocking removal step, and accepted answer format.
-4. Apply the operational invariants (link only) before and during execution:
+5. Apply the operational invariants (link only) before and during execution:
    - Two-tier routing + Group 2 scope boundary: [07-framework-operations.md](07-framework-operations.md) §7.1
    - Safety gate (dry-run → confirm → apply): [07-framework-operations.md](07-framework-operations.md) §7.2
    - AWESOME-COPILOT gate when editing `.github/agents/**` or `.github/prompts/**`: [07-framework-operations.md](07-framework-operations.md) §7.3
-5. Dry-run: enumerate all files that will be deleted or modified, and list all references/links that must be updated to avoid broken paths.
-6. Apply (only after the Operations safety confirmation per §7.2):
+6. Dry-run: enumerate all files that will be deleted or modified, and list all references/links that must be updated to avoid broken paths.
+  - Dry-run MUST use and reference the confirmed discovery snapshot from step 3.
+  - Dry-run MUST stop and request re-confirmation if PRE_DISCOVERY evidence changed after confirmation (stale snapshot guard).
+7. Apply (only after the Operations safety confirmation per §7.2):
    - Remove framework-owned agent prompts (unless confirmed as repurposed by the user):
      - Group 2 (bootstrap) agents: `.github/agents/bootstrap-*.agent.md`
      - Group 1 (project) agents installed for this framework (enumerate from `AGENTS.md` and the current `.github/agents/` contents)
    - Minimal removal (spec-only): delete `framework/` and update any links that reference `framework/**` paths.
    - Full cleanup (spec + agent system): additionally remove framework-introduced scaffolding under `.github/prompts/**`, `.agents/**`, `.vscode/**`, and framework-owned docs/config files, while preserving any repurposed files confirmed by the user.
      - Ordering rule: when removing `.agents/**`, keep `.agents/compliance/awesome-copilot-gate.md` until the very end so the bootstrap critic can verify the AWESOME-COPILOT gate on the applied change set; delete `.agents/compliance/awesome-copilot-gate.md` only as the final cleanup step after all other removals.
-7. Stop and summarize what was deleted/changed, and list any preserved files that were treated as repurposed.
+8. Stop and summarize what was deleted/changed, and list any preserved files that were treated as repurposed.
 
 Expected outputs/files:
 - Minimal removal (spec-only):
@@ -571,7 +628,10 @@ If the repo has repurposed any files (e.g., `.github/agents/**` used for non-fra
 You — Bootstrap Remover (Group 2). Your task is to remove the framework and framework-introduced agent scaffolding from this repository.
 
 Constraints:
-- Follow `framework/spec/07-framework-operations.md` safety gate: dry-run → wait for exact token APPLY → apply.
+- Follow `framework/spec/07-framework-operations.md` safety gate: PRE_DISCOVERY → confirm discovery → dry-run → wait for exact token APPLY → apply.
+- PRE_DISCOVERY chat report is mandatory before DRY_RUN and MUST use header `## PRE_DISCOVERY Report` with required fields: `snapshot_id`, `generated_at`, `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
+- Ask user to confirm/correct PRE_DISCOVERY with deterministic tokens: `CONFIRMED` or `CORRECTIONS: ...`.
+- DRY_RUN MUST include `confirmed_discovery_snapshot_id` and MUST stop for re-confirmation if PRE_DISCOVERY evidence changed after confirmation.
 - Default to the safest interpretation: never delete a file unless it was introduced solely for this framework.
 - Before asking the user for any missing parameter, run exhaustive repository discovery and evidence-based autofill.
 - Ask user questions ONLY for TODOs unresolved after discovery, and map each question to one unresolved TODO with a blocking removal step.

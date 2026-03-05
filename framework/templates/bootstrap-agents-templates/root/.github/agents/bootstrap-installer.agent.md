@@ -55,7 +55,7 @@ If you discover required product changes, stop and report them as follow-ups.
 
 ### Discovery-first + evidence-based autofill (mandatory)
 
-Before asking the user anything, you MUST perform an exhaustive repository discovery pass for all §pre fields and produce the DRY_RUN artifacts using the canonical `framework/spec/07-framework-operations.md` §7.2 contract exactly.
+Before asking the user anything, you MUST perform an exhaustive repository discovery pass for all §pre fields and produce a PRE_DISCOVERY output first; DRY_RUN artifacts may be produced only after the user confirms/corrects PRE_DISCOVERY per `framework/spec/07-framework-operations.md` §7.2.
 
 Question policy:
 
@@ -63,6 +63,10 @@ Question policy:
 - You MUST NOT ask the user to confirm values that were resolved by discovery/autofill.
 - If there are no unresolved TODO rows after discovery, you MUST proceed without asking any user questions.
 - You MUST classify topology before asking topology questions and ask at most one topology clarifying question only when `topology_confidence = low`.
+- You MUST perform parent-directory sibling VCS-root scan relative to `host_repo` before topology classification and include explicit parent-scan evidence in PRE_DISCOVERY/topology preflight.
+- You MUST block DRY_RUN unless parent-scan evidence is present (`parent_scan_status=ok` and `parent_scan_evidence!=none`).
+- If host parent directory is unreadable/unavailable, you MUST force `topology_confidence=low`, set `preflight_verdict=fail`, and block DRY_RUN.
+- If parent scan finds sibling VCS roots, you MUST classify topology as `multi-repo` and emit `sibling_repo_roots` as host-excluded relative paths in deterministic lexicographic order.
 
 Host repo definition:
 
@@ -100,7 +104,26 @@ For each field:
 ### 3. Present draft to user
 
 Print the full draft `§pre` block in a fenced code block.
-Then print the DRY_RUN artifacts with exact stage markers and required table schemas/order:
+Then print a PRE_DISCOVERY section in chat that includes all of the following deterministic outputs:
+
+- The chat section header MUST be exactly `## PRE_DISCOVERY Report`.
+- The report MUST include required fields before any dry-run output: `snapshot_id`, `generated_at` (ISO8601), `host_repo`, `topology_class`, `topology_confidence`, `topology_signal`, `topology_preflight`.
+
+- repository topology summary + topology preflight,
+- full repo inventory with relative repo-root paths,
+- inferred project identity (including project name when inferable),
+- technology evidence covering technologies, databases, and devops tooling.
+
+PRE_DISCOVERY deterministic table requirement:
+
+- You MUST include these named tables in PRE_DISCOVERY:
+  - **Full Repo Inventory Table** (`repo_root_relative_path | detection_basis | vcs_marker | in_scope(yes|no) | reason`)
+  - **Inferred Project Identity Table** (`field | inferred_value | evidence | confidence`)
+  - **Technology Evidence Table** (`repo_root_relative_path | category(technology|database|devops) | inferred_value | evidence_path_or_command | confidence`)
+
+After PRE_DISCOVERY, ask the user to confirm/correct discovery output using deterministic token format (`CONFIRMED` or `CORRECTIONS: ...`) and persist a `confirmed_discovery_snapshot_id`.
+You MUST NOT output any DRY_RUN stage marker blocks before this confirmation step is complete.
+Then print the DRY_RUN artifacts (only after confirmation) with exact stage markers and required table schemas/order:
 
 1. `[DISCOVERY]` with **Discovery Evidence Table** columns exactly:
   `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
@@ -108,8 +131,10 @@ Then print the DRY_RUN artifacts with exact stage markers and required table sch
     - `topology_class: single-repo|multi-repo`
     - `topology_confidence: high|low`
     - `topology_signal: repo_roots=[...]; host_repo=<path>; sibling_repo_roots=[...]; detection_basis=<vcs|workspace|metadata|fallback>; contradictions=<none|...>; low_confidence_reason=<none|...>; topology_question_allowed=<yes|no>`
+    - `topology_preflight: topology_class=<single-repo|multi-repo>; host_repo=<path>; sibling_repo_roots=[...]; parent_scan_status=<ok|unavailable>; parent_scan_evidence=<explicit evidence|none>; self_repo_exclusion_applied=<yes|no>; preflight_verdict=<pass|fail>; fail_reason=<none|...>`
     - If `topology_confidence = low`, `topology_signal` MUST include `low_confidence_reason` that is not `none`.
     - If `topology_confidence = high`, `topology_signal` MUST include `low_confidence_reason=none` and `topology_question_allowed=no`.
+    - Hard precondition: generation/enrichment planning is allowed only when `topology_preflight` has `preflight_verdict=pass`, `self_repo_exclusion_applied=yes`, `parent_scan_status=ok`, and `parent_scan_evidence!=none`.
 2. `[UNRESOLVED]` with **Unresolved TODO Table** columns exactly:
   `todo_id | description | why_unresolved_after_discovery | blocking_stage | required_input`
 3. `[QUESTIONS]` with **Question Mapping Table** columns exactly:
@@ -119,6 +144,8 @@ Then print the DRY_RUN artifacts with exact stage markers and required table sch
     - at most one topology question
     - it MUST map to exactly one unresolved TODO row
 4. `[PLAN]` with file-by-file operations (create/modify/delete + paths + destructive notes)
+  - MUST include `confirmed_discovery_snapshot_id` and state whether corrections were applied.
+  - MUST include `.vscode/project.code-workspace` folder alignment plan that rewrites folders to exactly the confirmed repo inventory (relative paths only).
   - Include **Deployment Manifest Table** with columns exactly:
     `manifest_id | source_template_path | destination_path | operation(create|modify|skip|delete) | reason | stage(dry-run|apply)`
   - Include **Manifest Completeness Summary** with exact counters:
@@ -152,7 +179,12 @@ Stage-aware rule:
 
 You MUST follow the safety protocol:
 
-1. **Dry-run**: present a complete change plan.
+1. **PRE_DISCOVERY**: present deterministic discovery output and show it in chat.
+  - MUST include topology, full repo inventory (relative paths), inferred project identity, and technologies/databases/devops evidence.
+2. **Confirm discovery**: wait for user confirmation/corrections and persist `confirmed_discovery_snapshot_id`.
+3. **Dry-run**: present a complete change plan based on the confirmed discovery snapshot.
+  - MUST include `confirmed_discovery_snapshot_id`.
+  - MUST stop and re-run PRE_DISCOVERY confirmation if discovery evidence changed after confirmation (stale snapshot guard).
   - MUST include stage markers exactly as: `[DISCOVERY]`, `[UNRESOLVED]`, `[QUESTIONS]`, `[PLAN]`.
   - MUST include deterministic tables in this exact order:
     1) Discovery Evidence Table — `evidence_id | source_path_or_command | observation | inference | confidence | fills_todo_id`
@@ -161,11 +193,15 @@ You MUST follow the safety protocol:
   - MUST enumerate file operations: create/modify/delete + paths.
   - MUST call out any destructive step.
   - MUST include a deterministic source→destination deployment manifest for host outputs with completeness counters.
-2. **Confirm**: wait for the user to respond with the exact token `APPLY`.
-3. **Apply**: only after `APPLY`, perform the changes and summarise what happened.
+4. **Confirm apply**: wait for the user to respond with the exact token `APPLY`.
+5. **Apply**: only after `APPLY`, perform the changes and summarise what happened.
   - MUST report deployment manifest outcome and include `source_rows_repo_templates`, `source_rows_bootstrap_templates`, `source_rows_total`, `rows_total`, `rows_applied`, `rows_skipped`, `rows_failed`.
   - `rows_total` MUST equal `source_rows_total`.
   - `rows_failed` MUST be `0`; otherwise abort and report failure.
+  - MUST include a **Baseline Host Artifacts Table** with columns exactly:
+    `artifact_path | required(yes|conditional) | exists_after_apply(yes|no) | evidence`.
+  - MUST fail apply if any required baseline row has `exists_after_apply=no`.
+  - MUST fail apply if `.agents/compliance/awesome-copilot-gate.md` contains `TODO`, `PENDING`, `TBD`, or any `<...>` placeholder token.
 
 Clarification:
 
@@ -285,6 +321,11 @@ Stop after finishing with:
 - explicit completion state:
   - orchestrated flow: `HANDOFF_REQUIRED` (waiting for post-apply context-bootstrap + context-bootstrap-critic)
   - direct invocation: `HANDOFF_REQUIRED` plus exact next commands/agents to run
+  - handoff MUST include `confirmed_discovery_snapshot_id` and the confirmed repo inventory for post-apply context bootstrap processing
+  - include required context-quality thresholds for handoff verification:
+    - host repo `required_fields_unknown=0`
+    - each sibling repo `unknown_ratio<=0.10`
+    - all per-repo rows `quality_verdict=pass`
 
 ## Observability (mandatory)
 
